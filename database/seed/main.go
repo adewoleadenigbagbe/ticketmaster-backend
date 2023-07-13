@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,6 +9,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Wolechacho/ticketmaster-backend/database/entities"
+	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 )
 
 const MOVIEDB_URL string = "https://api.themoviedb.org/3/movie/popular?language=en-US&page=1"
@@ -61,15 +65,39 @@ type ResponseData struct {
 }
 
 func main() {
-	//newTime := JsonReleaseDate(time.Now())
-	//fmt.Printf("%+v\n", newTime)
+
+	// dsn := "root:P@ssw0r1d@tcp(127.0.0.1:3306)/?charset=utf8mb4&parseTime=True&loc=Local"
+	// _, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// fmt.Println("Connected to the mysql database")
 	resp := getMovieData(1)
 	AddMovieToList(resp.MovieDatas)
 
-	go AllocateJobs(resp.TotalPages)
+	//go AllocateJobs(resp.TotalPages)
+	go AllocateJobs(2)
 	CreateWorkerThread(workerPoolSize)
 
-	fmt.Println(movielist)
+	movies := []entities.Movie{}
+	for _, moviedata := range movielist {
+		time.Sleep(1 * time.Second)
+		movie := entities.Movie{
+			Id:           sequentialguid.New().String(),
+			Title:        moviedata.OriginalTitle,
+			Description:  sql.NullString{String: moviedata.Overview, Valid: true},
+			Duration:     sql.NullInt32{Valid: false},
+			ReleaseDate:  time.Time(moviedata.ReleaseDate),
+			Language:     moviedata.OriginalLanguage,
+			Popularity:   moviedata.Popularity,
+			VoteCount:    moviedata.VoteCount,
+			IsDeprecated: false,
+		}
+		movies = append(movies, movie)
+	}
+	fmt.Printf("%+v\n", movies)
 }
 
 func getMovieData(page int) ResponseData {
@@ -95,9 +123,7 @@ func getMovieData(page int) ResponseData {
 
 // AllocateJobs - create jobs to be done - sender
 func AllocateJobs(totalPages int) {
-	fmt.Println("Number of total pages", totalPages)
 	for i := 2; i <= totalPages; i++ {
-		fmt.Println("Job started running #", i)
 		pages <- i
 	}
 
@@ -108,7 +134,6 @@ func AllocateJobs(totalPages int) {
 func CreateWorkerThread(noOfWorkers int) []MovieData {
 	var wg sync.WaitGroup
 	for i := 1; i <= noOfWorkers; i++ {
-		fmt.Println("Worker #", i)
 		//means add the number of worker semaphore
 		wg.Add(1)
 		go worker(&wg)
@@ -121,7 +146,6 @@ func CreateWorkerThread(noOfWorkers int) []MovieData {
 // receive jobs
 func worker(wg *sync.WaitGroup) {
 	for page := range pages {
-		fmt.Println("Page #", page)
 		resp := getMovieData(page)
 		AddMovieToList(resp.MovieDatas)
 	}

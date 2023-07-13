@@ -2,7 +2,7 @@ module github.com/Wolechacho/ticketmaster-backend
 
 go 1.19
 
-require gorm.io/gorm v1.24.2
+require gorm.io/gorm v1.25.2
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
@@ -13,6 +13,7 @@ require (
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
 	github.com/go-openapi/spec v0.20.4 // indirect
 	github.com/go-openapi/swag v0.19.15 // indirect
+	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
@@ -24,6 +25,7 @@ require (
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
+	github.com/stroiman/go-automapper v0.0.0-20200419053654-7c63d5bb0eb4 // indirect
 	github.com/swaggo/echo-swagger v1.4.0 // indirect
 	github.com/swaggo/files/v2 v2.0.0 // indirect
 	github.com/swaggo/swag v1.16.1 // indirect
@@ -36,5 +38,6 @@ require (
 	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gorm.io/driver/mysql v1.5.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
