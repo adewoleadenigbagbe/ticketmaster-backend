@@ -11,7 +11,6 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/routes"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
-
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
@@ -65,7 +64,6 @@ func main() {
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
-
 }
 
 // HealthCheck godoc
