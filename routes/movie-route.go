@@ -5,7 +5,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func movieRoutes(e *echo.Echo) {
+func movieRoutes(group *echo.Group) {
 	movieController := controllers.MovieController{}
-	e.GET("/api/v1/movies", movieController.GetMovies)
+	group.GET("movies", movieController.GetMovies)
 }

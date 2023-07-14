@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
 
 	_ "github.com/Wolechacho/ticketmaster-backend/docs"
 	"github.com/Wolechacho/ticketmaster-backend/routes"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
@@ -29,6 +34,8 @@ func main() {
 	// Create a new Echo instance
 	e := echo.New()
 
+	e.Logger.SetLevel(log.INFO)
+
 	// Define a route
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
@@ -41,6 +48,23 @@ func main() {
 
 	// Start the server
 	e.Start(":8185")
+
+	// Start server
+	go func() {
+		if err := e.Start(":8185"); err != nil && err != http.ErrServerClosed {
+			e.Logger.Fatal("shutting down the server")
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
+	}
 
 }
 
