@@ -5,13 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 const MOVIEDB_URL string = "https://api.themoviedb.org/3/movie/popular?language=en-US&page=1"
@@ -21,6 +25,7 @@ const AUTHORIZATION = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2YTRhZjY0MzFlY2YyN
 var workerPoolSize = 4
 var pages = make(chan int, workerPoolSize)
 var movielist = make([]MovieData, 0)
+var movies = []entities.Movie{}
 
 // create a time alias
 type JsonReleaseDate time.Time
@@ -65,39 +70,38 @@ type ResponseData struct {
 }
 
 func main() {
+	dsn := "root:P@ssw0r1d@tcp(127.0.0.1:3306)/?charset=utf8mb4&parseTime=True&loc=Local"
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
-	// dsn := "root:P@ssw0r1d@tcp(127.0.0.1:3306)/?charset=utf8mb4&parseTime=True&loc=Local"
-	// _, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// fmt.Println("Connected to the mysql database")
-	resp := getMovieData(1)
-	AddMovieToList(resp.MovieDatas)
-
-	//go AllocateJobs(resp.TotalPages)
-	go AllocateJobs(2)
-	CreateWorkerThread(workerPoolSize)
-
-	movies := []entities.Movie{}
-	for _, moviedata := range movielist {
-		time.Sleep(1 * time.Second)
-		movie := entities.Movie{
-			Id:           sequentialguid.New().String(),
-			Title:        moviedata.OriginalTitle,
-			Description:  sql.NullString{String: moviedata.Overview, Valid: true},
-			Duration:     sql.NullInt32{Valid: false},
-			ReleaseDate:  time.Time(moviedata.ReleaseDate),
-			Language:     moviedata.OriginalLanguage,
-			Popularity:   moviedata.Popularity,
-			VoteCount:    moviedata.VoteCount,
-			IsDeprecated: false,
-		}
-		movies = append(movies, movie)
+	if err != nil {
+		log.Fatal(err)
 	}
-	fmt.Printf("%+v\n", movies)
+
+	fmt.Println("Connected to the mysql Server")
+
+	dbName := "ticketmasterDB"
+	createCommand := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s;", dbName)
+	useDBCommand := fmt.Sprintf("USE %s;", dbName)
+
+	db.Exec(createCommand)
+	db.Exec(useDBCommand)
+
+	fmt.Println(db.Migrator().CurrentDatabase())
+
+	if !db.Migrator().HasTable(&entities.Movie{}) {
+		err = db.Migrator().CreateTable(&entities.Movie{})
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// resp := getMovieData(1)
+	// AddMovieToList(resp.MovieDatas)
+
+	// //go AllocateJobs(resp.TotalPages)
+	// go AllocateJobs(2)
+	// CreateWorkerThread(workerPoolSize)
 }
 
 func getMovieData(page int) ResponseData {
@@ -152,6 +156,39 @@ func worker(wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-func AddMovieToList(movies []MovieData) {
-	movielist = append(movielist, movies...)
+func AddMovieToList(movieDatasResponse []MovieData) {
+	for _, moviedata := range movieDatasResponse {
+		movie := entities.Movie{
+			Id:           sequentialguid.New().String(),
+			Title:        moviedata.OriginalTitle,
+			Description:  sql.NullString{String: moviedata.Overview, Valid: true},
+			Duration:     sql.NullInt32{Valid: false},
+			ReleaseDate:  time.Time(moviedata.ReleaseDate),
+			Language:     moviedata.OriginalLanguage,
+			Popularity:   moviedata.Popularity,
+			VoteCount:    moviedata.VoteCount,
+			IsDeprecated: false,
+		}
+		movies = append(movies, movie)
+	}
+
+	fmt.Printf("%+v\n", movies)
+	//sort the data
+	sort.Sort(byUUID(movies))
+
+	//check if the table exist, create if it does not
+}
+
+type byUUID []entities.Movie
+
+func (s byUUID) Len() int {
+	return len(s)
+}
+
+func (s byUUID) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s byUUID) Less(i, j int) bool {
+	return len(s[i].Id) < len(s[j].Id)
 }
