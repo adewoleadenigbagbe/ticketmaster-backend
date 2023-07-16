@@ -105,9 +105,6 @@ func main() {
 		}
 	}
 
-	//resp := getMovieData(1)
-	//AddMovieToList(resp.MovieDatas)
-
 	maxpage := 500
 	go AllocateJobs(maxpage)
 	CreateWorkerThread(workerPoolSize)
