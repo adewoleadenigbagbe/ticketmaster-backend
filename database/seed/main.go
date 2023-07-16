@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"sort"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
+	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -26,6 +28,13 @@ var workerPoolSize = 4
 var pages = make(chan int, workerPoolSize)
 var movielist = make([]MovieData, 0)
 var movies = []entities.Movie{}
+var genres = []enums.Genre{
+	enums.Action, enums.Adventure, enums.Animation, enums.Comedy,
+	enums.Crime, enums.Documentary, enums.Drama, enums.Family,
+	enums.Fantasy, enums.History, enums.Horror, enums.Music,
+	enums.Mystery, enums.Romance, enums.ScienceFiction, enums.TVMovie,
+	enums.Thriller, enums.War, enums.Western,
+}
 
 // create a time alias
 type JsonReleaseDate time.Time
@@ -96,12 +105,21 @@ func main() {
 		}
 	}
 
-	// resp := getMovieData(1)
-	// AddMovieToList(resp.MovieDatas)
+	//resp := getMovieData(1)
+	//AddMovieToList(resp.MovieDatas)
 
-	// //go AllocateJobs(resp.TotalPages)
-	// go AllocateJobs(2)
-	// CreateWorkerThread(workerPoolSize)
+	maxpage := 500
+	go AllocateJobs(maxpage)
+	CreateWorkerThread(workerPoolSize)
+
+	//sort the data
+	sort.Sort(byUUID(movies))
+	for _, movie := range movies {
+		tx := db.Create(movie)
+		if tx.Error != nil {
+			continue
+		}
+	}
 }
 
 func getMovieData(page int) ResponseData {
@@ -127,7 +145,7 @@ func getMovieData(page int) ResponseData {
 
 // AllocateJobs - create jobs to be done - sender
 func AllocateJobs(totalPages int) {
-	for i := 2; i <= totalPages; i++ {
+	for i := 1; i <= totalPages; i++ {
 		pages <- i
 	}
 
@@ -150,6 +168,7 @@ func CreateWorkerThread(noOfWorkers int) []MovieData {
 // receive jobs
 func worker(wg *sync.WaitGroup) {
 	for page := range pages {
+		fmt.Println("Page #", page)
 		resp := getMovieData(page)
 		AddMovieToList(resp.MovieDatas)
 	}
@@ -164,6 +183,7 @@ func AddMovieToList(movieDatasResponse []MovieData) {
 			Description:  sql.NullString{String: moviedata.Overview, Valid: true},
 			Duration:     sql.NullInt32{Valid: false},
 			ReleaseDate:  time.Time(moviedata.ReleaseDate),
+			Genre:        rand.Intn(len(genres)),
 			Language:     moviedata.OriginalLanguage,
 			Popularity:   moviedata.Popularity,
 			VoteCount:    moviedata.VoteCount,
@@ -171,12 +191,6 @@ func AddMovieToList(movieDatasResponse []MovieData) {
 		}
 		movies = append(movies, movie)
 	}
-
-	fmt.Printf("%+v\n", movies)
-	//sort the data
-	sort.Sort(byUUID(movies))
-
-	//check if the table exist, create if it does not
 }
 
 type byUUID []entities.Movie
@@ -190,5 +204,5 @@ func (s byUUID) Swap(i, j int) {
 }
 
 func (s byUUID) Less(i, j int) bool {
-	return len(s[i].Id) < len(s[j].Id)
+	return s[i].Id < s[j].Id
 }
