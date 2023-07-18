@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"time"
 
+	db "github.com/Wolechacho/ticketmaster-backend/database"
 	_ "github.com/Wolechacho/ticketmaster-backend/docs"
 	"github.com/Wolechacho/ticketmaster-backend/routes"
 	"github.com/labstack/echo/v4"
@@ -30,6 +31,10 @@ import (
 // @BasePath /
 // @schemes http
 func main() {
+
+	//create a database connection
+	db.ConnectToDatabase()
+
 	// Create a new Echo instance
 	e := echo.New()
 

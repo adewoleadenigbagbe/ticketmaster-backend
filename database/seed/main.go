@@ -86,7 +86,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Connected to the mysql Server")
+	fmt.Println("Connected to the Database")
 
 	dbName := "ticketmasterDB"
 	createCommand := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s;", dbName)
