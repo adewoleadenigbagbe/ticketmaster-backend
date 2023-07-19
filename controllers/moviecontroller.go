@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	db "github.com/Wolechacho/ticketmaster-backend/database"
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
@@ -30,10 +31,20 @@ func (movieController *MovieController) GetMovies(movieContext echo.Context) err
 		req.PageLength = 10
 	}
 
-	//this uses functional scope pattern in golang
+	//Filter
+	filterClause := paginate.FilterFields(&entities.Movie{IsDeprecated: false})
+
+	//paginate
 	movies := new([]entities.Movie)
-	paginateFunc := paginate.Paginate(req.Page, req.PageLength)
-	db.DB.Scopes(paginateFunc).Find(&movies)
+	paginateClause := paginate.Paginate(req.Page, req.PageLength)
+
+	//order by
+	sortandorder := fmt.Sprintf("%s %s", req.SortBy, req.Order)
+	fmt.Println(sortandorder)
+	orderByClause := paginate.OrderBy(sortandorder)
+
+	//this uses functional scope pattern in golang
+	db.DB.Scopes(filterClause, paginateClause, orderByClause).Find(&movies)
 
 	var countResult int64
 	paginate.GetEntityCount(db.DB, new(entities.Movie), &countResult)
@@ -46,7 +57,20 @@ func (movieController *MovieController) GetMovies(movieContext echo.Context) err
 	resp.RequestedPageLength = req.PageLength
 	resp.PerPage = len(*movies)
 	resp.TotalResults = countResult
-	resp.Movies = *movies
+
+	for _, movie := range *movies {
+		movieData := MovieDataResponse{
+			Id:          movie.Id,
+			Title:       movie.Title,
+			Language:    movie.Language,
+			Description: movie.Description.String,
+			ReleaseDate: movie.ReleaseDate,
+			Genre:       movie.Genre,
+			Popularity:  movie.Popularity,
+			VoteCount:   movie.VoteCount,
+		}
+		resp.Movies = append(resp.Movies, movieData)
+	}
 	return movieContext.JSON(http.StatusOK, resp)
 }
 
@@ -58,22 +82,20 @@ type getMoviesRequest struct {
 }
 
 type getMoviesResponse struct {
-	Page                int              `json:"page"`
-	PerPage             int              `json:"perPage"`
-	TotalResults        int64            `json:"totalResults"`
-	RequestedPageLength int              `json:"requestedPageLength"`
-	Movies              []entities.Movie `json:"movies"`
+	Page                int                 `json:"page"`
+	PerPage             int                 `json:"perPage"`
+	TotalResults        int64               `json:"totalResults"`
+	RequestedPageLength int                 `json:"requestedPageLength"`
+	Movies              []MovieDataResponse `json:"movies"`
 }
 
-// type MovieDataResponse struct {
-// 	Id           string `gorm:"primaryKey;size:36"`
-// 	Title        string `gorm:"not null"`
-// 	Description  sql.NullString
-// 	Language     string    `gorm:"not null"`
-// 	ReleaseDate  time.Time `gorm:"not null"`
-// 	Duration     sql.NullInt32
-// 	Genre        int     `gorm:"not null"`
-// 	Popularity   float32 `gorm:"not null"`
-// 	VoteCount    int     `gorm:"not null"`
-// 	IsDeprecated bool
-// }
+type MovieDataResponse struct {
+	Id          string    `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Language    string    `json:"language"`
+	ReleaseDate time.Time `json:"releaseDate"`
+	Genre       int       `json:"genre"`
+	Popularity  float32   `json:"popularity"`
+	VoteCount   int       `json:"voteCount"`
+}

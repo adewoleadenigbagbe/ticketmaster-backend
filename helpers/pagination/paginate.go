@@ -15,8 +15,10 @@ func GetEntityCount(db *gorm.DB, entity interface{}, count *int64) {
 	db.Find(entity).Count(count)
 }
 
-func FilterFields(field ...string) {
-
+func FilterFields(entity interface{}) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(entity)
+	}
 }
 
 func OrderBy(sortOrder string) func(db *gorm.DB) *gorm.DB {
