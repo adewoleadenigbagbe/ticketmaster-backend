@@ -99,3 +99,42 @@ type MovieDataResponse struct {
 	Popularity  float32   `json:"popularity"`
 	VoteCount   int       `json:"voteCount"`
 }
+
+func (movieController *MovieController) GetMovieById(movieContext echo.Context) error {
+	req := new(getMovieByIdRequest)
+
+	err := movieContext.Bind(req)
+	if err != nil {
+		return movieContext.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	movie := &entities.Movie{
+		Id: req.Id,
+	}
+	result := db.DB.First(movie)
+	if result.Error != nil {
+		return movieContext.JSON(http.StatusBadRequest, "Movie Record not found")
+	}
+
+	resp := new(getMovieByIdResponse)
+	resp.Movie = MovieDataResponse{
+		Id:          movie.Id,
+		Title:       movie.Title,
+		Language:    movie.Language,
+		Description: movie.Description.String,
+		ReleaseDate: movie.ReleaseDate,
+		Genre:       movie.Genre,
+		Popularity:  movie.Popularity,
+		VoteCount:   movie.VoteCount,
+	}
+
+	return movieContext.JSON(http.StatusOK, resp)
+}
+
+type getMovieByIdRequest struct {
+	Id string `param:"id" validate:"required"`
+}
+
+type getMovieByIdResponse struct {
+	Movie MovieDataResponse `json:"movie"`
+}
