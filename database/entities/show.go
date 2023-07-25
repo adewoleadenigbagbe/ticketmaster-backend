@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+type Tabler interface {
+	TableName() string
+}
+
 type Show struct {
 	Id                 string       `gorm:"primaryKey;size:36;column:Id"`
 	Date               time.Time    `gorm:"index;not null;column:Date"`
@@ -17,4 +21,8 @@ type Show struct {
 	IsDeprecated       bool         `gorm:"column:IsDeprecated"`
 	CreatedOn          sql.NullTime `gorm:"index;column:CreatedOn"`
 	ModifiedOn         sql.NullTime `gorm:"column:ModifiedOn"`
+}
+
+func (Show) TableName() string {
+	return "Shows"
 }

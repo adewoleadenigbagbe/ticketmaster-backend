@@ -14,3 +14,7 @@ type City struct {
 	CreatedOn    time.Time      `gorm:"column:CreatedOn"`
 	ModifiedOn   time.Time      `gorm:"column:ModifiedOn"`
 }
+
+func (City) TableName() string {
+	return "Cities"
+}
