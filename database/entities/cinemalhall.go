@@ -11,3 +11,7 @@ type CinemaHall struct {
 	CreatedOn    time.Time `gorm:"index;column:CreatedOn"`
 	ModifiedOn   time.Time `gorm:"column:ModifiedOn"`
 }
+
+func (CinemaHall) TableName() string {
+	return "CinemaHalls"
+}

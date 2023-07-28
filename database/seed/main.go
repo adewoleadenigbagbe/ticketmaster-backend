@@ -18,6 +18,7 @@ import (
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 const MOVIEDB_URL string = "https://api.themoviedb.org/3/movie/popular?language=en-US&page=1"
@@ -80,7 +81,11 @@ type ResponseData struct {
 
 func main() {
 	dsn := "root:P@ssw0r1d@tcp(127.0.0.1:3306)/?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			NoLowerCase: true,
+		},
+	})
 
 	if err != nil {
 		log.Fatal(err)
@@ -95,15 +100,11 @@ func main() {
 	db.Exec(createCommand)
 	db.Exec(useDBCommand)
 
-	fmt.Println(db.Migrator().CurrentDatabase())
-
-	if !db.Migrator().HasTable(&entities.Movie{}) {
-		err = db.Migrator().CreateTable(&entities.Movie{})
-
-		if err != nil {
-			log.Fatal(err)
-		}
+	err = CreateDataBaseEntities(db, &entities.City{}, &entities.Show{}, &entities.Cinema{}, &entities.CinemaHall{}, &entities.CinemaSeat{}, &entities.Show{}, &entities.Movie{})
+	if err != nil {
+		log.Fatal(err)
 	}
+	fmt.Println("Entity Save Sucessfully")
 
 	maxpage := 500
 	go AllocateJobs(maxpage)
@@ -202,4 +203,16 @@ func (s byUUID) Swap(i, j int) {
 
 func (s byUUID) Less(i, j int) bool {
 	return s[i].Id < s[j].Id
+}
+
+func CreateDataBaseEntities(db *gorm.DB, entities ...interface{}) error {
+	for _, entity := range entities {
+		if !db.Migrator().HasTable(entity) {
+			err := db.Migrator().CreateTable(entity)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

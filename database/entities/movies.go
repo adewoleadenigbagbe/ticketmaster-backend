@@ -17,3 +17,7 @@ type Movie struct {
 	VoteCount    int     `gorm:"not null"`
 	IsDeprecated bool
 }
+
+func (Movie) TableName() string {
+	return "Movies"
+}
