@@ -8,8 +8,8 @@ type Cinema struct {
 	TotalCinemalHalls int       `gorm:"not null;column:TotalCinemalHalls"`
 	CityId            string    `gorm:"index;not null1;column:CityId"`
 	IsDeprecated      bool      `gorm:"column:IsDeprecated"`
-	CreatedOn         time.Time `gorm:"index;column:CreatedOn"`
-	ModifiedOn        time.Time `gorm:"column:ModifiedOn"`
+	CreatedOn         time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
+	ModifiedOn        time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
 func (Cinema) TableName() string {

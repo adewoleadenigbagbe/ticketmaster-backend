@@ -13,4 +13,6 @@ type Booking struct {
 	UserId       string `gorm:"index;not null"`
 	ShowId       string `gorm:"index;not null"`
 	IsDeprecated bool
+	CreatedOn    time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
+	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
 }

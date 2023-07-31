@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +20,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -35,6 +40,9 @@ var genres = []enums.Genre{
 	enums.Fantasy, enums.History, enums.Horror, enums.Music,
 	enums.Mystery, enums.Romance, enums.ScienceFiction, enums.TVMovie,
 	enums.Thriller, enums.War, enums.Western,
+}
+var seats = []enums.SeatType{
+	enums.Gold, enums.Premium, enums.Standard,
 }
 
 // create a time alias
@@ -100,24 +108,31 @@ func main() {
 	db.Exec(createCommand)
 	db.Exec(useDBCommand)
 
-	err = CreateDataBaseEntities(db, &entities.City{}, &entities.Show{}, &entities.Cinema{}, &entities.CinemaHall{}, &entities.CinemaSeat{}, &entities.Show{}, &entities.Movie{})
+	err = createDataBaseEntities(db, &entities.City{},
+		&entities.Show{}, &entities.Cinema{}, &entities.CinemaHall{},
+		&entities.CinemaSeat{}, &entities.Show{})
+	//&entities.Movie{})
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Entity Save Sucessfully")
+	fmt.Println("All Tables are sucessfully created in the DB")
 
-	maxpage := 500
-	go AllocateJobs(maxpage)
-	CreateWorkerThread(workerPoolSize)
+	// maxpage := 500
+	// go AllocateJobs(maxpage)
+	// CreateWorkerThread(workerPoolSize)
 
-	//sort the data
-	sort.Sort(byUUID(movies))
-	for _, movie := range movies {
-		tx := db.Create(movie)
-		if tx.Error != nil {
-			continue
-		}
-	}
+	// //sort the data
+	// sort.Sort(byUUID(movies))
+	// for _, movie := range movies {
+	// 	tx := db.Create(movie)
+	// 	if tx.Error != nil {
+	// 		continue
+	// 	}
+	// }
+
+	folderPath := "jsondata"
+	getJsonData(folderPath, db)
 }
 
 func getMovieData(page int) ResponseData {
@@ -191,21 +206,7 @@ func AddMovieToList(movieDatasResponse []MovieData) {
 	}
 }
 
-type byUUID []entities.Movie
-
-func (s byUUID) Len() int {
-	return len(s)
-}
-
-func (s byUUID) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-func (s byUUID) Less(i, j int) bool {
-	return s[i].Id < s[j].Id
-}
-
-func CreateDataBaseEntities(db *gorm.DB, entities ...interface{}) error {
+func createDataBaseEntities(db *gorm.DB, entities ...interface{}) error {
 	for _, entity := range entities {
 		if !db.Migrator().HasTable(entity) {
 			err := db.Migrator().CreateTable(entity)
@@ -215,4 +216,167 @@ func CreateDataBaseEntities(db *gorm.DB, entities ...interface{}) error {
 		}
 	}
 	return nil
+}
+
+func getJsonData(folderPath string, db *gorm.DB) {
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	targetFolderPath := "ticketmaster-backend"
+	index := strings.Index(currentWorkingDirectory, targetFolderPath)
+	if index == -1 {
+		log.Fatal("Target folder not found")
+	}
+
+	path := filepath.Join(currentWorkingDirectory[:index], targetFolderPath, folderPath, "\\*.json")
+	files, err := filepath.Glob(path)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	cities := []struct {
+		Name    string `json:"city"`
+		State   string `json:"state"`
+		ZipCode int    `json:"zip_code"`
+	}{}
+
+	cinemas := []struct {
+		Name        string `json:"city"`
+		CinemaHalls int    `json:"cinemahalls"`
+	}{}
+
+	cinemahalls := []struct {
+		Name       string `json:"city"`
+		TotalSeats int    `json:"totalseats"`
+	}{}
+
+	for _, file := range files {
+		if filepath.Ext(file) == ".json" {
+
+			content, err := ioutil.ReadFile(file)
+			if err != nil {
+				continue
+			}
+
+			switch filepath.Base(file) {
+			case "city.json":
+				err = json.Unmarshal(content, &cities)
+			case "cinema.json":
+				err = json.Unmarshal(content, &cinemas)
+			case "cinemahall.json":
+				err = json.Unmarshal(content, &cinemahalls)
+			default:
+				log.Fatalln("File not available for processing")
+			}
+
+			if err != nil {
+				continue
+			}
+		}
+	}
+
+	cityEntities := []entities.City{}
+	for _, city := range cities {
+		cityentity := entities.City{
+			Id:           sequentialguid.New().String(),
+			Name:         city.Name,
+			State:        city.State,
+			Zipcode:      sql.NullString{String: strconv.Itoa(city.ZipCode), Valid: true},
+			IsDeprecated: false,
+		}
+		cityEntities = append(cityEntities, cityentity)
+	}
+
+	//sort the cities
+	sort.Sort(utilities.ByCityID(cityEntities))
+
+	cinemaEntities := []entities.Cinema{}
+	for _, cinema := range cinemas {
+		cinemaentity := entities.Cinema{
+			Id:                sequentialguid.New().String(),
+			Name:              cinema.Name,
+			TotalCinemalHalls: cinema.CinemaHalls,
+			CityId:            cityEntities[rand.Intn(len(cityEntities))].Id,
+			IsDeprecated:      false,
+		}
+		cinemaEntities = append(cinemaEntities, cinemaentity)
+	}
+
+	//sort the cinemas
+	sort.Sort(utilities.ByCinemaID(cinemaEntities))
+
+	cinemaHallEntities := []entities.CinemaHall{}
+	for _, cinemaHall := range cinemahalls {
+		cinemahallentity := entities.CinemaHall{
+			Id:           sequentialguid.New().String(),
+			Name:         cinemaHall.Name,
+			TotalSeat:    cinemaHall.TotalSeats,
+			CinemaId:     cinemaEntities[rand.Intn(len(cinemaEntities))].Id,
+			IsDeprecated: false,
+		}
+		cinemaHallEntities = append(cinemaHallEntities, cinemahallentity)
+	}
+
+	// sort the cinemahall
+	sort.Sort(utilities.ByCinemaHallID(cinemaHallEntities))
+
+	cinemaSeatsEntities := []entities.CinemaSeat{}
+	for _, cinemaHallEntity := range cinemaHallEntities {
+		for i := 1; i <= cinemaHallEntity.TotalSeat; i++ {
+			cinemaSeat := entities.CinemaSeat{
+				Id:           sequentialguid.New().String(),
+				SeatNumber:   i,
+				Type:         rand.Intn(len(seats)),
+				CinemaHallId: cinemaHallEntity.Id,
+				IsDeprecated: false,
+			}
+			cinemaSeatsEntities = append(cinemaSeatsEntities, cinemaSeat)
+		}
+	}
+
+	//sort the entities cinema seats
+	sort.Sort(utilities.ByCinemaSeatID(cinemaSeatsEntities))
+
+	err = db.Transaction(func(tx *gorm.DB) error {
+		// do some database operations in the transaction (use 'tx' from this point, not 'db')
+		for _, city := range cityEntities {
+			if err := tx.Create(&city).Error; err != nil {
+				// return any error will rollback
+				return err
+			}
+		}
+
+		for _, cinema := range cinemaEntities {
+			if err := tx.Create(&cinema).Error; err != nil {
+				// return any error will rollback
+				return err
+			}
+		}
+
+		for _, cinemaHall := range cinemaHallEntities {
+			if err := tx.Create(&cinemaHall).Error; err != nil {
+				// return any error will rollback
+				return err
+			}
+		}
+
+		for _, cinemaSeat := range cinemaSeatsEntities {
+			if err := tx.Create(&cinemaSeat).Error; err != nil {
+				// return any error will rollback
+				return err
+			}
+		}
+
+		// return nil will commit the whole transaction
+		return nil
+	})
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	fmt.Println("All Data sucessfully saved into the newly created tables")
 }

@@ -16,6 +16,8 @@ type Movie struct {
 	Popularity   float32 `gorm:"not null"`
 	VoteCount    int     `gorm:"not null"`
 	IsDeprecated bool
+	CreatedOn    time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
+	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
 func (Movie) TableName() string {
