@@ -9,8 +9,8 @@ type CinemaSeat struct {
 	Type         int       `gorm:"not null;column:Type"`
 	CinemaHallId string    `gorm:"index;not null;column:CinemaHallId"`
 	IsDeprecated bool      `gorm:"column:IsDeprecated"`
-	CreatedOn    time.Time `gorm:"index;column:CreatedOn"`
-	ModifiedOn   time.Time `gorm:"column:ModifiedOn"`
+	CreatedOn    time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
+	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
 func (CinemaSeat) TableName() string {

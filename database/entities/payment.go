@@ -15,4 +15,6 @@ type Payment struct {
 	PaymentMethod int    `gorm:"not null"`
 	BookingId     string `gorm:"index;not null"`
 	IsDeprecated  bool
+	CreatedOn     time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
+	ModifiedOn    time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
 }

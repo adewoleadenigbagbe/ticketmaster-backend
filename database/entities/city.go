@@ -11,8 +11,8 @@ type City struct {
 	State        string         `gorm:"not null;column:State"`
 	Zipcode      sql.NullString `gorm:"column:ZipCode"`
 	IsDeprecated bool           `gorm:"column:IsDeprecated"`
-	CreatedOn    time.Time      `gorm:"column:CreatedOn"`
-	ModifiedOn   time.Time      `gorm:"column:ModifiedOn"`
+	CreatedOn    time.Time      `gorm:"column:CreatedOn;autoCreateTime"`
+	ModifiedOn   time.Time      `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
 func (City) TableName() string {

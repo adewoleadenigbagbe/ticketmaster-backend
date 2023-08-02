@@ -19,8 +19,8 @@ type Show struct {
 	IsCancelled        bool         `gorm:"column:IsCancelled"`
 	CancellationReason string       `gorm:"column:CancellationReason"`
 	IsDeprecated       bool         `gorm:"column:IsDeprecated"`
-	CreatedOn          sql.NullTime `gorm:"index;column:CreatedOn"`
-	ModifiedOn         sql.NullTime `gorm:"column:ModifiedOn"`
+	CreatedOn          sql.NullTime `gorm:"index;column:CreatedOn;autoCreateTime"`
+	ModifiedOn         sql.NullTime `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
 func (Show) TableName() string {

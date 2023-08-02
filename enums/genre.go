@@ -4,25 +4,25 @@ type Genre int
 
 const (
 	None           Genre = iota + 0
-	Action               = 1
-	Adventure            = 1 << 1
-	Animation            = 1 << 2
-	Comedy               = 1 << 3
-	Crime                = 1 << 4
-	Documentary          = 1 << 5
-	Drama                = 1 << 6
-	Family               = 1 << 7
-	Fantasy              = 1 << 8
-	History              = 1 << 9
-	Horror               = 1 << 10
-	Music                = 1 << 11
-	Mystery              = 1 << 12
-	Romance              = 1 << 13
-	ScienceFiction       = 1 << 14
-	TVMovie              = 1 << 15
-	Thriller             = 1 << 16
-	War                  = 1 << 17
-	Western              = 1 << 18
+	Action         Genre = 1
+	Adventure      Genre = 1 << 1
+	Animation      Genre = 1 << 2
+	Comedy         Genre = 1 << 3
+	Crime          Genre = 1 << 4
+	Documentary    Genre = 1 << 5
+	Drama          Genre = 1 << 6
+	Family         Genre = 1 << 7
+	Fantasy        Genre = 1 << 8
+	History        Genre = 1 << 9
+	Horror         Genre = 1 << 10
+	Music          Genre = 1 << 11
+	Mystery        Genre = 1 << 12
+	Romance        Genre = 1 << 13
+	ScienceFiction Genre = 1 << 14
+	TVMovie        Genre = 1 << 15
+	Thriller       Genre = 1 << 16
+	War            Genre = 1 << 17
+	Western        Genre = 1 << 18
 )
 
 var MovieGenre Genre

@@ -2,6 +2,7 @@ package entities
 
 import (
 	"database/sql"
+	"time"
 )
 
 type User struct {
@@ -11,4 +12,6 @@ type User struct {
 	PhoneNumber  sql.NullString
 	Password     string `gorm:"not null"`
 	IsDeprecated bool
+	CreatedOn    time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
+	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
