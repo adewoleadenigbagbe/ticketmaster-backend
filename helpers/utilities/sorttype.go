@@ -1,6 +1,12 @@
 package utilities
 
-import "github.com/Wolechacho/ticketmaster-backend/database/entities"
+import (
+	"encoding/json"
+	"strings"
+	"time"
+
+	"github.com/Wolechacho/ticketmaster-backend/database/entities"
+)
 
 type ByMovieID []entities.Movie
 
@@ -70,4 +76,22 @@ func (s ByCinemaSeatID) Swap(i, j int) {
 
 func (s ByCinemaSeatID) Less(i, j int) bool {
 	return s[i].Id < s[j].Id
+}
+
+// create a time alias
+type JsonReleaseDate time.Time
+
+// Implement Marshaler and Unmarshaler interface
+func (j *JsonReleaseDate) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	t, err := time.Parse("2006-01-02", s)
+	if err != nil {
+		return err
+	}
+	*j = JsonReleaseDate(t)
+	return nil
+}
+
+func (j JsonReleaseDate) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Time(j))
 }

@@ -26,6 +26,211 @@ import (
 	"gorm.io/gorm/schema"
 )
 
+type IData interface {
+	GetData(db *gorm.DB)
+}
+
+type FileData struct {
+	JsonFolderPath   string
+	TargetFolderPath string
+	Converter        func(data []byte, v any) error
+	Cities           []struct {
+		Name    string `json:"city"`
+		State   string `json:"state"`
+		ZipCode int    `json:"zip_code"`
+	}
+	Cinemas []struct {
+		Name        string `json:"city"`
+		CinemaHalls int    `json:"cinemahalls"`
+	}
+
+	Cinemahalls []struct {
+		Name       string `json:"city"`
+		TotalSeats int    `json:"totalseats"`
+	}
+}
+
+func (fileData *FileData) GetData(db *gorm.DB) {
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	index := strings.Index(currentWorkingDirectory, fileData.TargetFolderPath)
+	if index == -1 {
+		log.Fatal("Target folder not found")
+	}
+
+	path := filepath.Join(currentWorkingDirectory[:index], fileData.TargetFolderPath, fileData.JsonFolderPath, "\\*.json")
+	files, err := filepath.Glob(path)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	for _, file := range files {
+		if filepath.Ext(file) == ".json" {
+
+			content, err := ioutil.ReadFile(file)
+			if err != nil {
+				continue
+			}
+
+			switch filepath.Base(file) {
+			case "city.json":
+				err = fileData.Converter(content, &fileData.Cities)
+			case "cinema.json":
+				err = fileData.Converter(content, &fileData.Cinemas)
+			case "cinemahall.json":
+				err = fileData.Converter(content, &fileData.Cinemahalls)
+			default:
+				log.Fatalln("File not available for processing")
+			}
+
+			if err != nil {
+				continue
+			}
+		}
+	}
+
+	cityEntities := []entities.City{}
+	for _, city := range fileData.Cities {
+		cityentity := entities.City{
+			Id:           sequentialguid.New().String(),
+			Name:         city.Name,
+			State:        city.State,
+			Zipcode:      sql.NullString{String: strconv.Itoa(city.ZipCode), Valid: true},
+			IsDeprecated: false,
+		}
+		cityEntities = append(cityEntities, cityentity)
+	}
+
+	//sort the cities
+	sort.Sort(utilities.ByCityID(cityEntities))
+
+	cinemaEntities := []entities.Cinema{}
+	for _, cinema := range fileData.Cinemas {
+		cinemaentity := entities.Cinema{
+			Id:                sequentialguid.New().String(),
+			Name:              cinema.Name,
+			TotalCinemalHalls: cinema.CinemaHalls,
+			CityId:            cityEntities[rand.Intn(len(cityEntities))].Id,
+			IsDeprecated:      false,
+		}
+		cinemaEntities = append(cinemaEntities, cinemaentity)
+	}
+
+	//sort the cinemas
+	sort.Sort(utilities.ByCinemaID(cinemaEntities))
+
+	cinemaHallEntities := []entities.CinemaHall{}
+	for _, cinemaHall := range fileData.Cinemahalls {
+		cinemahallentity := entities.CinemaHall{
+			Id:           sequentialguid.New().String(),
+			Name:         cinemaHall.Name,
+			TotalSeat:    cinemaHall.TotalSeats,
+			CinemaId:     cinemaEntities[rand.Intn(len(cinemaEntities))].Id,
+			IsDeprecated: false,
+		}
+		cinemaHallEntities = append(cinemaHallEntities, cinemahallentity)
+	}
+
+	// sort the cinemahall
+	sort.Sort(utilities.ByCinemaHallID(cinemaHallEntities))
+
+	cinemaSeatsEntities := []entities.CinemaSeat{}
+	for _, cinemaHallEntity := range cinemaHallEntities {
+		for i := 1; i <= cinemaHallEntity.TotalSeat; i++ {
+			cinemaSeat := entities.CinemaSeat{
+				Id:           sequentialguid.New().String(),
+				SeatNumber:   i,
+				Type:         rand.Intn(len(seats)),
+				CinemaHallId: cinemaHallEntity.Id,
+				IsDeprecated: false,
+			}
+			cinemaSeatsEntities = append(cinemaSeatsEntities, cinemaSeat)
+		}
+	}
+
+	//sort the entities cinema seats
+	sort.Sort(utilities.ByCinemaSeatID(cinemaSeatsEntities))
+
+	err = db.Transaction(func(tx *gorm.DB) error {
+		// do some database operations in the transaction (use 'tx' from this point, not 'db')
+		for _, city := range cityEntities {
+			if err := tx.Create(&city).Error; err != nil {
+				// return any error will rollback
+				return err
+			}
+		}
+
+		for _, cinema := range cinemaEntities {
+			if err := tx.Create(&cinema).Error; err != nil {
+				// return any error will rollback
+				return err
+			}
+		}
+
+		for _, cinemaHall := range cinemaHallEntities {
+			if err := tx.Create(&cinemaHall).Error; err != nil {
+				// return any error will rollback
+				return err
+			}
+		}
+
+		for _, cinemaSeat := range cinemaSeatsEntities {
+			if err := tx.Create(&cinemaSeat).Error; err != nil {
+				// return any error will rollback
+				return err
+			}
+		}
+
+		// return nil will commit the whole transaction
+		return nil
+	})
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	fmt.Println("All Data sucessfully saved into the newly created tables")
+}
+
+func NewFileData() *FileData {
+	fileData := &FileData{
+		JsonFolderPath:   "jsondata",
+		TargetFolderPath: "ticketmaster-backend",
+		Converter: func(data []byte, v any) error {
+			err := json.Unmarshal(data, v)
+			return err
+		},
+		Cities: []struct {
+			Name    string `json:"city"`
+			State   string `json:"state"`
+			ZipCode int    `json:"zip_code"`
+		}{},
+
+		Cinemas: []struct {
+			Name        string `json:"city"`
+			CinemaHalls int    `json:"cinemahalls"`
+		}{},
+
+		Cinemahalls: []struct {
+			Name       string `json:"city"`
+			TotalSeats int    `json:"totalseats"`
+		}{},
+	}
+
+	return fileData
+}
+
+type ApiData struct {
+}
+
+func (apiData *ApiData) GetData(db *gorm.DB) {
+
+}
+
 const MOVIEDB_URL string = "https://api.themoviedb.org/3/movie/popular?language=en-US&page=1"
 const API_KEY string = "6a4af6431ecf275b09f733a9ed14fe96"
 const AUTHORIZATION = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2YTRhZjY0MzFlY2YyNzViMDlmNzMzYTllZDE0ZmU5NiIsInN1YiI6IjY0YWU3ZGVjNjZhMGQzMDEwMGRiYTFhYiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WS39L-os2iWGQyRJAflD_VzuWLda4BvpWkBHcXOgbG0"
@@ -45,39 +250,21 @@ var seats = []enums.SeatType{
 	enums.Gold, enums.Premium, enums.Standard,
 }
 
-// create a time alias
-type JsonReleaseDate time.Time
-
-// Implement Marshaler and Unmarshaler interface
-func (j *JsonReleaseDate) UnmarshalJSON(b []byte) error {
-	s := strings.Trim(string(b), "\"")
-	t, err := time.Parse("2006-01-02", s)
-	if err != nil {
-		return err
-	}
-	*j = JsonReleaseDate(t)
-	return nil
-}
-
-func (j JsonReleaseDate) MarshalJSON() ([]byte, error) {
-	return json.Marshal(time.Time(j))
-}
-
 type MovieData struct {
-	Adult            bool            `json:"adult"`
-	BackDropPath     string          `json:"backdrop_path"`
-	GenreIDs         []int           `json:"genre_ids"`
-	ID               int             `json:"id"`
-	OriginalLanguage string          `json:"original_language"`
-	OriginalTitle    string          `json:"original_title"`
-	Overview         string          `json:"overview"`
-	Popularity       float32         `json:"popularity"`
-	PosterPath       string          `json:"poster_path"`
-	ReleaseDate      JsonReleaseDate `json:"release_date"`
-	Title            string          `json:"title"`
-	Video            bool            `json:"video"`
-	VoteAverage      float32         `json:"vote_average"`
-	VoteCount        int             `json:"vote_count"`
+	Adult            bool                      `json:"adult"`
+	BackDropPath     string                    `json:"backdrop_path"`
+	GenreIDs         []int                     `json:"genre_ids"`
+	ID               int                       `json:"id"`
+	OriginalLanguage string                    `json:"original_language"`
+	OriginalTitle    string                    `json:"original_title"`
+	Overview         string                    `json:"overview"`
+	Popularity       float32                   `json:"popularity"`
+	PosterPath       string                    `json:"poster_path"`
+	ReleaseDate      utilities.JsonReleaseDate `json:"release_date"`
+	Title            string                    `json:"title"`
+	Video            bool                      `json:"video"`
+	VoteAverage      float32                   `json:"vote_average"`
+	VoteCount        int                       `json:"vote_count"`
 }
 
 type ResponseData struct {
@@ -110,13 +297,15 @@ func main() {
 
 	err = createDataBaseEntities(db, &entities.City{},
 		&entities.Show{}, &entities.Cinema{}, &entities.CinemaHall{},
-		&entities.CinemaSeat{}, &entities.Show{})
-	//&entities.Movie{})
+		&entities.CinemaSeat{}, &entities.Show{}, &entities.Movie{})
 
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("All Tables are sucessfully created in the DB")
+
+	filedata := NewFileData()
+	filedata.GetData(db)
 
 	// maxpage := 500
 	// go AllocateJobs(maxpage)
@@ -130,9 +319,6 @@ func main() {
 	// 		continue
 	// 	}
 	// }
-
-	folderPath := "jsondata"
-	getJsonData(folderPath, db)
 }
 
 func getMovieData(page int) ResponseData {
