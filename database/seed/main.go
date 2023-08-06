@@ -111,30 +111,6 @@ func main() {
 	apiData.GetData(*movieConfig, db)
 }
 
-type MovieData struct {
-	Adult            bool                      `json:"adult"`
-	BackDropPath     string                    `json:"backdrop_path"`
-	GenreIDs         []int                     `json:"genre_ids"`
-	ID               int                       `json:"id"`
-	OriginalLanguage string                    `json:"original_language"`
-	OriginalTitle    string                    `json:"original_title"`
-	Overview         string                    `json:"overview"`
-	Popularity       float32                   `json:"popularity"`
-	PosterPath       string                    `json:"poster_path"`
-	ReleaseDate      utilities.JsonReleaseDate `json:"release_date"`
-	Title            string                    `json:"title"`
-	Video            bool                      `json:"video"`
-	VoteAverage      float32                   `json:"vote_average"`
-	VoteCount        int                       `json:"vote_count"`
-}
-
-type ResponseData struct {
-	Page         int         `json:"page"`
-	TotalPages   int         `json:"total_pages"`
-	TotalResults int         `json:"total_results"`
-	MovieDatas   []MovieData `json:"results"`
-}
-
 type IData interface {
 	GetData(db *gorm.DB)
 }
@@ -157,6 +133,34 @@ type FileData struct {
 		Name       string `json:"city"`
 		TotalSeats int    `json:"totalseats"`
 	}
+}
+
+func NewFileData(folderPath string) *FileData {
+	fileData := &FileData{
+		JsonFolderPath:   "jsondata",
+		TargetFolderPath: folderPath,
+		Converter: func(data []byte, v any) error {
+			err := json.Unmarshal(data, v)
+			return err
+		},
+		Cities: []struct {
+			Name    string `json:"city"`
+			State   string `json:"state"`
+			ZipCode int    `json:"zip_code"`
+		}{},
+
+		Cinemas: []struct {
+			Name        string `json:"city"`
+			CinemaHalls int    `json:"cinemahalls"`
+		}{},
+
+		Cinemahalls: []struct {
+			Name       string `json:"city"`
+			TotalSeats int    `json:"totalseats"`
+		}{},
+	}
+
+	return fileData
 }
 
 func (fileData *FileData) GetData(db *gorm.DB) {
@@ -295,40 +299,6 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	fmt.Println("All Data sucessfully saved into the newly created tables")
 }
 
-func NewFileData(folderPath string) *FileData {
-	fileData := &FileData{
-		JsonFolderPath:   "jsondata",
-		TargetFolderPath: folderPath,
-		Converter: func(data []byte, v any) error {
-			err := json.Unmarshal(data, v)
-			return err
-		},
-		Cities: []struct {
-			Name    string `json:"city"`
-			State   string `json:"state"`
-			ZipCode int    `json:"zip_code"`
-		}{},
-
-		Cinemas: []struct {
-			Name        string `json:"city"`
-			CinemaHalls int    `json:"cinemahalls"`
-		}{},
-
-		Cinemahalls: []struct {
-			Name       string `json:"city"`
-			TotalSeats int    `json:"totalseats"`
-		}{},
-	}
-
-	return fileData
-}
-
-type MovieDataConfig struct {
-	Url    string `json:"url"`
-	ApiKey string `json:"apiKey"`
-	Auth   string `json:"auth"`
-}
-
 type ApiData struct {
 	MovieDataConfig MovieDataConfig
 	WorkerPoolSize  int
@@ -344,6 +314,20 @@ func NewApiData() *ApiData {
 	}
 
 	return apiData
+}
+
+func (apiData *ApiData) GetData(config MovieDataConfig, db *gorm.DB) {
+	go apiData.allocateJobs(MaxPage)
+	apiData.createWorkerThread(config, apiData.WorkerPoolSize)
+
+	//sort the data
+	sort.Sort(utilities.ByMovieID(movies))
+	for _, movie := range movies {
+		tx := db.Create(movie)
+		if tx.Error != nil {
+			continue
+		}
+	}
 }
 
 // AllocateJobs - create jobs to be done - sender
@@ -374,20 +358,6 @@ func (apiData *ApiData) worker(movieConfig MovieDataConfig, wg *sync.WaitGroup) 
 		addMovieToList(resp.MovieDatas)
 	}
 	wg.Done()
-}
-
-func (apiData *ApiData) GetData(config MovieDataConfig, db *gorm.DB) {
-	go apiData.allocateJobs(MaxPage)
-	apiData.createWorkerThread(config, apiData.WorkerPoolSize)
-
-	//sort the data
-	sort.Sort(utilities.ByMovieID(movies))
-	for _, movie := range movies {
-		tx := db.Create(movie)
-		if tx.Error != nil {
-			continue
-		}
-	}
 }
 
 func getMovieData(movieConfig MovieDataConfig, page int) ResponseData {
@@ -440,4 +410,34 @@ func createDataBaseEntities(db *gorm.DB, entities ...interface{}) error {
 		}
 	}
 	return nil
+}
+
+type MovieDataConfig struct {
+	Url    string `json:"url"`
+	ApiKey string `json:"apiKey"`
+	Auth   string `json:"auth"`
+}
+
+type MovieData struct {
+	Adult            bool                      `json:"adult"`
+	BackDropPath     string                    `json:"backdrop_path"`
+	GenreIDs         []int                     `json:"genre_ids"`
+	ID               int                       `json:"id"`
+	OriginalLanguage string                    `json:"original_language"`
+	OriginalTitle    string                    `json:"original_title"`
+	Overview         string                    `json:"overview"`
+	Popularity       float32                   `json:"popularity"`
+	PosterPath       string                    `json:"poster_path"`
+	ReleaseDate      utilities.JsonReleaseDate `json:"release_date"`
+	Title            string                    `json:"title"`
+	Video            bool                      `json:"video"`
+	VoteAverage      float32                   `json:"vote_average"`
+	VoteCount        int                       `json:"vote_count"`
+}
+
+type ResponseData struct {
+	Page         int         `json:"page"`
+	TotalPages   int         `json:"total_pages"`
+	TotalResults int         `json:"total_results"`
+	MovieDatas   []MovieData `json:"results"`
 }
