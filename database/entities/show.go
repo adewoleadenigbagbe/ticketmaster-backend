@@ -3,6 +3,9 @@ package entities
 import (
 	"database/sql"
 	"time"
+
+	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"gorm.io/gorm"
 )
 
 type Tabler interface {
@@ -25,4 +28,9 @@ type Show struct {
 
 func (Show) TableName() string {
 	return "Shows"
+}
+
+func (show *Show) BeforeCreate(tx *gorm.DB) (err error) {
+	show.Id = sequentialguid.New().String()
+	return nil
 }

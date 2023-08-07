@@ -3,6 +3,9 @@ package entities
 import (
 	"database/sql"
 	"time"
+
+	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"gorm.io/gorm"
 )
 
 type Movie struct {
@@ -22,4 +25,11 @@ type Movie struct {
 
 func (Movie) TableName() string {
 	return "Movies"
+}
+
+func (movie *Movie) BeforeCreate(tx *gorm.DB) (err error) {
+	if len(movie.Id) == 0 || movie.Id == DEFAULT_UUID {
+		movie.Id = sequentialguid.New().String()
+	}
+	return
 }
