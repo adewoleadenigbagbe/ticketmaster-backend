@@ -110,8 +110,7 @@ func main() {
 
 	err = createDataBaseEntities(db, &entities.City{},
 		&entities.Show{}, &entities.Cinema{}, &entities.CinemaHall{},
-		&entities.CinemaSeat{}, &entities.Show{})
-	//&entities.Movie{})
+		&entities.CinemaSeat{}, &entities.Show{}, &entities.Movie{})
 
 	if err != nil {
 		log.Fatal(err)

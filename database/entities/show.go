@@ -18,7 +18,7 @@ type Show struct {
 	StartTime          int64        `gorm:"not null;column:StartTime"`
 	EndTime            int64        `gorm:"not null;column:EndTime"`
 	CinemaHallId       string       `gorm:"index;not null;size:36;column:CinemalHallId"`
-	MovieId            string       `gorm:"index;not null;size:36;column:MovieHallId"`
+	MovieId            string       `gorm:"index;not null;size:36;column:MovieId"`
 	IsCancelled        bool         `gorm:"column:IsCancelled"`
 	CancellationReason string       `gorm:"column:CancellationReason"`
 	IsDeprecated       bool         `gorm:"column:IsDeprecated"`
@@ -31,6 +31,9 @@ func (Show) TableName() string {
 }
 
 func (show *Show) BeforeCreate(tx *gorm.DB) (err error) {
-	show.Id = sequentialguid.New().String()
-	return nil
+	if len(show.Id) == 0 || show.Id == DEFAULT_UUID {
+		show.Id = sequentialguid.New().String()
+	}
+
+	return
 }
