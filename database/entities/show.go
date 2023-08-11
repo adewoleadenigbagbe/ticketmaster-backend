@@ -14,8 +14,8 @@ type Show struct {
 	Date               time.Time      `gorm:"index;not null;column:Date"`
 	StartTime          int64          `gorm:"not null;column:StartTime"`
 	EndTime            int64          `gorm:"not null;column:EndTime"`
-	CinemaHallId       string         `gorm:"index;not null;size:36;column:CinemalHallId"`
-	MovieId            string         `gorm:"index;not null;size:36;column:MovieHallId"`
+	CinemaHallId       string         `gorm:"index;not null;size:36;column:CinemaHallId"`
+	MovieId            string         `gorm:"index;not null;size:36;column:MovieId"`
 	IsCancelled        bool           `gorm:"column:IsCancelled"`
 	CancellationReason sql.NullString `gorm:"column:CancellationReason"`
 	IsDeprecated       bool           `gorm:"column:IsDeprecated"`

@@ -26,7 +26,7 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-const MOVIEDB_URL string = "https://api.themoviedb.org/3/movie/popular?language=en-US&page=1"
+const MOVIEDB_BASE_URL string = "https://api.themoviedb.org/3/movie/popular?language=en-US"
 const API_KEY string = "6a4af6431ecf275b09f733a9ed14fe96"
 const AUTHORIZATION = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2YTRhZjY0MzFlY2YyNzViMDlmNzMzYTllZDE0ZmU5NiIsInN1YiI6IjY0YWU3ZGVjNjZhMGQzMDEwMGRiYTFhYiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WS39L-os2iWGQyRJAflD_VzuWLda4BvpWkBHcXOgbG0"
 
@@ -110,33 +110,33 @@ func main() {
 
 	err = createDataBaseEntities(db, &entities.City{},
 		&entities.Show{}, &entities.Cinema{}, &entities.CinemaHall{},
-		&entities.CinemaSeat{}, &entities.Show{})
-	//&entities.Movie{})
+		&entities.CinemaSeat{}, &entities.Show{}, &entities.Movie{})
 
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("All Tables are sucessfully created in the DB")
 
-	// maxpage := 500
-	// go AllocateJobs(maxpage)
-	// CreateWorkerThread(workerPoolSize)
+	maxpage := 500
+	go AllocateJobs(maxpage)
+	CreateWorkerThread(workerPoolSize)
 
-	// //sort the data
-	// sort.Sort(byUUID(movies))
-	// for _, movie := range movies {
-	// 	tx := db.Create(movie)
-	// 	if tx.Error != nil {
-	// 		continue
-	// 	}
-	// }
+	//sort the data
+	sort.Sort(utilities.ByMovieID(movies))
+	for _, movie := range movies {
+		tx := db.Create(&movie)
+		if tx.Error != nil {
+			continue
+		}
+	}
 
 	folderPath := "jsondata"
 	getJsonData(folderPath, db)
 }
 
 func getMovieData(page int) ResponseData {
-	req, _ := http.NewRequest("GET", MOVIEDB_URL, nil)
+	url := fmt.Sprintf("%s&page=%d", MOVIEDB_BASE_URL, page)
+	req, _ := http.NewRequest("GET", url, nil)
 
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("api_key", API_KEY)
