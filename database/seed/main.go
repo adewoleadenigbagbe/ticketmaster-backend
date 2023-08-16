@@ -117,18 +117,18 @@ func main() {
 	}
 	fmt.Println("All Tables are sucessfully created in the DB")
 
-	// maxpage := 500
-	// go AllocateJobs(maxpage)
-	// CreateWorkerThread(workerPoolSize)
+	maxpage := 500
+	go AllocateJobs(maxpage)
+	CreateWorkerThread(workerPoolSize)
 
-	// //sort the data
-	// sort.Sort(byUUID(movies))
-	// for _, movie := range movies {
-	// 	tx := db.Create(movie)
-	// 	if tx.Error != nil {
-	// 		continue
-	// 	}
-	// }
+	//sort the data
+	sort.Sort(utilities.ByMovieID(movies))
+	for _, movie := range movies {
+		tx := db.Create(movie)
+		if tx.Error != nil {
+			continue
+		}
+	}
 
 	folderPath := "jsondata"
 	getJsonData(folderPath, db)

@@ -9,10 +9,10 @@ import (
 )
 
 type Movie struct {
-	Id           string `gorm:"primaryKey;size:36"`
-	Title        string `gorm:"not null"`
+	Id           string `gorm:"primaryKey;size:36;type:char(36)"`
+	Title        string `gorm:"not null;type:mediumtext"`
 	Description  sql.NullString
-	Language     string    `gorm:"not null"`
+	Language     string    `gorm:"not null;type:char(10)"`
 	ReleaseDate  time.Time `gorm:"not null"`
 	Duration     sql.NullInt32
 	Genre        int     `gorm:"not null"`
