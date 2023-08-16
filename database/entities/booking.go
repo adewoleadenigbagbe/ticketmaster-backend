@@ -31,3 +31,8 @@ func (booking *Booking) BeforeCreate(tx *gorm.DB) (err error) {
 
 	return
 }
+
+func (booking Booking) GetId() string {
+	return booking.Id
+}
+

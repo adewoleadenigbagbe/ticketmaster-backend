@@ -28,3 +28,8 @@ func (payment *Payment) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	return
 }
+
+func (payment Payment) GetId() string {
+	return payment.Id
+}
+

@@ -25,3 +25,7 @@ func (showSeat *ShowSeat) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	return
 }
+
+func (showSeat ShowSeat) GetId() string {
+	return showSeat.Id
+}

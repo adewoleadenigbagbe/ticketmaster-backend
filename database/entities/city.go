@@ -28,3 +28,7 @@ func (city *City) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	return
 }
+
+func (city City) GetId() string {
+	return city.Id
+}
