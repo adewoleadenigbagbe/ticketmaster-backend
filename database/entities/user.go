@@ -3,6 +3,9 @@ package entities
 import (
 	"database/sql"
 	"time"
+
+	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -14,4 +17,11 @@ type User struct {
 	IsDeprecated bool
 	CreatedOn    time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
 	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
+}
+
+func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
+	if len(user.Id) == 0 || user.Id == DEFAULT_UUID {
+		user.Id = sequentialguid.New().String()
+	}
+	return
 }

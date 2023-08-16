@@ -3,6 +3,9 @@ package entities
 import (
 	"database/sql"
 	"time"
+
+	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"gorm.io/gorm"
 )
 
 type Tabler interface {
@@ -15,7 +18,7 @@ type Show struct {
 	StartTime          int64        `gorm:"not null;column:StartTime"`
 	EndTime            int64        `gorm:"not null;column:EndTime"`
 	CinemaHallId       string       `gorm:"index;not null;size:36;column:CinemalHallId"`
-	MovieId            string       `gorm:"index;not null;size:36;column:MovieHallId"`
+	MovieId            string       `gorm:"index;not null;size:36;column:MovieId"`
 	IsCancelled        bool         `gorm:"column:IsCancelled"`
 	CancellationReason string       `gorm:"column:CancellationReason"`
 	IsDeprecated       bool         `gorm:"column:IsDeprecated"`
@@ -25,4 +28,12 @@ type Show struct {
 
 func (Show) TableName() string {
 	return "Shows"
+}
+
+func (show *Show) BeforeCreate(tx *gorm.DB) (err error) {
+	if len(show.Id) == 0 || show.Id == DEFAULT_UUID {
+		show.Id = sequentialguid.New().String()
+	}
+
+	return
 }

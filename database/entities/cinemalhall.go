@@ -1,6 +1,11 @@
 package entities
 
-import "time"
+import (
+	"time"
+
+	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"gorm.io/gorm"
+)
 
 type CinemaHall struct {
 	Id           string    `gorm:"primaryKey;size:36;column:Id"`
@@ -14,4 +19,11 @@ type CinemaHall struct {
 
 func (CinemaHall) TableName() string {
 	return "CinemaHalls"
+}
+
+func (cinemaHall *CinemaHall) BeforeCreate(tx *gorm.DB) (err error) {
+	if len(cinemaHall.Id) == 0 || cinemaHall.Id == DEFAULT_UUID {
+		cinemaHall.Id = sequentialguid.New().String()
+	}
+	return
 }
