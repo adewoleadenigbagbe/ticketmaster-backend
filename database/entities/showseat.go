@@ -1,6 +1,11 @@
 package entities
 
-import "time"
+import (
+	"time"
+
+	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"gorm.io/gorm"
+)
 
 type ShowSeat struct {
 	Id           string  `gorm:"primaryKey;size:36;type:char(36)"`
@@ -12,4 +17,11 @@ type ShowSeat struct {
 	IsDeprecated bool
 	CreatedOn    time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
 	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
+}
+
+func (showSeat *ShowSeat) BeforeCreate(tx *gorm.DB) (err error) {
+	if len(showSeat.Id) == 0 || showSeat.Id == DEFAULT_UUID {
+		showSeat.Id = sequentialguid.New().String()
+	}
+	return
 }

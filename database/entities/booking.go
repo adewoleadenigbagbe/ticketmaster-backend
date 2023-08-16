@@ -2,6 +2,13 @@ package entities
 
 import (
 	"time"
+
+	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"gorm.io/gorm"
+)
+
+const (
+	DEFAULT_UUID = "00000000-0000-0000-0000-000000000000"
 )
 
 type Booking struct {
@@ -15,4 +22,12 @@ type Booking struct {
 	IsDeprecated bool
 	CreatedOn    time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
 	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
+}
+
+func (booking *Booking) BeforeCreate(tx *gorm.DB) (err error) {
+	if len(booking.Id) == 0 || booking.Id == DEFAULT_UUID {
+		booking.Id = sequentialguid.New().String()
+	}
+
+	return
 }

@@ -3,6 +3,9 @@ package entities
 import (
 	"database/sql"
 	"time"
+
+	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"gorm.io/gorm"
 )
 
 type City struct {
@@ -17,4 +20,11 @@ type City struct {
 
 func (City) TableName() string {
 	return "Cities"
+}
+
+func (city *City) BeforeCreate(tx *gorm.DB) (err error) {
+	if len(city.Id) == 0 || city.Id == DEFAULT_UUID {
+		city.Id = sequentialguid.New().String()
+	}
+	return
 }
