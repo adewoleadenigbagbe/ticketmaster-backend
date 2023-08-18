@@ -114,7 +114,7 @@ func (movieController *MovieController) GetMovieById(movieContext echo.Context) 
 	result := db.DB.First(movie)
 
 	if result.Error != nil {
-		return movieContext.JSON(http.StatusBadRequest, "Movie Record not found")
+		return movieContext.JSON(http.StatusNotFound, "Movie Record not found")
 	}
 
 	resp := new(getMovieByIdResponse)
