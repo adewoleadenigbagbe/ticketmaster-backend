@@ -9,4 +9,5 @@ func RegisterAllRoutes(echo *echo.Echo) {
 	group := echo.Group("/api/v1/")
 	movieRoutes(group)
 	showRoutes(group)
+	cityRoutes(group)
 }

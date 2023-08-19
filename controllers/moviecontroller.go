@@ -112,6 +112,7 @@ func (movieController *MovieController) GetMovieById(movieContext echo.Context) 
 		Id: req.Id,
 	}
 	result := db.DB.First(movie)
+
 	if result.Error != nil {
 		return movieContext.JSON(http.StatusNotFound, "Movie Record not found")
 	}
