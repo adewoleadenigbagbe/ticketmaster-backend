@@ -10,14 +10,21 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
+)
+
+const (
+	TIME_OVERLAP_ERROR = "Time overlap between the show Start and End Time"
+	INVALID_UUID_ERROR = "%s should have a valid UUID"
 )
 
 type ShowController struct {
 }
 
 func (showController *ShowController) CreateShow(showContext echo.Context) error {
+	var err error
 	request := new(createMovieRequest)
-	err := showContext.Bind(request)
+	err = showContext.Bind(request)
 
 	if err != nil {
 		fmt.Println(err)
@@ -29,40 +36,52 @@ func (showController *ShowController) CreateShow(showContext echo.Context) error
 		return showContext.JSON(http.StatusBadRequest, validationErrors)
 	}
 
-	start := request.StartDateTime.Unix()
-	end := request.EndDateTime.Unix()
-
-	show := &entities.Show{
-		Id:                 sequentialguid.New().String(),
-		Date:               request.StartDateTime,
-		StartTime:          start,
-		EndTime:            end,
-		MovieId:            request.MovieId,
-		CinemaHallId:       request.CinemaHallId,
-		IsDeprecated:       false,
-		IsCancelled:        false,
-		CancellationReason: sql.NullString{Valid: false},
-	}
-
-	result := db.DB.Create(&show)
-	if result.Error != nil || result.RowsAffected < 1 {
-		return showContext.JSON(http.StatusBadRequest, result.Error)
-	}
-
 	response := new(createMovieResponse)
-	response.ShowId = show.Id
+
+	err = db.DB.Transaction(func(tx *gorm.DB) error {
+		for _, showTime := range request.ShowTimes {
+			show := &entities.Show{
+				Id:                 sequentialguid.New().String(),
+				Date:               showTime.StartDateTime,
+				StartTime:          showTime.StartDateTime.Unix(),
+				EndTime:            showTime.EndDateTime.Unix(),
+				MovieId:            request.MovieId,
+				CinemaHallId:       request.CinemaHallId,
+				IsDeprecated:       false,
+				IsCancelled:        false,
+				CancellationReason: sql.NullString{Valid: false},
+			}
+
+			result := tx.Create(&show)
+			if result.Error != nil || result.RowsAffected < 1 {
+				return result.Error
+			}
+
+			response.ShowIds = append(response.ShowIds, show.Id)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return showContext.JSON(http.StatusBadRequest, err)
+	}
+
 	return showContext.JSON(http.StatusOK, response)
 }
 
 type createMovieRequest struct {
+	ShowTimes    []ShowDateTime `json:"showTimes"`
+	CinemaHallId string         `json:"cinemaHallId"`
+	MovieId      string         `json:"movieId"`
+}
+type ShowDateTime struct {
 	StartDateTime time.Time `json:"startDate"`
 	EndDateTime   time.Time `json:"endDate"`
-	CinemaHallId  string    `json:"cinemaHallId"`
-	MovieId       string    `json:"movieId"`
 }
 
 type createMovieResponse struct {
-	ShowId string `json:"showId"`
+	ShowIds []string `json:"showIds"`
 }
 
 func validateShow(request createMovieRequest) []string {
@@ -70,39 +89,63 @@ func validateShow(request createMovieRequest) []string {
 
 	defaultTime, _ := time.Parse("2006-01-02", entities.DEFAULT_TIME)
 	today := time.Now().Local()
-
-	if request.StartDateTime == defaultTime {
-		errors = append(errors, "startDate is a required field")
-	}
-
-	if request.EndDateTime == defaultTime {
-		errors = append(errors, "endDate is a required field")
-	}
-
-	if request.StartDateTime != defaultTime && request.StartDateTime.Before(today) {
-		errors = append(errors, "show startdate can be added for future dates")
-	}
-
-	if request.EndDateTime != defaultTime && request.EndDateTime.Before(today) {
-		errors = append(errors, "show enddate can be added for future dates")
-	}
-
-	if request.StartDateTime.Equal(request.EndDateTime) {
-		errors = append(errors, "show cannot start and end at the same time")
-	}
-
-	if request.StartDateTime.After(request.EndDateTime) {
-		errorMessage := fmt.Sprintf("show time end time %s must be greater than the start time %s", request.EndDateTime.Format("2006-01-02T15:04:05"), request.StartDateTime.Format("2006-01-02T15:04:05"))
-		errors = append(errors, errorMessage)
-	}
-
 	var minShowTime float64 = 1
 	var maxShowTime float64 = 4
-	hours := request.EndDateTime.Sub(request.StartDateTime).Hours()
-	if hours < minShowTime || hours > maxShowTime {
-		errors = append(errors, fmt.Sprintf("Show time must be between %.0fhrs and %.0fhrs", minShowTime, maxShowTime))
+
+	var timeOverlap = false
+	var tempStartDate = today
+	var tempEndDate = today
+
+	//Validate the show time
+	for i, showTime := range request.ShowTimes {
+		if showTime.StartDateTime == defaultTime {
+			errors = append(errors, "startDate is a required field")
+		}
+
+		if showTime.EndDateTime == defaultTime {
+			errors = append(errors, "endDate is a required field")
+		}
+
+		if showTime.StartDateTime != defaultTime && showTime.StartDateTime.Before(today) {
+			errors = append(errors, "show startdate can be added for future dates")
+		}
+
+		if showTime.EndDateTime != defaultTime && showTime.EndDateTime.Before(today) {
+			errors = append(errors, "show enddate can be added for future dates")
+		}
+
+		if showTime.StartDateTime.Equal(showTime.EndDateTime) {
+			errors = append(errors, "show cannot start and end at the same time")
+		}
+
+		if showTime.StartDateTime.After(showTime.EndDateTime) {
+			errorMessage := fmt.Sprintf("show time end time %s must be greater than the start time %s", showTime.EndDateTime.Format("2006-01-02T15:04:05"), showTime.StartDateTime.Format("2006-01-02T15:04:05"))
+			errors = append(errors, errorMessage)
+		}
+
+		hours := showTime.EndDateTime.Sub(showTime.StartDateTime).Hours()
+		if hours < minShowTime || hours > maxShowTime {
+			errors = append(errors, fmt.Sprintf("Show time must be between %.0fhrs and %.0fhrs", minShowTime, maxShowTime))
+		}
+
+		//check for date overlap
+		if i != 0 {
+			timeOverlap = tempStartDate.Before(showTime.EndDateTime) && tempEndDate.After(showTime.StartDateTime)
+			if timeOverlap {
+				continue
+			}
+		}
+
+		tempStartDate = showTime.StartDateTime
+		tempEndDate = showTime.EndDateTime
 	}
 
+	//if there is overlap, add error
+	if timeOverlap {
+		errors = append(errors, TIME_OVERLAP_ERROR)
+	}
+
+	//validate the cinemaHallId and movieId
 	if len(request.CinemaHallId) == 0 || len(request.CinemaHallId) < 36 {
 		errors = append(errors, "cinemaHallId is a required field  with 36 characters")
 	}
@@ -120,16 +163,6 @@ func validateShow(request createMovieRequest) []string {
 	}
 
 	return errors
-}
-package controllers
-
-import (
-	"time"
-
-	"github.com/labstack/echo/v4"
-)
-
-type ShowController struct {
 }
 
 func (showController ShowController) GetShowsByUserLocation(showContext echo.Context) error {
