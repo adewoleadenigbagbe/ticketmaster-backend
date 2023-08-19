@@ -6,8 +6,8 @@ import (
 
 // RegisterRoutes - Configuration for all incoming routes
 func RegisterAllRoutes(echo *echo.Echo) {
-	//movie routes
 	group := echo.Group("/api/v1/")
 	movieRoutes(group)
+	showRoutes(group)
 	cityRoutes(group)
 }
