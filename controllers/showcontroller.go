@@ -35,12 +35,20 @@ func (showController *ShowController) CreateShow(showContext echo.Context) error
 
 	fieldErrors := validateRequiredFields(*request)
 	if len(fieldErrors) != 0 {
-		return showContext.JSON(http.StatusBadRequest, fieldErrors)
+		errors := []string{}
+		for _, fieldError := range fieldErrors {
+			errors = append(errors, fieldError.Error())
+		}
+		return showContext.JSON(http.StatusBadRequest, errors)
 	}
 
 	showTimeErrors := validateShowTime(*request)
 	if len(showTimeErrors) != 0 {
-		return showContext.JSON(http.StatusBadRequest, showTimeErrors)
+		errors := []string{}
+		for _, showTimeError := range showTimeErrors {
+			errors = append(errors, showTimeError.Error())
+		}
+		return showContext.JSON(http.StatusBadRequest, errors)
 	}
 
 	response := new(createShowResponse)
@@ -185,7 +193,7 @@ func query(filter GetShowsByLocationRequest) func(db *gorm.DB) *gorm.DB {
 
 func validateRequiredFields(request createShowRequest) []error {
 	var validationErrors []error
-	defaultTime, _ := time.Parse("2006-01-02", entities.DEFAULT_TIME)
+	defaultTime, _ := time.Parse("2006-01-02", entities.MIN_DATE)
 
 	//validate the cinemaHallId and movieId
 	if len(request.CinemaHallId) == 0 || len(request.CinemaHallId) < 36 {
@@ -227,12 +235,12 @@ func validateShowTime(request createShowRequest) []error {
 	var maxShowTime float64 = 4
 	var validationErrors []error
 
-	defaultTime, _ := time.Parse("2006-01-02", entities.DEFAULT_TIME)
 	today := time.Now().Local()
+	defaultTime, _ := time.Parse("2006-01-02", entities.MIN_DATE)
 
 	timeOverlap := false
-	tempStartDate := today
-	tempEndDate := today
+	tempStartDate, _ := time.Parse("2006-01-02", entities.MAX_DATE)
+	tempEndDate := tempStartDate
 
 	//Validate the show time
 	for i, showTime := range request.ShowTimes {
@@ -259,18 +267,17 @@ func validateShowTime(request createShowRequest) []error {
 		}
 
 		//check for date overlap
-		if i != 0 {
-			timeOverlap = tempStartDate.Before(showTime.EndDateTime) && tempEndDate.After(showTime.StartDateTime)
-			if timeOverlap {
-				continue
-			}
+		if timeOverlap {
+			continue
 		}
 
+		timeOverlap = tempStartDate.Before(showTime.EndDateTime) && tempEndDate.After(showTime.StartDateTime)
 		tempStartDate = showTime.StartDateTime
 		tempEndDate = showTime.EndDateTime
 	}
 
 	//if there is overlap, add error
+	fmt.Println("Overlap : ", timeOverlap)
 	if timeOverlap {
 		validationErrors = append(validationErrors, fmt.Errorf(TIME_OVERLAP_ERROR))
 	}
