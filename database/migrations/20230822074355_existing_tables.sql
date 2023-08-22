@@ -8,8 +8,8 @@ CREATE TABLE Bookings (
  UserId CHAR(36) NOT NULL,
  ShowId CHAR(36) NOT NULL,
  IsDeprecated TINYINT,
- CreatedOn DATETIME DEFAULT,
- ModifiedOn DATETIME ON UPDATE,
+ CreatedOn NOT NULL DATETIME DEFAULT,
+ ModifiedOn NOT NULL DATETIME ON UPDATE,
  INDEX (UserId),
  INDEX (ShowId),
  INDEX (CreatedOn)
@@ -21,8 +21,8 @@ CREATE TABLE Cinemas (
  TotalCinemalHalls INT NOT NULL,
  CityId CHAR(36) NOT NULL,
  IsDeprecated TINYINT,
- CreatedOn DATETIME DEFAULT,
- ModifiedOn DATETIME ON UPDATE,
+ CreatedOn NOT NULL DATETIME DEFAULT,
+ ModifiedOn NOT NULL DATETIME ON UPDATE,
  INDEX (Name),
  INDEX (CityId),
  INDEX (CreatedOn)
@@ -34,8 +34,8 @@ CREATE TABLE CinemaHalls (
  TotalSeats INT NOT NULL,
  CinemaId CHAR(36) NOT NULL,
  IsDeprecated TINYINT,
- CreatedOn DATETIME DEFAULT,
- ModifiedOn DATETIME ON UPDATE,
+ CreatedOn NOT NULL DATETIME DEFAULT,
+ ModifiedOn NOT NULL DATETIME ON UPDATE,
  INDEX (Name),
  INDEX (CinemaId),
  INDEX (CreatedOn)
@@ -47,8 +47,8 @@ CREATE TABLE CinemaSeats (
  Type INT NOT NULL,
  CinemaHallId CHAR(36) NOT NULL,
  IsDeprecated TINYINT,
- CreatedOn DATETIME DEFAULT,
- ModifiedOn DATETIME ON UPDATE,
+ CreatedOn NOT NULL DATETIME DEFAULT,
+ ModifiedOn NOT NULL DATETIME ON UPDATE,
  INDEX (CinemaHallId),
  INDEX (CreatedOn)
 );
@@ -60,8 +60,8 @@ CREATE TABLE Cities (
  ZipCode VARCHAR(255) NOT NULL,
  CinemaHallId CHAR(36) NOT NULL,
  IsDeprecated TINYINT,
- CreatedOn DATETIME DEFAULT,
- ModifiedOn DATETIME ON UPDATE,
+ CreatedOn NOT NULL DATETIME DEFAULT,
+ ModifiedOn NOT NULL DATETIME ON UPDATE,
  INDEX (Name),
  INDEX (CreatedOn)
 );
@@ -77,8 +77,8 @@ CREATE TABLE Movies (
  Popularity FLOAT NOT NULL,
  VoteCount INT NOT NULL,
  IsDeprecated TINYINT,
- CreatedOn DATETIME DEFAULT,
- ModifiedOn DATETIME ON UPDATE,
+ CreatedOn NOT NULL DATETIME DEFAULT,
+ ModifiedOn NOT NULL DATETIME ON UPDATE,
  INDEX (Name),
  INDEX (CreatedOn)
 );
@@ -92,8 +92,8 @@ CREATE TABLE Payments (
  Amount DECIMAL(19, 4) NOT NULL,
  BookingId CHAR(36) NOT NULL,
  IsDeprecated TINYINT,
- CreatedOn DATETIME DEFAULT,
- ModifiedOn DATETIME ON UPDATE,
+ CreatedOn NOT NULL DATETIME DEFAULT,
+ ModifiedOn NOT NULL DATETIME ON UPDATE,
  INDEX (PaymentDate),
  INDEX (CreatedOn)
 );
@@ -110,8 +110,8 @@ CREATE TABLE Shows (
  IsDeprecated TINYINT,
  IsCancelled TINYINT,
  CancellationReason VARCHAR(255)
- CreatedOn DATETIME DEFAULT,
- ModifiedOn DATETIME ON UPDATE,
+ CreatedOn NOT NULL DATETIME DEFAULT,
+ ModifiedOn NOT NULL DATETIME ON UPDATE,
  INDEX (Date),
  INDEX (CinemaHallId)
  INDEX (MovieId),
@@ -126,8 +126,8 @@ CREATE TABLE ShowSeats (
  ShowId CHAR(36) NOT NULL,
  BookingId CHAR(36) NOT NULL,
  IsDeprecated TINYINT,
- CreatedOn DATETIME DEFAULT,
- ModifiedOn DATETIME ON UPDATE,
+ CreatedOn NOT NULL DATETIME DEFAULT,
+ ModifiedOn NOT NULL DATETIME ON UPDATE,
  INDEX (CinemaSeatId)
  INDEX (ShowId),
  INDEX (BookingId),
@@ -142,8 +142,8 @@ CREATE TABLE Users (
  PhoneNumber VARCHAR(20) NOT NULL,
  Password VARCHAR(255) NOT NULL,
  Price DECIMAL(19, 4) NOT NULL,
- CreatedOn DATETIME DEFAULT,
- ModifiedOn DATETIME ON UPDATE,
+ CreatedOn NOT NULL DATETIME DEFAULT,
+ ModifiedOn NOT NULL DATETIME ON UPDATE,
  INDEX (CreatedOn)
 );
 -- +goose StatementEnd
