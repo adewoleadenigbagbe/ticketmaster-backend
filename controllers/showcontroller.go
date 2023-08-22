@@ -68,7 +68,7 @@ type createMovieResponse struct {
 func validateShow(request createMovieRequest) []string {
 	errors := []string{}
 
-	defaultTime, _ := time.Parse("2006-01-02", entities.DEFAULT_TIME)
+	defaultTime, _ := time.Parse("2006-01-02", entities.MIN_TIME)
 	today := time.Now().Local()
 
 	if request.StartDateTime == defaultTime {
