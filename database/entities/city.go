@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"database/sql"
 	"time"
 
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
@@ -9,13 +8,13 @@ import (
 )
 
 type City struct {
-	Id           string         `gorm:"primaryKey;size:36;column:Id;type:char(36)"`
-	Name         string         `gorm:"not null;index;column:Name;type:varchar(255)"`
-	State        string         `gorm:"not null;column:State;type:varchar(255)"`
-	Zipcode      sql.NullString `gorm:"column:ZipCode;type:varchar(255)"`
-	IsDeprecated bool           `gorm:"column:IsDeprecated"`
-	CreatedOn    time.Time      `gorm:"column:CreatedOn;autoCreateTime"`
-	ModifiedOn   time.Time      `gorm:"column:ModifiedOn;autoUpdateTime"`
+	Id           string    `gorm:"primaryKey;size:36;column:Id;type:char(36)"`
+	Name         string    `gorm:"not null;index;column:Name;type:varchar(255)"`
+	State        string    `gorm:"not null;column:State;type:varchar(255)"`
+	Zipcode      string    `gorm:"not null;column:ZipCode;type:varchar(255)"`
+	IsDeprecated bool      `gorm:"column:IsDeprecated"`
+	CreatedOn    time.Time `gorm:"column:CreatedOn;autoCreateTime"`
+	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
 func (City) TableName() string {

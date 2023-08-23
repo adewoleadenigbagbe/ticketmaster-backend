@@ -10,8 +10,8 @@ import (
 
 type User struct {
 	Id           string         `gorm:"primaryKey;size:36;type:char(36)"`
-	First        string         `gorm:"not null;type:mediumtext"`
-	LastName     string         `gorm:"not null;type:mediumtext"`
+	FirstName    string         `gorm:"not null;type:varchar(255)"`
+	LastName     string         `gorm:"not null;type:varchar(255)"`
 	Email        string         `gorm:"not null;type:varchar(255)"`
 	PhoneNumber  sql.NullString `gorm:"type:varchar(20)"`
 	Password     string         `gorm:"not null"`
