@@ -131,7 +131,8 @@ func (showController ShowController) GetShowsByUserLocation(showContext echo.Con
 	sortandorder := fmt.Sprintf("%s %s", request.SortBy, request.Order)
 	orderByClause := paginate.OrderBy(sortandorder)
 
-	rows, err := db.DB.Scopes(filterClause, paginateClause, orderByClause).Rows()
+	defaultTime, _ := time.Parse("2006-01-02", entities.DEFAULT_TIME)
+	today := time.Now().Local()
 
 	if err != nil {
 		log.Fatalln(err)
