@@ -284,7 +284,7 @@ func getJsonData(folderPath string, db *gorm.DB) {
 			Id:           sequentialguid.New().String(),
 			Name:         city.Name,
 			State:        city.State,
-			Zipcode:      sql.NullString{String: strconv.Itoa(city.ZipCode), Valid: true},
+			Zipcode:      strconv.Itoa(city.ZipCode),
 			IsDeprecated: false,
 		}
 		cityEntities = append(cityEntities, cityentity)
