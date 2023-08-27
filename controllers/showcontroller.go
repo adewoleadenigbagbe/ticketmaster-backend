@@ -29,7 +29,6 @@ func (showController *ShowController) CreateShow(showContext echo.Context) error
 	err = showContext.Bind(request)
 	fmt.Println(request)
 	if err != nil {
-		fmt.Println(err)
 		return showContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
@@ -180,14 +179,14 @@ type GetShowsByLocationDTO struct {
 
 func query(filter GetShowsByLocationRequest) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Table("userLocations").
-			Joins("join cinemas on userLocations.CityId = cinemas.CityId").
+		return db.Table("addresses").
+			Joins("join cinemas on addresses.EntityId = cinemas.CityId").
 			Joins("join cinemaHalls on cinemas.Id = cinemaHalls.CinemaId").
 			Joins("join shows on cinemaHalls.Id = shows.CinemaHallId").
 			Joins("join movies on shows.MovieId = movies.Id").
-			Where("userLocations.UserId = ? AND cinemas.IsDeprecated = ? AND cinemaHalls.IsDeprecated = ? AND shows.IsDeprecated = ? AND shows.IsCancelled = ? AND movies.IsDeprecated = ?",
+			Where("addresses.EntityId = ? AND cinemas.IsDeprecated = ? AND cinemaHalls.IsDeprecated = ? AND shows.IsDeprecated = ? AND shows.IsCancelled = ? AND movies.IsDeprecated = ?",
 				filter.UserId, false, false, false, false, false).
-			Select("shows.Id,shows.Date,shows.StartTime,shows.EndTime,movies.Id,movies.Title,movies.Description,movies.Language,movies.Genre,userLocations.CityId,cinemas.Id")
+			Select("shows.Id AS ShowId, shows.Date, shows.StartTime, shows.EndTime,movies.Id AS MovieId, movies.Title, movies.Description, movies.Language, movies.Genre, addresses.EntityId,cinemas.Id AS CinemaId")
 	}
 }
 

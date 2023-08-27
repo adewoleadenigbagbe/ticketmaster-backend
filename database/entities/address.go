@@ -10,11 +10,11 @@ import (
 
 type Address struct {
 	Id           string                  `gorm:"primaryKey;size:36;type:char(36);column:Id"`
-	AddressLine  string                  `gorm:"not null;type:mediumtext;colunm:Address"`
-	EntityId     string                  `gorm:"index;not null;column:UserId;type:char(36)"`
-	AddressType  enums.EntityAddressType `gorm:"index;not null;column:AddressType;type:int"`
+	AddressLine  string                  `gorm:"not null;type:mediumtext;colunm:AddressLine"`
+	EntityId     string                  `gorm:"index;not null;column:EntityId;type:char(36)"`
 	CityId       string                  `gorm:"index;not null;column:CityId;type:char(36)"`
-	Coordinates  Coordinate              `gorm:"not null;column:Location"`
+	AddressType  enums.EntityAddressType `gorm:"index;not null;column:AddressType;type:int"`
+	Coordinates  Coordinate              `gorm:"not null;column:Coordinates"`
 	IsDeprecated bool
 	CreatedOn    time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
 	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`

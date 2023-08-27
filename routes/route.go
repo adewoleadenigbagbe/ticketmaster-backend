@@ -10,4 +10,5 @@ func RegisterAllRoutes(echo *echo.Echo) {
 	movieRoutes(group)
 	showRoutes(group)
 	cityRoutes(group)
+	cinemaRoutes(group)
 }
