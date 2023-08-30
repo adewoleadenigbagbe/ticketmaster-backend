@@ -8,11 +8,11 @@ import (
 )
 
 type City struct {
-	Id           string     `gorm:"primaryKey;size:36;column:Id;type:char(36)"`
-	Name         string     `gorm:"not null;index;column:Name;type:varchar(255)"`
-	State        string     `gorm:"not null;column:State;type:varchar(255)"`
-	Coordinates  Coordinate `gorm:"not null;column:Coordinates"`
-	Zipcode      string     `gorm:"not null;column:ZipCode;type:varchar(255)"`
+	Id           string     `gorm:"column:Id"`
+	Name         string     `gorm:"column:Name"`
+	State        string     `gorm:"column:State"`
+	Coordinates  Coordinate `gorm:"column:Coordinates"`
+	Zipcode      string     `gorm:"column:ZipCode"`
 	IsDeprecated bool       `gorm:"column:IsDeprecated"`
 	CreatedOn    time.Time  `gorm:"column:CreatedOn;autoCreateTime"`
 	ModifiedOn   time.Time  `gorm:"column:ModifiedOn;autoUpdateTime"`
@@ -26,5 +26,7 @@ func (city *City) BeforeCreate(tx *gorm.DB) (err error) {
 	if len(city.Id) == 0 || city.Id == DEFAULT_UUID {
 		city.Id = sequentialguid.New().String()
 	}
+	city.IsDeprecated = false
+
 	return
 }

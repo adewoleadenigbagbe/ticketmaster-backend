@@ -238,18 +238,20 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	}
 
 	cities := []struct {
-		Name    string `json:"city"`
-		State   string `json:"state"`
-		ZipCode int    `json:"zip_code"`
+		Name      string  `json:"city"`
+		State     string  `json:"state"`
+		ZipCode   int     `json:"zip_code"`
+		Latitude  float32 `json:"latitude"`
+		Longitude float32 `json:"longitude"`
 	}{}
 
 	cinemas := []struct {
-		Name        string `json:"city"`
+		Name        string `json:"name"`
 		CinemaHalls int    `json:"cinemahalls"`
 	}{}
 
 	cinemahalls := []struct {
-		Name       string `json:"city"`
+		Name       string `json:"name"`
 		TotalSeats int    `json:"totalseats"`
 	}{}
 
@@ -281,10 +283,14 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	cityEntities := []entities.City{}
 	for _, city := range cities {
 		cityentity := entities.City{
-			Id:           sequentialguid.New().String(),
-			Name:         city.Name,
-			State:        city.State,
-			Zipcode:      strconv.Itoa(city.ZipCode),
+			Id:      sequentialguid.New().String(),
+			Name:    city.Name,
+			State:   city.State,
+			Zipcode: strconv.Itoa(city.ZipCode),
+			Coordinates: entities.Coordinate{
+				Longitude: city.Longitude,
+				Latitude:  city.Latitude,
+			},
 			IsDeprecated: false,
 		}
 		cityEntities = append(cityEntities, cityentity)

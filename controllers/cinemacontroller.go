@@ -6,8 +6,10 @@ import (
 
 	db "github.com/Wolechacho/ticketmaster-backend/database"
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
+	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 type CinemaController struct {
@@ -33,15 +35,42 @@ func (cinemaController CinemaController) CreateCinema(cinemaContext echo.Context
 	}
 
 	cinema := entities.Cinema{
-		Id:           sequentialguid.New().String(),
-		Name:         request.Name,
-		CityId:       request.CityId,
-		IsDeprecated: false,
+		Id:                sequentialguid.New().String(),
+		Name:              request.Name,
+		TotalCinemalHalls: request.TotalCinemalHalls,
+		CityId:            request.CityId,
+		IsDeprecated:      false,
 	}
 
-	result := db.DB.Create(&cinema)
-	if result.Error != nil {
-		return cinemaContext.JSON(http.StatusBadRequest, result.Error.Error())
+	err = db.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&cinema).Error; err != nil {
+			// return any error will rollback
+			return err
+		}
+
+		address := entities.Address{
+			Id:          sequentialguid.New().String(),
+			EntityId:    cinema.Id,
+			AddressType: enums.Cinema,
+			AddressLine: request.Address,
+			CityId:      request.CityId,
+			Coordinates: entities.Coordinate{
+				Longitude: request.Longitude,
+				Latitude:  request.Latitude,
+			},
+			IsDeprecated: false,
+		}
+
+		if err := tx.Create(&address).Error; err != nil {
+			// return any error will rollback
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return cinemaContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	response := new(createCinemaResponse)
@@ -50,9 +79,12 @@ func (cinemaController CinemaController) CreateCinema(cinemaContext echo.Context
 }
 
 type createCinemaRequest struct {
-	Name              string `json:"name"`
-	CityId            string `json:"cityId"`
-	TotalCinemalHalls int    `json:"totalCinemalHalls"`
+	Name              string  `json:"name"`
+	CityId            string  `json:"cityId"`
+	TotalCinemalHalls int     `json:"totalCinemalHalls"`
+	Address           string  `json:"address"`
+	Longitude         float32 `json:"longitude"`
+	Latitude          float32 `json:"latitude"`
 }
 
 type createCinemaResponse struct {
@@ -75,7 +107,7 @@ func validateCinema(request createCinemaRequest) []error {
 	}
 
 	if request.TotalCinemalHalls <= 0 {
-		validationErrors = append(validationErrors, fmt.Errorf("totalCinemalHalls cannot be lessa than or equal to zero"))
+		validationErrors = append(validationErrors, fmt.Errorf("totalCinemalHalls cannot be less than or equal to zero"))
 	}
 
 	return validationErrors

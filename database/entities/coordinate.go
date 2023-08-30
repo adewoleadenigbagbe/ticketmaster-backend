@@ -9,8 +9,8 @@ import (
 )
 
 type Coordinate struct {
-	Longitude int
-	Latitude  int
+	Longitude float32
+	Latitude  float32
 }
 
 func (coord Coordinate) GormDataType() string {
@@ -20,7 +20,7 @@ func (coord Coordinate) GormDataType() string {
 func (coord Coordinate) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 	return clause.Expr{
 		SQL:  "ST_PointFromText(?)",
-		Vars: []interface{}{fmt.Sprintf("POINT(%d %d)", coord.Longitude, coord.Latitude)},
+		Vars: []interface{}{fmt.Sprintf("POINT(%.6f %.6f)", coord.Longitude, coord.Latitude)},
 	}
 }
 

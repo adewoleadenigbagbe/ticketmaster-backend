@@ -9,20 +9,21 @@ import (
 )
 
 type User struct {
-	Id           string         `gorm:"primaryKey;size:36;type:char(36)"`
-	FirstName    string         `gorm:"not null;type:varchar(255)"`
-	LastName     string         `gorm:"not null;type:varchar(255)"`
-	Email        string         `gorm:"not null;type:varchar(255)"`
-	PhoneNumber  sql.NullString `gorm:"type:varchar(20)"`
-	Password     string         `gorm:"not null"`
-	IsDeprecated bool
-	CreatedOn    time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
-	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
+	Id           string         `gorm:"column:Id"`
+	FirstName    string         `gorm:"column:FirstName"`
+	LastName     string         `gorm:"column:LastName"`
+	Email        string         `gorm:"column:Email"`
+	PhoneNumber  sql.NullString `gorm:"column:PhoneNumber"`
+	Password     string         `gorm:"column:Password"`
+	IsDeprecated bool           `gorm:"column:IsDeprecated"`
+	CreatedOn    time.Time      `gorm:"column:CreatedOn;autoCreateTime"`
+	ModifiedOn   time.Time      `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
 func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
 	if len(user.Id) == 0 || user.Id == DEFAULT_UUID {
 		user.Id = sequentialguid.New().String()
 	}
+	user.IsDeprecated = false
 	return
 }

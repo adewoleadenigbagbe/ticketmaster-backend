@@ -14,14 +14,14 @@ const (
 )
 
 type Booking struct {
-	Id            string    `gorm:"primaryKey;size:36;type:char(36)"`
-	NumberOfSeats uint      `gorm:"not null"`
-	BookDateTime  time.Time `gorm:"index; not null"`
+	Id            string    `gorm:"column:Id"`
+	NumberOfSeats uint      `gorm:"column:NumberOfSeats"`
+	BookDateTime  time.Time `gorm:"column:BookDateTime"`
 	//Status is Enum in case of change
-	Status       int    `gorm:"not null"`
-	UserId       string `gorm:"index;not null;type:char(36)"`
-	ShowId       string `gorm:"index;not null;type:char(36)"`
-	IsDeprecated bool
+	Status       int       `gorm:"column:Status"`
+	UserId       string    `gorm:"column:UserId"`
+	ShowId       string    `gorm:"column:ShowId"`
+	IsDeprecated bool      `gorm:"column:IsDeprecated"`
 	CreatedOn    time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
 	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
@@ -31,5 +31,6 @@ func (booking *Booking) BeforeCreate(tx *gorm.DB) (err error) {
 		booking.Id = sequentialguid.New().String()
 	}
 
+	booking.IsDeprecated = false
 	return
 }
