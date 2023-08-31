@@ -7,5 +7,5 @@ import (
 
 func cinemaRoutes(group *echo.Group) {
 	cinemaController := controllers.CinemaController{}
-	group.POST("cinema", cinemaController.CreateCinema)
+	group.POST("cinemas", cinemaController.CreateCinema)
 }
