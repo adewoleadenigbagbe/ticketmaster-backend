@@ -37,3 +37,8 @@ func (show *Show) BeforeCreate(tx *gorm.DB) (err error) {
 
 	return
 }
+
+func (show Show) GetId() string {
+	return show.Id
+}
+

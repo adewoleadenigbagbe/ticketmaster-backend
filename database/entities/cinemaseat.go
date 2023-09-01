@@ -28,3 +28,8 @@ func (cinemaSeat *CinemaSeat) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	return
 }
+
+func (cinemaSeat CinemaSeat) GetId() string {
+	return cinemaSeat.Id
+}
+

@@ -122,7 +122,8 @@ func main() {
 	CreateWorkerThread(workerPoolSize)
 
 	//sort the data
-	sort.Sort(utilities.ByMovieID(movies))
+	sort.Sort(utilities.ByID[entities.Movie](movies))
+
 	for _, movie := range movies {
 		tx := db.Create(&movie)
 		if tx.Error != nil {
@@ -132,6 +133,7 @@ func main() {
 
 	folderPath := "jsondata"
 	getJsonData(folderPath, db)
+
 }
 
 func getMovieData(page int) ResponseData {
@@ -291,7 +293,7 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	}
 
 	//sort the cities
-	sort.Sort(utilities.ByCityID(cityEntities))
+	sort.Sort(utilities.ByID[entities.City](cityEntities))
 
 	cinemaEntities := []entities.Cinema{}
 	for _, cinema := range cinemas {
@@ -306,7 +308,7 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	}
 
 	//sort the cinemas
-	sort.Sort(utilities.ByCinemaID(cinemaEntities))
+	sort.Sort(utilities.ByID[entities.Cinema](cinemaEntities))
 
 	cinemaHallEntities := []entities.CinemaHall{}
 	for _, cinemaHall := range cinemahalls {
@@ -321,7 +323,7 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	}
 
 	// sort the cinemahall
-	sort.Sort(utilities.ByCinemaHallID(cinemaHallEntities))
+	sort.Sort(utilities.ByID[entities.CinemaHall](cinemaHallEntities))
 
 	cinemaSeatsEntities := []entities.CinemaSeat{}
 	for _, cinemaHallEntity := range cinemaHallEntities {
@@ -338,7 +340,7 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	}
 
 	//sort the entities cinema seats
-	sort.Sort(utilities.ByCinemaSeatID(cinemaSeatsEntities))
+	sort.Sort(utilities.ByID[entities.CinemaSeat](cinemaSeatsEntities))
 
 	err = db.Transaction(func(tx *gorm.DB) error {
 		// do some database operations in the transaction (use 'tx' from this point, not 'db')

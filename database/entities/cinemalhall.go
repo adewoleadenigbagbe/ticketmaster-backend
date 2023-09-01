@@ -27,3 +27,7 @@ func (cinemaHall *CinemaHall) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	return
 }
+
+func (cinemaHall CinemaHall) GetId() string {
+	return cinemaHall.Id
+}

@@ -33,3 +33,7 @@ func (movie *Movie) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	return
 }
+
+func (movie Movie) GetId() string {
+	return movie.Id
+}
