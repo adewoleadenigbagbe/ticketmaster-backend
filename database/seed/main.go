@@ -26,7 +26,7 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-const MOVIEDB_URL string = "https://api.themoviedb.org/3/movie/popular?language=en-US"
+const MOVIEDB_BASE_URL string = "https://api.themoviedb.org/3/movie/popular?language=en-US"
 const API_KEY string = "6a4af6431ecf275b09f733a9ed14fe96"
 const AUTHORIZATION = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2YTRhZjY0MzFlY2YyNzViMDlmNzMzYTllZDE0ZmU5NiIsInN1YiI6IjY0YWU3ZGVjNjZhMGQzMDEwMGRiYTFhYiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WS39L-os2iWGQyRJAflD_VzuWLda4BvpWkBHcXOgbG0"
 
@@ -125,7 +125,7 @@ func main() {
 	sort.Sort(utilities.ByID[entities.Movie](movies))
 
 	for _, movie := range movies {
-		tx := db.Create(movie)
+		tx := db.Create(&movie)
 		if tx.Error != nil {
 			continue
 		}
@@ -137,7 +137,7 @@ func main() {
 }
 
 func getMovieData(page int) ResponseData {
-	url := fmt.Sprintf("%s&page=%d", MOVIEDB_URL, page)
+	url := fmt.Sprintf("%s&page=%d", MOVIEDB_BASE_URL, page)
 	req, _ := http.NewRequest("GET", url, nil)
 
 	req.Header.Add("accept", "application/json")
@@ -286,7 +286,7 @@ func getJsonData(folderPath string, db *gorm.DB) {
 			Id:           sequentialguid.New().String(),
 			Name:         city.Name,
 			State:        city.State,
-			Zipcode:      sql.NullString{String: strconv.Itoa(city.ZipCode), Valid: true},
+			Zipcode:      strconv.Itoa(city.ZipCode),
 			IsDeprecated: false,
 		}
 		cityEntities = append(cityEntities, cityentity)
