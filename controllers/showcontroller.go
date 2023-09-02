@@ -192,7 +192,7 @@ func query(filter GetShowsByLocationRequest) func(db *gorm.DB) *gorm.DB {
 
 func validateRequiredFields(request createShowRequest) []error {
 	var validationErrors []error
-	defaultTime, _ := time.Parse("2006-01-02", entities.MIN_DATE)
+	defaultTime, _ := time.Parse(time.RFC3339, entities.MIN_DATE)
 
 	//validate the cinemaHallId and movieId
 	if len(request.CinemaHallId) == 0 || len(request.CinemaHallId) < 36 {
@@ -235,10 +235,10 @@ func validateShowTime(request createShowRequest) []error {
 	var validationErrors []error
 
 	today := time.Now().Local()
-	defaultTime, _ := time.Parse("2006-01-02", entities.MIN_DATE)
+	defaultTime, _ := time.Parse(time.RFC3339, entities.MIN_DATE)
 
 	timeOverlap := false
-	tempStartDate, _ := time.Parse("2006-01-02", entities.MAX_DATE)
+	tempStartDate, _ := time.Parse(time.RFC3339, entities.MAX_DATE)
 	tempEndDate := tempStartDate
 
 	//Validate the show time
