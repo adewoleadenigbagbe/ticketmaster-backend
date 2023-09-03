@@ -1,11 +1,10 @@
-package utilities
+package entities
 
 import (
 	"fmt"
 	"sort"
 	"testing"
 
-	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 )
 
@@ -13,12 +12,12 @@ const size = 2000
 
 func TestEntitySortById(t *testing.T) {
 
-	cities := []entities.City{}
-	tempcities := make([]entities.City, size)
+	cities := []City{}
+	tempcities := make([]City, size)
 
 	for i := 0; i < size; i++ {
 		//use city entity
-		city := entities.City{
+		city := City{
 			Id:           sequentialguid.New().String(),
 			Name:         fmt.Sprintf("Dave%d", i),
 			State:        fmt.Sprintf("State%d", i),
@@ -31,7 +30,7 @@ func TestEntitySortById(t *testing.T) {
 	copy(tempcities[:], cities)
 
 	//sort the original list
-	sort.Sort(ByID[entities.City](cities))
+	sort.Sort(ByID[City](cities))
 
 	sorted := false
 	for i := 0; i < size; i++ {

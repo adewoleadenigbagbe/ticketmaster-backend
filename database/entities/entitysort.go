@@ -1,8 +1,6 @@
-package utilities
+package entities
 
-import "github.com/Wolechacho/ticketmaster-backend/database/entities"
-
-type ByID[T entities.IDatabaseEntity] []T
+type ByID[T IDatabaseEntity] []T
 
 func (byId ByID[T]) Len() int {
 	return len(byId)

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"gorm.io/gorm"
 )
 
@@ -21,7 +22,7 @@ type User struct {
 }
 
 func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
-	if len(user.Id) == 0 || user.Id == DEFAULT_UUID {
+	if len(user.Id) == 0 || user.Id == utilities.DEFAULT_UUID {
 		user.Id = sequentialguid.New().String()
 	}
 	return
