@@ -3,14 +3,14 @@ package controllers
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"math"
 	"net/http"
 	"time"
 
 	db "github.com/Wolechacho/ticketmaster-backend/database"
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
+	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
-	paginate "github.com/Wolechacho/ticketmaster-backend/helpers/pagination"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -99,95 +99,119 @@ type createShowResponse struct {
 }
 
 func (showController ShowController) GetShowsByUserLocation(showContext echo.Context) error {
+	var err error
 	request := new(GetShowsByLocationRequest)
+
+	err = showContext.Bind(request)
+	if err != nil {
+		return showContext.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	//get show that are not deprecated nor cancelled
 	//sort them by the earliest show date and time
 
-	// use the cityId to get the : UserLocation -> cinema -> cinemalHall -> Show -> Movie
-
-	//rows, err := db.DB.Table("userLocations").Select("userLocations.CityId").Joins("join cinemas on userLocations.CityId = cinemas.CityId").Joins("join cinemaHalls on cinemas.Id = cinemaHalls.CinemaId").Joins("join shows on cinemaHalls.Id = shows.CinemaHallId").Select()
-	//.Rows()
-
-	//db.Model(&User{}).Select("users.name, emails.email").Joins("left join emails on emails.user_id = users.id").Scan(&result{})
-
-	// rows, err := db.DB.Table("userLocations").
-	// 	Joins("join cinemas on userLocations.CityId = cinemas.CityId").
-	// 	Joins("join cinemaHalls on cinemas.Id = cinemaHalls.CinemaId").
-	// 	Joins("join shows on cinemaHalls.Id = shows.CinemaHallId").
-	// 	Joins("join movies on shows.MovieId = movies.Id").
-	// 	Where("userLocations.UserId = ? AND cinemas.IsDeprecated = ? AND cinemaHalls.IsDeprecated = ? AND shows.IsDeprecated = ? AND movies.IsDeprecated = ?", request.UserId, false, false, false, false).
-	// 	Select("shows.Id,shows.Date,shows.StartTime,shows.EndTime,movies.Id,movies.Title,movies.Description,movies.Language,movies.Genre,userLocations.CityId,cinemas.Id").
-	// 	Rows()
-
-	//filter
-	filterClause := query(*request)
-
-	//paginate
-	paginateClause := paginate.Paginate(request.Page, request.PageLength)
-
-	//orderby
-	sortandorder := fmt.Sprintf("%s %s", request.SortBy, request.Order)
-	orderByClause := paginate.OrderBy(sortandorder)
-
-	rows, err := db.DB.Scopes(filterClause, paginateClause, orderByClause).Rows()
+	userQuery, err := db.DB.Table("users").
+		Where("users.Id = ?", request.UserId).
+		Where("users.IsDeprecated = ?", false).
+		Joins("join addresses on users.Id = addresses.EntityId").
+		Where("addresses.EntityId = ?", request.UserId).
+		Where("addresses.IsDeprecated = ?", false).
+		Where("addresses.AddressType = ?", enums.User).
+		Select("users.Id AS UserId, users.IsDeprecated, addresses.CityId,addresses.Coordinates").
+		Rows()
 
 	if err != nil {
-		log.Fatalln(err)
+		showContext.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	shows := []GetShowsByLocationDTO{}
-	for rows.Next() {
-		var show GetShowsByLocationDTO
-		err = rows.Scan(&show)
+	var user UserDTO
+	i := 0
+	for userQuery.Next() {
+		if i > 1 {
+			break
+		}
+		err = userQuery.Scan(&user.UserId, &user.IsDeprecated, &user.CityId, &user.Coordinates)
+		if err != nil {
+			return showContext.JSON(http.StatusInternalServerError, err.Error())
+		}
+		i++
+	}
+
+	showQuery, err := db.DB.Table("addresses").
+		Where("addresses.CityId = ?", user.CityId).
+		Where("addresses.IsDeprecated = ?", false).
+		Where("addresses.AddressType = ?", enums.Cinema).
+		Joins("join cinemas on addresses.EntityId = cinemas.Id").
+		Where("cinemas.IsDeprecated = ?", false).
+		Joins("join cinemaHalls on cinemas.Id = cinemaHalls.CinemaId").
+		Where("cinemaHalls.IsDeprecated = ?", false).
+		Joins("join shows on cinemaHalls.Id = shows.CinemaHallId").
+		Where("shows.IsDeprecated = ?", false).
+		Where("shows.IsCancelled = ?", false).
+		Joins("join movies on shows.MovieId = movies.Id").
+		Where("movies.IsDeprecated = ?", false).
+		Select("shows.Id AS ShowId, shows.Date, shows.StartTime, shows.EndTime,movies.Id AS MovieId, movies.Title, movies.Description, movies.Language, movies.Genre,addresses.AddressLine, addresses.Coordinates").
+		Rows()
+
+	if err != nil {
+		return showContext.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	shows := []ShowsDTO{}
+	for showQuery.Next() {
+		show := &ShowsDTO{}
+		err = showQuery.Scan(&show.ShowId, &show.Date, &show.startTime, &show.endTime, &show.MovieId, &show.Title,
+			&show.Description, &show.Language, &show.Genre, &show.AddressLine, &show.Coordinates)
 
 		if err != nil {
-			log.Fatalln(err)
+			return showContext.JSON(http.StatusInternalServerError, err.Error())
 		}
-		shows = append(shows, show)
+
+		show.StartTime = time.Unix(show.startTime, 0)
+		show.EndTime = time.Unix(show.endTime, 0)
+
+		show.Distance = distance(user.Coordinates, show.Coordinates)
+
+		shows = append(shows, *show)
 	}
 
 	response := new(GetShowsByLocationResponse)
 	response.Results = shows
 
-	return showContext.JSON(http.StatusOK, response)
+	fmt.Println(shows)
+	return showContext.JSON(http.StatusOK, shows)
 }
 
 type GetShowsByLocationRequest struct {
-	UserId     string `json:"userId"`
-	Page       int    `query:"page"`
-	PageLength int    `query:"pageLength"`
-	SortBy     string `query:"sortBy"`
-	Order      string `query:"order"`
+	UserId string `json:"userId"`
 }
 
 type GetShowsByLocationResponse struct {
-	Results []GetShowsByLocationDTO
+	Results []ShowsDTO
 }
 
-type GetShowsByLocationDTO struct {
-	Id          string    `json:"id"`
+type ShowsDTO struct {
+	ShowId      string    `json:"showId"`
 	Date        time.Time `json:"showDate"`
-	StartTime   int64     `json:"showStartTime"`
-	EndTime     int64     `json:"showEndTime"`
-	MovieId     string    `json:"movieId"`
-	Title       string    `json:"movieTitle"`
-	Description string    `json:"movieDescription"`
-	Language    string    `json:"language"`
-	Genre       int       `json:"genre"`
+	startTime   int64
+	endTime     int64
+	MovieId     string              `json:"movieId"`
+	Title       string              `json:"movieTitle"`
+	Description string              `json:"movieDescription"`
+	Language    string              `json:"language"`
+	Genre       int                 `json:"genre"`
+	StartTime   time.Time           `json:"showStartTime"`
+	EndTime     time.Time           `json:"showEndTime"`
+	AddressLine string              `json:"address"`
+	Coordinates entities.Coordinate `json:"coordinates"`
+	Distance    float64             `json:"distance"`
 }
 
-func query(filter GetShowsByLocationRequest) func(db *gorm.DB) *gorm.DB {
-	return func(db *gorm.DB) *gorm.DB {
-		return db.Table("addresses").
-			Joins("join cinemas on addresses.EntityId = cinemas.CityId").
-			Joins("join cinemaHalls on cinemas.Id = cinemaHalls.CinemaId").
-			Joins("join shows on cinemaHalls.Id = shows.CinemaHallId").
-			Joins("join movies on shows.MovieId = movies.Id").
-			Where("addresses.EntityId = ? AND cinemas.IsDeprecated = ? AND cinemaHalls.IsDeprecated = ? AND shows.IsDeprecated = ? AND shows.IsCancelled = ? AND movies.IsDeprecated = ?",
-				filter.UserId, false, false, false, false, false).
-			Select("shows.Id AS ShowId, shows.Date, shows.StartTime, shows.EndTime,movies.Id AS MovieId, movies.Title, movies.Description, movies.Language, movies.Genre, addresses.EntityId,cinemas.Id AS CinemaId")
-	}
+type UserDTO struct {
+	UserId       string
+	IsDeprecated bool
+	Coordinates  entities.Coordinate
+	CityId       string
 }
 
 func validateRequiredFields(request createShowRequest) []error {
@@ -282,4 +306,33 @@ func validateShowTime(request createShowRequest) []error {
 	}
 
 	return validationErrors
+}
+
+func distance(coordinate1, coordinate2 entities.Coordinate, unit ...string) float64 {
+	const PI float64 = 3.141592653589793
+
+	radlat1 := float64(PI * float64(coordinate1.Latitude) / 180)
+	radlat2 := float64(PI * float64(coordinate2.Latitude) / 180)
+
+	theta := float64(float64(coordinate1.Longitude) - float64(coordinate2.Longitude))
+	radtheta := float64(PI * theta / 180)
+
+	dist := math.Sin(radlat1)*math.Sin(radlat2) + math.Cos(radlat1)*math.Cos(radlat2)*math.Cos(radtheta)
+
+	if dist > 1 {
+		dist = 1
+	}
+
+	dist = math.Acos(dist)
+	dist = dist * 180 / PI
+	dist = dist * 60 * 1.1515
+
+	if len(unit) > 0 {
+		if unit[0] == "K" {
+			dist = dist * 1.609344
+		} else if unit[0] == "N" {
+			dist = dist * 0.8684
+		}
+	}
+	return dist
 }

@@ -66,6 +66,41 @@ func (cinemaController CinemaController) CreateCinema(cinemaContext echo.Context
 			return err
 		}
 
+		if len(request.Halls) != 0 {
+			for _, hall := range request.Halls {
+				cinemaHall := entities.CinemaHall{
+					Id:           sequentialguid.New().String(),
+					Name:         hall.Name,
+					TotalSeat:    hall.TotalSeats,
+					CinemaId:     cinema.Id,
+					IsDeprecated: false,
+				}
+
+				if err := tx.Create(&cinemaHall).Error; err != nil {
+					// return any error will rollback
+					return err
+				}
+
+				if len(hall.CinemaSeats) != 0 {
+					for _, seat := range hall.CinemaSeats {
+						seat := entities.CinemaSeat{
+							Id:           sequentialguid.New().String(),
+							SeatNumber:   seat.SeatNumber,
+							Type:         int(seat.Type),
+							CinemaHallId: cinemaHall.Id,
+							IsDeprecated: false,
+						}
+
+						if err := tx.Create(&seat).Error; err != nil {
+							// return any error will rollback
+							return err
+						}
+					}
+				}
+
+			}
+		}
+
 		return nil
 	})
 
@@ -79,12 +114,24 @@ func (cinemaController CinemaController) CreateCinema(cinemaContext echo.Context
 }
 
 type createCinemaRequest struct {
-	Name              string  `json:"name"`
-	CityId            string  `json:"cityId"`
-	TotalCinemalHalls int     `json:"totalCinemalHalls"`
-	Address           string  `json:"address"`
-	Longitude         float32 `json:"longitude"`
-	Latitude          float32 `json:"latitude"`
+	Name              string            `json:"name"`
+	CityId            string            `json:"cityId"`
+	TotalCinemalHalls int               `json:"totalCinemalHalls"`
+	Address           string            `json:"address"`
+	Longitude         float32           `json:"longitude"`
+	Latitude          float32           `json:"latitude"`
+	Halls             []cinemaHallModel `json:"halls"`
+}
+
+type cinemaHallModel struct {
+	Name        string            `json:"name"`
+	TotalSeats  int               `json:"totalSeats"`
+	CinemaSeats []cinemaSeatModel `json:"cinemaSeats"`
+}
+
+type cinemaSeatModel struct {
+	SeatNumber int            `json:"seatNumber"`
+	Type       enums.SeatType `json:"type"`
 }
 
 type createCinemaResponse struct {
@@ -110,5 +157,18 @@ func validateCinema(request createCinemaRequest) []error {
 		validationErrors = append(validationErrors, fmt.Errorf("totalCinemalHalls cannot be less than or equal to zero"))
 	}
 
+	if len(request.Halls) > request.TotalCinemalHalls {
+		validationErrors = append(validationErrors, fmt.Errorf("length of the halls to add cannot be greater than the fixed hall in total"))
+	}
+
+	for i, hall := range request.Halls {
+		if hall.TotalSeats <= 0 {
+			validationErrors = append(validationErrors, fmt.Errorf("Halls[%d].TotalSeats cannot be less or equal to zero", i))
+		}
+
+		if len(hall.CinemaSeats) > hall.TotalSeats {
+			validationErrors = append(validationErrors, fmt.Errorf("length of the cinema hall seats to add cannot be greater than the fixed cinema hall seats in total"))
+		}
+	}
 	return validationErrors
 }

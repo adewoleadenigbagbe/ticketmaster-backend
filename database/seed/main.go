@@ -311,6 +311,8 @@ func getJsonData(folderPath string, db *gorm.DB) {
 		cinemaEntities = append(cinemaEntities, cinemaentity)
 	}
 
+	// add the address of cinema
+
 	//sort the cinemas
 	sort.Sort(utilities.ByCinemaID(cinemaEntities))
 

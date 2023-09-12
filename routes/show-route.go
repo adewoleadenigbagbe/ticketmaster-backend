@@ -8,4 +8,5 @@ import (
 func showRoutes(group *echo.Group) {
 	showController := controllers.ShowController{}
 	group.POST("shows", showController.CreateShow)
+	group.GET("shows/user-location", showController.GetShowsByUserLocation)
 }

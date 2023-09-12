@@ -17,7 +17,7 @@ type Show struct {
 	Date               time.Time      `gorm:"column:Date"`
 	StartTime          int64          `gorm:"column:StartTime"`
 	EndTime            int64          `gorm:"column:EndTime"`
-	CinemaHallId       string         `gorm:"column:CinemalHallId"`
+	CinemaHallId       string         `gorm:"column:CinemaHallId"`
 	MovieId            string         `gorm:"column:MovieId"`
 	IsCancelled        bool           `gorm:"column:IsCancelled"`
 	CancellationReason sql.NullString `gorm:"column:CancellationReason"`
