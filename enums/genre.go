@@ -1,6 +1,6 @@
 package enums
 
-type Genre int
+type Genre uint64
 
 const (
 	None           Genre = iota + 0
@@ -24,22 +24,3 @@ const (
 	War            Genre = 1 << 17
 	Western        Genre = 1 << 18
 )
-
-var MovieGenre Genre
-
-func (movieGenre *Genre) AddGenre(genres ...Genre) {
-	for _, genre := range genres {
-		*movieGenre |= genre
-	}
-
-}
-
-func (movieGenre *Genre) RemoveGenre(genres ...Genre) {
-	for _, genre := range genres {
-		*movieGenre &= ^genre
-	}
-}
-
-func (movieGenre *Genre) HasGenre(genre Genre) bool {
-	return *movieGenre&genre != 0
-}
