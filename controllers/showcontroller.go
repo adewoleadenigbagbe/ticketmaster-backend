@@ -120,6 +120,7 @@ func (showController ShowController) GetShowsByUserLocation(showContext echo.Con
 		Select("users.Id AS UserId, users.IsDeprecated, addresses.CityId,addresses.Coordinates").
 		Rows()
 
+	defer userQuery.Close()
 	if err != nil {
 		showContext.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -153,6 +154,7 @@ func (showController ShowController) GetShowsByUserLocation(showContext echo.Con
 		Select("shows.Id AS ShowId, shows.Date, shows.StartTime, shows.EndTime,movies.Id AS MovieId, movies.Title, movies.Description, movies.Language, movies.Genre,addresses.AddressLine, addresses.Coordinates").
 		Rows()
 
+	defer showQuery.Close()
 	if err != nil {
 		return showContext.JSON(http.StatusInternalServerError, err.Error())
 	}
