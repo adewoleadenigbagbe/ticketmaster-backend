@@ -153,11 +153,17 @@ func (movieController MovieController) SearchMovie(movieContext echo.Context) er
 		return movieContext.JSON(http.StatusBadRequest, "enter a search term")
 	}
 
-	var movie entities.Movie
-	result := db.DB.Table("movies").
-	Where()
-	
-	return nil
+	var movieResult []MovieDataResponse
+	sqlQuery := fmt.Sprintf("SELECT Id,Title,Description,ReleaseDate,Genre,Popularity,VoteCount FROM movies WHERE MATCH (movies.Title,movies.Description) AGAINST ('%s')", req.Term)
+
+	dbResult := db.DB.Raw(sqlQuery).Scan(&movieResult)
+	if dbResult.Error != nil {
+		return movieContext.JSON(http.StatusInternalServerError, dbResult.Error.Error())
+	}
+
+	resp := new(getSearchResponse)
+	resp.Result = movieResult
+	return movieContext.JSON(http.StatusOK, resp)
 }
 
 type getSearchRequest struct {
@@ -165,4 +171,5 @@ type getSearchRequest struct {
 }
 
 type getSearchResponse struct {
+	Result []MovieDataResponse
 }
