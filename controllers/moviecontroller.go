@@ -139,3 +139,30 @@ type getMovieByIdRequest struct {
 type getMovieByIdResponse struct {
 	Movie MovieDataResponse `json:"movie"`
 }
+
+func (movieController MovieController) SearchMovie(movieContext echo.Context) error {
+	var err error
+	req := new(getSearchRequest)
+
+	err = movieContext.Bind(req)
+	if err != nil {
+		return movieContext.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	if len(req.Term) == 0 {
+		return movieContext.JSON(http.StatusBadRequest, "enter a search term")
+	}
+
+	var movie entities.Movie
+	result := db.DB.Table("movies").
+	Where()
+	
+	return nil
+}
+
+type getSearchRequest struct {
+	Term string `query:"term"`
+}
+
+type getSearchResponse struct {
+}
