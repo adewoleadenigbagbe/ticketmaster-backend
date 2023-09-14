@@ -23,4 +23,5 @@ const (
 	Thriller       Genre = 1 << 16
 	War            Genre = 1 << 17
 	Western        Genre = 1 << 18
+	Western2        Genre = 1 << 63
 )
