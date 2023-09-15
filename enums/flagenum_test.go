@@ -78,3 +78,10 @@ func TestHas(t *testing.T) {
 		t.Error("should have a flag")
 	}
 }
+
+func TestGetEnumValues(t *testing.T) {
+	values := FlaggedEnum[Genre](0).TypePossibleValues()
+	if len(values) == 0 {
+		t.Errorf("Length should be greater than zero")
+	}
+}

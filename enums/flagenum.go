@@ -37,22 +37,29 @@ func (f FlaggedEnum[T]) IsLesserThan(val1 T, val2 T) bool {
 	return val1 < val2
 }
 
-func (f FlaggedEnum[T]) GetEnumValues() []T {
+func (f FlaggedEnum[T]) TypePossibleValues() []T {
 	values := new([]T)
 	var s uint64
-	for i := 64; s > 0; i-- {
-		if 1<<i > 0 {
-			t := T(1 << i)
+	for s = 0; s < 64; s++ {
+		if uint64(1<<s) > 0 {
+			t := T(1 << s)
 			*values = append(*values, t)
 		}
 	}
 	return *values
 }
 
-func (f FlaggedEnum[T]) GetCount(values []T) int {
-	return len(values)
+func (f FlaggedEnum[T]) GetType() T {
+	return *new(T)
 }
 
-func (f FlaggedEnum[T]) GetStringValues(from T, enum T) bool {
-	return from&enum != 0
+func (f FlaggedEnum[T]) Max(values []T) T {
+	return *new(T)
 }
+
+func (f FlaggedEnum[T]) Min(values []T) T {
+	return *new(T)
+}
+
+
+
