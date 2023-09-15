@@ -171,5 +171,5 @@ type getSearchRequest struct {
 }
 
 type getSearchResponse struct {
-	Result []MovieDataResponse
+	Result []MovieDataResponse `json:"results"`
 }
