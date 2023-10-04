@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,17 +17,19 @@ const (
 	TargetFolderPath = "database\\migrations"
 )
 
-// Loop through all the files getting the timestamp of each and check it match the database _migration tables
+// Loop through all the files getting the timestamp of each and check it match the latest migration row in _migration tables
 func CheckMigrationCompatibility(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		fmt.Println("Http method :", c.Request().Method)
 		if c.Request().Method != "GET" {
-			data := getRecentMigrationData()
-			if !reflect.ValueOf(data).IsZero() {
-				latestTimestamp := getRecentMigrationFile()
-				if latestTimestamp != data.VersionId {
-					log.Fatal("Database model has change. Please pull the recent migration changes")
+			if !db.IsMigrationChecked {
+				data := getRecentMigrationData()
+				if !reflect.ValueOf(data).IsZero() {
+					latestTimestamp := getRecentMigrationFile()
+					if latestTimestamp != data.VersionId {
+						log.Fatal("Database model has change. Please pull the recent migration changes")
+					}
 				}
+				db.IsMigrationChecked = true
 			}
 		}
 		return nil
