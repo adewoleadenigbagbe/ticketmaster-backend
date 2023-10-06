@@ -27,7 +27,7 @@ func CheckMigrationCompatibility(next echo.HandlerFunc) echo.HandlerFunc {
 				if !reflect.ValueOf(data).IsZero() {
 					latestTimestamp := getRecentMigrationFile()
 					if latestTimestamp != data.VersionId {
-						log.Fatal("Database model has change. Please pull the recent migration changes")
+						log.Fatal("Database model has changed. Please pull the recent migration changes")
 					}
 				}
 				db.IsMigrationChecked = true
