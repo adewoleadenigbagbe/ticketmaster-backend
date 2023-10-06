@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	RootFolderPath   = "ticketmaster-backend"
+	RootFolderPath = "ticketmaster-backend"
+	//If migration folder is moved the path needs to change too
 	TargetFolderPath = "database\\migrations"
 )
 
