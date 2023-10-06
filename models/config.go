@@ -17,14 +17,35 @@ type DatabaseConfig struct {
 	Loc          string `json:"loc"`
 }
 
-func (dbConfig DatabaseConfig) NewConfig(content []byte) string {
-	err := json.Unmarshal(content, &dbConfig)
+func CreateDbConfig(content []byte) *DatabaseConfig {
+	dbConfig := &DatabaseConfig{}
+	err := json.Unmarshal(content, dbConfig)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	//dsn := "root:P@ssw0r1d@tcp(127.0.0.1:3306)/?charset=utf8mb4&parseTime=True&loc=Local"
+
+	return dbConfig
+}
+
+func (dbConfig *DatabaseConfig) GetDsn() string {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=%s&parseTime=%s&loc=%s", dbConfig.User, dbConfig.Password,
 		dbConfig.IpAddress, dbConfig.Port, dbConfig.Charset, dbConfig.ParseTime, dbConfig.Loc)
 
 	return dsn
+}
+
+type MovieApiConfig struct {
+	Url    string `json:"url"`
+	ApiKey string `json:"apiKey"`
+	Auth   string `json:"auth"`
+}
+
+func CreateMovieApiConfig(content []byte) MovieApiConfig {
+	movieApiConfig := MovieApiConfig{}
+	err := json.Unmarshal(content, &movieApiConfig)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return movieApiConfig
 }

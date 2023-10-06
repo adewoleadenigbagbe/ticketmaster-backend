@@ -28,8 +28,11 @@ import (
 )
 
 var (
-	RootFolder = "ticketmaster-backend"
-	genres     = []enums.Genre{
+	RootFolderPath   = "ticketmaster-backend"
+	DbConfigFilePath = "configs\\database.json"
+	MovieApiFilePath = "configs\\movieapi.json"
+
+	genres = []enums.Genre{
 		enums.Action, enums.Adventure, enums.Animation, enums.Comedy,
 		enums.Crime, enums.Documentary, enums.Drama, enums.Family,
 		enums.Fantasy, enums.History, enums.Horror, enums.Music,
@@ -53,22 +56,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-	index := strings.Index(currentWorkingDirectory, RootFolder)
+	index := strings.Index(currentWorkingDirectory, RootFolderPath)
 	if index == -1 {
 		log.Fatal("App Root Folder Path not found")
 	}
 
-	rootFolder := filepath.Join(currentWorkingDirectory[:index], RootFolder)
-	dbConfigPath := fmt.Sprintf("%s\\database.json", rootFolder)
+	rootPath := filepath.Join(currentWorkingDirectory[:index], RootFolderPath)
 
-	content, err := ioutil.ReadFile(dbConfigPath)
+	dbConfigPath := filepath.Join(rootPath, DbConfigFilePath)
+	content, err := os.ReadFile(dbConfigPath)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	dbConfig := models.DatabaseConfig{}
-	dsn := dbConfig.NewConfig(content)
-
+	dbConfig := models.CreateDbConfig(content)
+	dsn := dbConfig.GetDsn()
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			NoLowerCase: true,
@@ -78,8 +80,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Connected to the Database")
 
+	fmt.Println("SucessFully Connected to the Database")
+
+	//create database entities
 	createCommand := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s;", dbConfig.DatabaseName)
 	useDBCommand := fmt.Sprintf("USE %s;", dbConfig.DatabaseName)
 
@@ -96,19 +100,18 @@ func main() {
 
 	fmt.Println("All Tables are sucessfully created in the DB")
 
-	filedata := NewFileData(rootFolder)
+	filedata := NewFileData(rootPath)
 	filedata.GetData(db)
 
-	apiJsonPath := fmt.Sprintf("%s\\movieapi.json", rootFolder)
-	apicontent, err := ioutil.ReadFile(apiJsonPath)
+	apiJsonPath := filepath.Join(rootPath, MovieApiFilePath)
+	apicontent, err := os.ReadFile(apiJsonPath)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	movieConfig := &MovieDataConfig{}
-	json.Unmarshal(apicontent, movieConfig)
+	movieApiConfig := models.CreateMovieApiConfig(apicontent)
 	apiData := NewApiData()
-	apiData.GetData(*movieConfig, db)
+	apiData.GetData(movieApiConfig, db)
 }
 
 type IData interface {
@@ -181,16 +184,12 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 
 			switch filepath.Base(file) {
 			case "city.json":
-				err = fileData.Converter(content, &fileData.Cities)
+				_ = fileData.Converter(content, &fileData.Cities)
 			case "cinema.json":
-				err = fileData.Converter(content, &fileData.Cinemas)
+				_ = fileData.Converter(content, &fileData.Cinemas)
 			case "cinemahall.json":
-				err = fileData.Converter(content, &fileData.Cinemahalls)
+				_ = fileData.Converter(content, &fileData.Cinemahalls)
 			default:
-				log.Fatalln("File not available for processing")
-			}
-
-			if err != nil {
 				continue
 			}
 		}
@@ -300,10 +299,10 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 }
 
 type ApiData struct {
-	MovieDataConfig MovieDataConfig
-	WorkerPoolSize  int
-	Pages           chan int
-	Wg              *sync.WaitGroup
+	MovieApiConfig models.MovieApiConfig
+	WorkerPoolSize int
+	Pages          chan int
+	Wg             *sync.WaitGroup
 }
 
 func NewApiData() *ApiData {
@@ -316,14 +315,14 @@ func NewApiData() *ApiData {
 	return apiData
 }
 
-func (apiData *ApiData) GetData(config MovieDataConfig, db *gorm.DB) {
+func (apiData *ApiData) GetData(config models.MovieApiConfig, db *gorm.DB) {
 	go apiData.allocateJobs(MaxPage)
 	apiData.createWorkerThread(config, apiData.WorkerPoolSize)
 
 	//sort the data
 	sort.Sort(utilities.ByMovieID(movies))
 	for _, movie := range movies {
-		tx := db.Create(movie)
+		tx := db.Create(&movie)
 		if tx.Error != nil {
 			continue
 		}
@@ -340,7 +339,7 @@ func (apiData *ApiData) allocateJobs(totalPages int) {
 }
 
 // create workers
-func (apiData *ApiData) createWorkerThread(movieConfig MovieDataConfig, noOfWorkers int) {
+func (apiData *ApiData) createWorkerThread(movieConfig models.MovieApiConfig, noOfWorkers int) {
 	var wg sync.WaitGroup
 	for i := 1; i <= noOfWorkers; i++ {
 		//means add the number of worker semaphore
@@ -351,7 +350,7 @@ func (apiData *ApiData) createWorkerThread(movieConfig MovieDataConfig, noOfWork
 }
 
 // receive jobs
-func (apiData *ApiData) worker(movieConfig MovieDataConfig, wg *sync.WaitGroup) {
+func (apiData *ApiData) worker(movieConfig models.MovieApiConfig, wg *sync.WaitGroup) {
 	for page := range apiData.Pages {
 		fmt.Println("Page #", page)
 		resp := getMovieData(movieConfig, page)
@@ -360,7 +359,7 @@ func (apiData *ApiData) worker(movieConfig MovieDataConfig, wg *sync.WaitGroup) 
 	wg.Done()
 }
 
-func getMovieData(movieConfig MovieDataConfig, page int) ResponseData {
+func getMovieData(movieConfig models.MovieApiConfig, page int) ResponseData {
 	url := fmt.Sprintf("%s&page=%d", movieConfig.Url, page)
 	req, _ := http.NewRequest("GET", url, nil)
 
@@ -410,12 +409,6 @@ func createDataBaseEntities(db *gorm.DB, entities ...interface{}) error {
 		}
 	}
 	return nil
-}
-
-type MovieDataConfig struct {
-	Url    string `json:"url"`
-	ApiKey string `json:"apiKey"`
-	Auth   string `json:"auth"`
 }
 
 type MovieData struct {
