@@ -4,6 +4,7 @@ import (
 	"time"
 
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"gorm.io/gorm"
 )
 
@@ -22,10 +23,14 @@ func (CinemaHall) TableName() string {
 }
 
 func (cinemaHall *CinemaHall) BeforeCreate(tx *gorm.DB) (err error) {
-	if len(cinemaHall.Id) == 0 || cinemaHall.Id == DEFAULT_UUID {
+	if len(cinemaHall.Id) == 0 || cinemaHall.Id == utilities.DEFAULT_UUID {
 		cinemaHall.Id = sequentialguid.New().String()
 	}
 	cinemaHall.IsDeprecated = false
 
 	return
+}
+
+func (cinemaHall CinemaHall) GetId() string {
+	return cinemaHall.Id
 }

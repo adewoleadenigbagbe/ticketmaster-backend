@@ -139,3 +139,37 @@ type getMovieByIdRequest struct {
 type getMovieByIdResponse struct {
 	Movie MovieDataResponse `json:"movie"`
 }
+
+func (movieController MovieController) SearchMovie(movieContext echo.Context) error {
+	var err error
+	req := new(getSearchRequest)
+
+	err = movieContext.Bind(req)
+	if err != nil {
+		return movieContext.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	if len(req.Term) == 0 {
+		return movieContext.JSON(http.StatusBadRequest, "enter a search term")
+	}
+
+	var movieResult []MovieDataResponse
+	sqlQuery := fmt.Sprintf("SELECT Id,Title,Description,ReleaseDate,Genre,Popularity,VoteCount FROM movies WHERE MATCH (movies.Title,movies.Description) AGAINST ('%s')", req.Term)
+
+	dbResult := db.DB.Raw(sqlQuery).Scan(&movieResult)
+	if dbResult.Error != nil {
+		return movieContext.JSON(http.StatusInternalServerError, dbResult.Error.Error())
+	}
+
+	resp := new(getSearchResponse)
+	resp.Result = movieResult
+	return movieContext.JSON(http.StatusOK, resp)
+}
+
+type getSearchRequest struct {
+	Term string `query:"term"`
+}
+
+type getSearchResponse struct {
+	Result []MovieDataResponse `json:"results"`
+}

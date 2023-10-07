@@ -4,6 +4,7 @@ import (
 	"time"
 
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"gorm.io/gorm"
 )
 
@@ -20,9 +21,13 @@ type ShowSeat struct {
 }
 
 func (showSeat *ShowSeat) BeforeCreate(tx *gorm.DB) (err error) {
-	if len(showSeat.Id) == 0 || showSeat.Id == DEFAULT_UUID {
+	if len(showSeat.Id) == 0 || showSeat.Id == utilities.DEFAULT_UUID {
 		showSeat.Id = sequentialguid.New().String()
 	}
 	showSeat.IsDeprecated = false
 	return
+}
+
+func (showSeat ShowSeat) GetId() string {
+	return showSeat.Id
 }

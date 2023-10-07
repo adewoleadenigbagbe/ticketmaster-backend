@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"gorm.io/gorm"
 )
 
@@ -31,9 +32,13 @@ func (Show) TableName() string {
 }
 
 func (show *Show) BeforeCreate(tx *gorm.DB) (err error) {
-	if len(show.Id) == 0 || show.Id == DEFAULT_UUID {
+	if len(show.Id) == 0 || show.Id == utilities.DEFAULT_UUID {
 		show.Id = sequentialguid.New().String()
 	}
 	show.IsDeprecated = false
 	return
+}
+
+func (show Show) GetId() string {
+	return show.Id
 }

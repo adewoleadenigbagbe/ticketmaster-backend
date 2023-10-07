@@ -10,6 +10,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -125,7 +126,7 @@ func validateUser(request createUserRequest) []error {
 		validationErrors = append(validationErrors, fmt.Errorf("cityId is a required field  with 36 characters"))
 	}
 
-	if request.CityId == entities.DEFAULT_UUID {
+	if request.CityId == utilities.DEFAULT_UUID {
 		validationErrors = append(validationErrors, fmt.Errorf("cityId should have a valid UUID"))
 	}
 

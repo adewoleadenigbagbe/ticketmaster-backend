@@ -9,6 +9,7 @@ import (
 )
 
 var DB *gorm.DB
+var IsMigrationChecked = false
 
 func ConnectToDatabase() *gorm.DB {
 	var err error

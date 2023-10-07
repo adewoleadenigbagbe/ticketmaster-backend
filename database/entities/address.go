@@ -5,6 +5,7 @@ import (
 
 	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"gorm.io/gorm"
 )
 
@@ -21,7 +22,7 @@ type Address struct {
 }
 
 func (address *Address) BeforeCreate(tx *gorm.DB) (err error) {
-	if len(address.Id) == 0 || address.Id == DEFAULT_UUID {
+	if len(address.Id) == 0 || address.Id == utilities.DEFAULT_UUID {
 		address.Id = sequentialguid.New().String()
 	}
 

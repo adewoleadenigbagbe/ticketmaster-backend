@@ -11,6 +11,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -218,14 +219,14 @@ type UserDTO struct {
 
 func validateRequiredFields(request createShowRequest) []error {
 	var validationErrors []error
-	defaultTime, _ := time.Parse(time.RFC3339, entities.MIN_DATE)
+	defaultTime, _ := time.Parse(time.RFC3339, utilities.MIN_DATE)
 
 	//validate the cinemaHallId and movieId
 	if len(request.CinemaHallId) == 0 || len(request.CinemaHallId) < 36 {
 		validationErrors = append(validationErrors, fmt.Errorf("cinemaHallId is a required field  with 36 characters"))
 	}
 
-	if request.CinemaHallId == entities.DEFAULT_UUID {
+	if request.CinemaHallId == utilities.DEFAULT_UUID {
 		validationErrors = append(validationErrors, fmt.Errorf("cinemaHallId should have a valid UUID"))
 	}
 
@@ -233,7 +234,7 @@ func validateRequiredFields(request createShowRequest) []error {
 		validationErrors = append(validationErrors, fmt.Errorf("movieId is a required field with 36 characters"))
 	}
 
-	if request.MovieId == entities.DEFAULT_UUID {
+	if request.MovieId == utilities.DEFAULT_UUID {
 		validationErrors = append(validationErrors, fmt.Errorf("movieId should have a valid UUID"))
 	}
 
@@ -261,10 +262,10 @@ func validateShowTime(request createShowRequest) []error {
 	var validationErrors []error
 
 	today := time.Now().Local()
-	defaultTime, _ := time.Parse(time.RFC3339, entities.MIN_DATE)
+	defaultTime, _ := time.Parse(time.RFC3339, utilities.MIN_DATE)
 
 	timeOverlap := false
-	tempStartDate, _ := time.Parse(time.RFC3339, entities.MAX_DATE)
+	tempStartDate, _ := time.Parse(time.RFC3339, utilities.MAX_DATE)
 	tempEndDate := tempStartDate
 
 	//Validate the show time
@@ -282,7 +283,7 @@ func validateShowTime(request createShowRequest) []error {
 		}
 
 		if showTime.StartDateTime.After(showTime.EndDateTime) {
-			errorMessage := fmt.Sprintf("showTimes[%d].endDate: %s must be greater than showTimes[%d].startDate: %s", i, showTime.EndDateTime.Format("2006-01-02T15:04:05"), i, showTime.StartDateTime.Format("2006-01-02T15:04:05"))
+			errorMessage := fmt.Sprintf("showTimes[%d].endDate: %s must be greater than showTimes[%d].startDate: %s", i, showTime.EndDateTime.Format(time.RFC3339), i, showTime.StartDateTime.Format(time.RFC3339))
 			validationErrors = append(validationErrors, fmt.Errorf(errorMessage))
 		}
 
