@@ -201,14 +201,14 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 			Id:           sequentialguid.New().String(),
 			Name:         city.Name,
 			State:        city.State,
-			Zipcode:      sql.NullString{String: strconv.Itoa(city.ZipCode), Valid: true},
+			Zipcode:      strconv.Itoa(city.ZipCode),
 			IsDeprecated: false,
 		}
 		cityEntities = append(cityEntities, cityentity)
 	}
 
 	//sort the cities
-	sort.Sort(utilities.ByCityID(cityEntities))
+	sort.Sort(entities.ByID[entities.City](cityEntities))
 
 	cinemaEntities := []entities.Cinema{}
 	for _, cinema := range fileData.Cinemas {
@@ -223,7 +223,7 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	}
 
 	//sort the cinemas
-	sort.Sort(utilities.ByCinemaID(cinemaEntities))
+	sort.Sort(entities.ByID[entities.Cinema](cinemaEntities))
 
 	cinemaHallEntities := []entities.CinemaHall{}
 	for _, cinemaHall := range fileData.Cinemahalls {
@@ -238,7 +238,7 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	}
 
 	// sort the cinemahall
-	sort.Sort(utilities.ByCinemaHallID(cinemaHallEntities))
+	sort.Sort(entities.ByID[entities.CinemaHall](cinemaHallEntities))
 
 	cinemaSeatsEntities := []entities.CinemaSeat{}
 	for _, cinemaHallEntity := range cinemaHallEntities {
@@ -255,7 +255,7 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	}
 
 	//sort the entities cinema seats
-	sort.Sort(utilities.ByCinemaSeatID(cinemaSeatsEntities))
+	sort.Sort(entities.ByID[entities.CinemaSeat](cinemaSeatsEntities))
 
 	err = db.Transaction(func(tx *gorm.DB) error {
 		// do some database operations in the transaction (use 'tx' from this point, not 'db')

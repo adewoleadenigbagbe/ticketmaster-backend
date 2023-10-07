@@ -9,6 +9,7 @@ import (
 
 	db "github.com/Wolechacho/ticketmaster-backend/database"
 	_ "github.com/Wolechacho/ticketmaster-backend/docs"
+	middlewares "github.com/Wolechacho/ticketmaster-backend/middleware"
 	"github.com/Wolechacho/ticketmaster-backend/routes"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
@@ -37,6 +38,9 @@ func main() {
 
 	// Create a new Echo instance
 	e := echo.New()
+
+	// set migration middleware
+	e.Use(middlewares.CheckMigrationCompatibility)
 
 	e.Logger.SetLevel(log.INFO)
 
