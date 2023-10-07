@@ -4,6 +4,7 @@ import (
 	"time"
 
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"gorm.io/gorm"
 )
 
@@ -22,7 +23,7 @@ func (City) TableName() string {
 }
 
 func (city *City) BeforeCreate(tx *gorm.DB) (err error) {
-	if len(city.Id) == 0 || city.Id == DEFAULT_UUID {
+	if len(city.Id) == 0 || city.Id == utilities.DEFAULT_UUID {
 		city.Id = sequentialguid.New().String()
 	}
 	return

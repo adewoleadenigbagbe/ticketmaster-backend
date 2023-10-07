@@ -45,39 +45,21 @@ var seats = []enums.SeatType{
 	enums.Gold, enums.Premium, enums.Standard,
 }
 
-// create a time alias
-type JsonReleaseDate time.Time
-
-// Implement Marshaler and Unmarshaler interface
-func (j *JsonReleaseDate) UnmarshalJSON(b []byte) error {
-	s := strings.Trim(string(b), "\"")
-	t, err := time.Parse("2006-01-02", s)
-	if err != nil {
-		return err
-	}
-	*j = JsonReleaseDate(t)
-	return nil
-}
-
-func (j JsonReleaseDate) MarshalJSON() ([]byte, error) {
-	return json.Marshal(time.Time(j))
-}
-
 type MovieData struct {
-	Adult            bool            `json:"adult"`
-	BackDropPath     string          `json:"backdrop_path"`
-	GenreIDs         []int           `json:"genre_ids"`
-	ID               int             `json:"id"`
-	OriginalLanguage string          `json:"original_language"`
-	OriginalTitle    string          `json:"original_title"`
-	Overview         string          `json:"overview"`
-	Popularity       float32         `json:"popularity"`
-	PosterPath       string          `json:"poster_path"`
-	ReleaseDate      JsonReleaseDate `json:"release_date"`
-	Title            string          `json:"title"`
-	Video            bool            `json:"video"`
-	VoteAverage      float32         `json:"vote_average"`
-	VoteCount        int             `json:"vote_count"`
+	Adult            bool               `json:"adult"`
+	BackDropPath     string             `json:"backdrop_path"`
+	GenreIDs         []int              `json:"genre_ids"`
+	ID               int                `json:"id"`
+	OriginalLanguage string             `json:"original_language"`
+	OriginalTitle    string             `json:"original_title"`
+	Overview         string             `json:"overview"`
+	Popularity       float32            `json:"popularity"`
+	PosterPath       string             `json:"poster_path"`
+	ReleaseDate      utilities.Datetime `json:"release_date"`
+	Title            string             `json:"title"`
+	Video            bool               `json:"video"`
+	VoteAverage      float32            `json:"vote_average"`
+	VoteCount        int                `json:"vote_count"`
 }
 
 type ResponseData struct {
@@ -122,7 +104,7 @@ func main() {
 	CreateWorkerThread(workerPoolSize)
 
 	//sort the data
-	sort.Sort(utilities.ByID[entities.Movie](movies))
+	sort.Sort(entities.ByID[entities.Movie](movies))
 
 	for _, movie := range movies {
 		tx := db.Create(&movie)
@@ -293,7 +275,7 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	}
 
 	//sort the cities
-	sort.Sort(utilities.ByID[entities.City](cityEntities))
+	sort.Sort(entities.ByID[entities.City](cityEntities))
 
 	cinemaEntities := []entities.Cinema{}
 	for _, cinema := range cinemas {
@@ -308,7 +290,7 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	}
 
 	//sort the cinemas
-	sort.Sort(utilities.ByID[entities.Cinema](cinemaEntities))
+	sort.Sort(entities.ByID[entities.Cinema](cinemaEntities))
 
 	cinemaHallEntities := []entities.CinemaHall{}
 	for _, cinemaHall := range cinemahalls {
@@ -323,7 +305,7 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	}
 
 	// sort the cinemahall
-	sort.Sort(utilities.ByID[entities.CinemaHall](cinemaHallEntities))
+	sort.Sort(entities.ByID[entities.CinemaHall](cinemaHallEntities))
 
 	cinemaSeatsEntities := []entities.CinemaSeat{}
 	for _, cinemaHallEntity := range cinemaHallEntities {
@@ -340,7 +322,7 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	}
 
 	//sort the entities cinema seats
-	sort.Sort(utilities.ByID[entities.CinemaSeat](cinemaSeatsEntities))
+	sort.Sort(entities.ByID[entities.CinemaSeat](cinemaSeatsEntities))
 
 	err = db.Transaction(func(tx *gorm.DB) error {
 		// do some database operations in the transaction (use 'tx' from this point, not 'db')

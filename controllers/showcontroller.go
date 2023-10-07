@@ -9,6 +9,7 @@ import (
 	db "github.com/Wolechacho/ticketmaster-backend/database"
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"github.com/labstack/echo/v4"
 )
 
@@ -68,7 +69,7 @@ type createMovieResponse struct {
 func validateShow(request createMovieRequest) []string {
 	errors := []string{}
 
-	defaultTime, _ := time.Parse("2006-01-02", entities.MIN_DATE)
+	defaultTime, _ := time.Parse(time.RFC3339, utilities.MIN_DATE)
 	today := time.Now().Local()
 
 	if request.StartDateTime == defaultTime {
@@ -107,7 +108,7 @@ func validateShow(request createMovieRequest) []string {
 		errors = append(errors, "cinemaHallId is a required field  with 36 characters")
 	}
 
-	if request.CinemaHallId == entities.DEFAULT_UUID {
+	if request.CinemaHallId == utilities.DEFAULT_UUID {
 		errors = append(errors, "cinemaHallId should have a valid UUID")
 	}
 
@@ -115,7 +116,7 @@ func validateShow(request createMovieRequest) []string {
 		errors = append(errors, "movieId is a required field with 36 characters")
 	}
 
-	if request.MovieId == entities.DEFAULT_UUID {
+	if request.MovieId == utilities.DEFAULT_UUID {
 		errors = append(errors, "movieId should have a valid UUID")
 	}
 

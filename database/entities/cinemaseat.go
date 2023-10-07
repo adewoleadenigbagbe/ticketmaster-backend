@@ -4,6 +4,7 @@ import (
 	"time"
 
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"gorm.io/gorm"
 )
 
@@ -23,7 +24,7 @@ func (CinemaSeat) TableName() string {
 }
 
 func (cinemaSeat *CinemaSeat) BeforeCreate(tx *gorm.DB) (err error) {
-	if len(cinemaSeat.Id) == 0 || cinemaSeat.Id == DEFAULT_UUID {
+	if len(cinemaSeat.Id) == 0 || cinemaSeat.Id == utilities.DEFAULT_UUID {
 		cinemaSeat.Id = sequentialguid.New().String()
 	}
 	return
@@ -32,4 +33,3 @@ func (cinemaSeat *CinemaSeat) BeforeCreate(tx *gorm.DB) (err error) {
 func (cinemaSeat CinemaSeat) GetId() string {
 	return cinemaSeat.Id
 }
-

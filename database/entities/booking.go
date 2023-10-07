@@ -4,13 +4,8 @@ import (
 	"time"
 
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"gorm.io/gorm"
-)
-
-const (
-	MIN_DATE     = "0001-01-01T00:00:00Z"
-	MAX_DATE     = "9999-12-31T23:59:59Z"
-	DEFAULT_UUID = "00000000-0000-0000-0000-000000000000"
 )
 
 type Booking struct {
@@ -27,7 +22,7 @@ type Booking struct {
 }
 
 func (booking *Booking) BeforeCreate(tx *gorm.DB) (err error) {
-	if len(booking.Id) == 0 || booking.Id == DEFAULT_UUID {
+	if len(booking.Id) == 0 || booking.Id == utilities.DEFAULT_UUID {
 		booking.Id = sequentialguid.New().String()
 	}
 
@@ -37,4 +32,3 @@ func (booking *Booking) BeforeCreate(tx *gorm.DB) (err error) {
 func (booking Booking) GetId() string {
 	return booking.Id
 }
-
