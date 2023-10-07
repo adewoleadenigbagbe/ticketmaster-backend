@@ -36,16 +36,16 @@ func (d Datetime) Min(datetimes ...time.Time) time.Time {
 	return minDate
 }
 
+// BeforeOrEqualTo return true if a date is before or equal to another date , this should be considered for time overlap (touch boundaries)
 func (d Datetime) BeforeOrEqualTo(u time.Time) bool {
-
 	dNano := time.Time(d).UnixNano()
 	uNano := u.UnixNano()
 
 	return dNano <= uNano
 }
 
+// AfterOrEqualTo return  true if a date is after or equal to another date , this should be considered for time overlap (touch boundaries)
 func (d Datetime) AfterOrEqualTo(u time.Time) bool {
-
 	dNano := time.Time(d).UnixNano()
 	uNano := u.UnixNano()
 
