@@ -320,7 +320,7 @@ func (apiData *ApiData) GetData(config models.MovieApiConfig, db *gorm.DB) {
 	apiData.createWorkerThread(config, apiData.WorkerPoolSize)
 
 	//sort the data
-	sort.Sort(utilities.ByMovieID(movies))
+	sort.Sort(entities.ByID[entities.Movie](movies))
 	for _, movie := range movies {
 		tx := db.Create(&movie)
 		if tx.Error != nil {
@@ -412,20 +412,20 @@ func createDataBaseEntities(db *gorm.DB, entities ...interface{}) error {
 }
 
 type MovieData struct {
-	Adult            bool                      `json:"adult"`
-	BackDropPath     string                    `json:"backdrop_path"`
-	GenreIDs         []int                     `json:"genre_ids"`
-	ID               int                       `json:"id"`
-	OriginalLanguage string                    `json:"original_language"`
-	OriginalTitle    string                    `json:"original_title"`
-	Overview         string                    `json:"overview"`
-	Popularity       float32                   `json:"popularity"`
-	PosterPath       string                    `json:"poster_path"`
-	ReleaseDate      utilities.JsonReleaseDate `json:"release_date"`
-	Title            string                    `json:"title"`
-	Video            bool                      `json:"video"`
-	VoteAverage      float32                   `json:"vote_average"`
-	VoteCount        int                       `json:"vote_count"`
+	Adult            bool               `json:"adult"`
+	BackDropPath     string             `json:"backdrop_path"`
+	GenreIDs         []int              `json:"genre_ids"`
+	ID               int                `json:"id"`
+	OriginalLanguage string             `json:"original_language"`
+	OriginalTitle    string             `json:"original_title"`
+	Overview         string             `json:"overview"`
+	Popularity       float32            `json:"popularity"`
+	PosterPath       string             `json:"poster_path"`
+	ReleaseDate      utilities.Datetime `json:"release_date"`
+	Title            string             `json:"title"`
+	Video            bool               `json:"video"`
+	VoteAverage      float32            `json:"vote_average"`
+	VoteCount        int                `json:"vote_count"`
 }
 
 type ResponseData struct {
