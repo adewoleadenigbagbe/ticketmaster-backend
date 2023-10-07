@@ -9,12 +9,12 @@ import (
 )
 
 type CinemaHall struct {
-	Id           string    `gorm:"primaryKey;size:36;column:Id;type:char(36)"`
-	Name         string    `gorm:"index;not null;column:Name;type:varchar(255)"`
-	TotalSeat    int       `gorm:"not null;column:TotalSeat"`
-	CinemaId     string    `gorm:"index;not null;column:CinemalId;type:char(36)"`
+	Id           string    `gorm:"column:Id"`
+	Name         string    `gorm:"column:Name"`
+	TotalSeat    int       `gorm:"column:TotalSeat"`
+	CinemaId     string    `gorm:"column:CinemaId"`
 	IsDeprecated bool      `gorm:"column:IsDeprecated"`
-	CreatedOn    time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
+	CreatedOn    time.Time `gorm:"column:CreatedOn;autoCreateTime"`
 	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
@@ -26,6 +26,8 @@ func (cinemaHall *CinemaHall) BeforeCreate(tx *gorm.DB) (err error) {
 	if len(cinemaHall.Id) == 0 || cinemaHall.Id == utilities.DEFAULT_UUID {
 		cinemaHall.Id = sequentialguid.New().String()
 	}
+	cinemaHall.IsDeprecated = false
+
 	return
 }
 

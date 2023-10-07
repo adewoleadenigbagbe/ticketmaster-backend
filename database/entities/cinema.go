@@ -9,12 +9,12 @@ import (
 )
 
 type Cinema struct {
-	Id                string    `gorm:"primaryKey;size:36;column:Id;type:char(36)"`
-	Name              string    `gorm:"index;not null;column:Name;type:varchar(255)"`
-	TotalCinemalHalls int       `gorm:"not null;column:TotalCinemalHalls"`
-	CityId            string    `gorm:"index;not null;column:CityId;type:char(36)"`
+	Id                string    `gorm:"column:Id"`
+	Name              string    `gorm:"column:Name"`
+	TotalCinemalHalls int       `gorm:"column:TotalCinemalHalls"`
+	CityId            string    `gorm:"column:CityId"`
 	IsDeprecated      bool      `gorm:"column:IsDeprecated"`
-	CreatedOn         time.Time `gorm:"index;column:CreatedOn;autoCreateTime"`
+	CreatedOn         time.Time `gorm:"column:CreatedOn;autoCreateTime"`
 	ModifiedOn        time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
@@ -27,6 +27,7 @@ func (cinema *Cinema) BeforeCreate(tx *gorm.DB) (err error) {
 		cinema.Id = sequentialguid.New().String()
 	}
 
+	cinema.IsDeprecated = false
 	return
 }
 

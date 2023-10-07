@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -123,17 +122,19 @@ type FileData struct {
 	TargetFolderPath string
 	Converter        func(data []byte, v any) error
 	Cities           []struct {
-		Name    string `json:"city"`
-		State   string `json:"state"`
-		ZipCode int    `json:"zip_code"`
+		Name      string  `json:"city"`
+		State     string  `json:"state"`
+		ZipCode   int     `json:"zip_code"`
+		Latitude  float32 `json:"latitude"`
+		Longitude float32 `json:"longitude"`
 	}
 	Cinemas []struct {
-		Name        string `json:"city"`
+		Name        string `json:"name"`
 		CinemaHalls int    `json:"cinemahalls"`
 	}
 
 	Cinemahalls []struct {
-		Name       string `json:"city"`
+		Name       string `json:"name"`
 		TotalSeats int    `json:"totalseats"`
 	}
 }
@@ -147,18 +148,20 @@ func NewFileData(folderPath string) *FileData {
 			return err
 		},
 		Cities: []struct {
-			Name    string `json:"city"`
-			State   string `json:"state"`
-			ZipCode int    `json:"zip_code"`
+			Name      string  `json:"city"`
+			State     string  `json:"state"`
+			ZipCode   int     `json:"zip_code"`
+			Latitude  float32 `json:"latitude"`
+			Longitude float32 `json:"longitude"`
 		}{},
 
 		Cinemas: []struct {
-			Name        string `json:"city"`
+			Name        string `json:"name"`
 			CinemaHalls int    `json:"cinemahalls"`
 		}{},
 
 		Cinemahalls: []struct {
-			Name       string `json:"city"`
+			Name       string `json:"name"`
 			TotalSeats int    `json:"totalseats"`
 		}{},
 	}
@@ -177,7 +180,7 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	for _, file := range files {
 		if filepath.Ext(file) == ".json" {
 
-			content, err := ioutil.ReadFile(file)
+			content, err := os.ReadFile(file)
 			if err != nil {
 				continue
 			}
@@ -198,10 +201,14 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	cityEntities := []entities.City{}
 	for _, city := range fileData.Cities {
 		cityentity := entities.City{
-			Id:           sequentialguid.New().String(),
-			Name:         city.Name,
-			State:        city.State,
-			Zipcode:      strconv.Itoa(city.ZipCode),
+			Id:      sequentialguid.New().String(),
+			Name:    city.Name,
+			State:   city.State,
+			Zipcode: strconv.Itoa(city.ZipCode),
+			Coordinates: entities.Coordinate{
+				Longitude: city.Longitude,
+				Latitude:  city.Latitude,
+			},
 			IsDeprecated: false,
 		}
 		cityEntities = append(cityEntities, cityentity)
@@ -221,6 +228,8 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 		}
 		cinemaEntities = append(cinemaEntities, cinemaentity)
 	}
+
+	// add the address of cinema
 
 	//sort the cinemas
 	sort.Sort(entities.ByID[entities.Cinema](cinemaEntities))
