@@ -21,56 +21,56 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
+	"github.com/Wolechacho/ticketmaster-backend/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
 
-const MOVIEDB_BASE_URL string = "https://api.themoviedb.org/3/movie/popular?language=en-US"
-const API_KEY string = "6a4af6431ecf275b09f733a9ed14fe96"
-const AUTHORIZATION = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2YTRhZjY0MzFlY2YyNzViMDlmNzMzYTllZDE0ZmU5NiIsInN1YiI6IjY0YWU3ZGVjNjZhMGQzMDEwMGRiYTFhYiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WS39L-os2iWGQyRJAflD_VzuWLda4BvpWkBHcXOgbG0"
+var (
+	RootFolderPath   = "ticketmaster-backend"
+	DbConfigFilePath = "configs\\database.json"
+	MovieApiFilePath = "configs\\movieapi.json"
 
-var workerPoolSize = 4
-var pages = make(chan int, workerPoolSize)
-var movielist = make([]MovieData, 0)
-var movies = []entities.Movie{}
-var genres = []enums.Genre{
-	enums.Action, enums.Adventure, enums.Animation, enums.Comedy,
-	enums.Crime, enums.Documentary, enums.Drama, enums.Family,
-	enums.Fantasy, enums.History, enums.Horror, enums.Music,
-	enums.Mystery, enums.Romance, enums.ScienceFiction, enums.TVMovie,
-	enums.Thriller, enums.War, enums.Western,
-}
-var seats = []enums.SeatType{
-	enums.Gold, enums.Premium, enums.Standard,
-}
+	genres = []enums.Genre{
+		enums.Action, enums.Adventure, enums.Animation, enums.Comedy,
+		enums.Crime, enums.Documentary, enums.Drama, enums.Family,
+		enums.Fantasy, enums.History, enums.Horror, enums.Music,
+		enums.Mystery, enums.Romance, enums.ScienceFiction, enums.TVMovie,
+		enums.Thriller, enums.War, enums.Western,
+	}
+	seats = []enums.SeatType{
+		enums.Gold, enums.Premium, enums.Standard,
+	}
+	movies = []entities.Movie{}
+)
 
-type MovieData struct {
-	Adult            bool               `json:"adult"`
-	BackDropPath     string             `json:"backdrop_path"`
-	GenreIDs         []int              `json:"genre_ids"`
-	ID               int                `json:"id"`
-	OriginalLanguage string             `json:"original_language"`
-	OriginalTitle    string             `json:"original_title"`
-	Overview         string             `json:"overview"`
-	Popularity       float32            `json:"popularity"`
-	PosterPath       string             `json:"poster_path"`
-	ReleaseDate      utilities.Datetime `json:"release_date"`
-	Title            string             `json:"title"`
-	Video            bool               `json:"video"`
-	VoteAverage      float32            `json:"vote_average"`
-	VoteCount        int                `json:"vote_count"`
-}
-
-type ResponseData struct {
-	Page         int         `json:"page"`
-	TotalPages   int         `json:"total_pages"`
-	TotalResults int         `json:"total_results"`
-	MovieDatas   []MovieData `json:"results"`
-}
+const (
+	workerPoolSize = 4
+	MaxPage        = 500
+)
 
 func main() {
-	dsn := "root:P@ssw0r1d@tcp(127.0.0.1:3306)/?charset=utf8mb4&parseTime=True&loc=Local"
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	index := strings.Index(currentWorkingDirectory, RootFolderPath)
+	if index == -1 {
+		log.Fatal("App Root Folder Path not found")
+	}
+
+	rootPath := filepath.Join(currentWorkingDirectory[:index], RootFolderPath)
+
+	dbConfigPath := filepath.Join(rootPath, DbConfigFilePath)
+	content, err := os.ReadFile(dbConfigPath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	dbConfig := models.CreateDbConfig(content)
+	dsn := dbConfig.GetDsn()
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			NoLowerCase: true,
@@ -81,11 +81,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Connected to the Database")
+	fmt.Println("SucessFully Connected to the Database")
 
-	dbName := "ticketmasterDB"
-	createCommand := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s;", dbName)
-	useDBCommand := fmt.Sprintf("USE %s;", dbName)
+	//create database entities
+	createCommand := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s;", dbConfig.DatabaseName)
+	useDBCommand := fmt.Sprintf("USE %s;", dbConfig.DatabaseName)
 
 	db.Exec(createCommand)
 	db.Exec(useDBCommand)
@@ -97,145 +97,82 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	fmt.Println("All Tables are sucessfully created in the DB")
 
-	maxpage := 500
-	go AllocateJobs(maxpage)
-	CreateWorkerThread(workerPoolSize)
+	filedata := NewFileData(rootPath)
+	filedata.GetData(db)
 
-	//sort the data
-	sort.Sort(entities.ByID[entities.Movie](movies))
-
-	for _, movie := range movies {
-		tx := db.Create(&movie)
-		if tx.Error != nil {
-			continue
-		}
-	}
-
-	folderPath := "jsondata"
-	getJsonData(folderPath, db)
-
-}
-
-func getMovieData(page int) ResponseData {
-	url := fmt.Sprintf("%s&page=%d", MOVIEDB_BASE_URL, page)
-	req, _ := http.NewRequest("GET", url, nil)
-
-	req.Header.Add("accept", "application/json")
-	req.Header.Add("api_key", API_KEY)
-	req.Header.Add("Authorization", AUTHORIZATION)
-
-	res, _ := http.DefaultClient.Do(req)
-
-	defer res.Body.Close()
-	body, _ := io.ReadAll(res.Body)
-
-	var responseData ResponseData
-	err := json.Unmarshal(body, &responseData)
-
+	apiJsonPath := filepath.Join(rootPath, MovieApiFilePath)
+	apicontent, err := os.ReadFile(apiJsonPath)
 	if err != nil {
-		fmt.Println(err)
-	}
-	return responseData
-}
-
-// AllocateJobs - create jobs to be done - sender
-func AllocateJobs(totalPages int) {
-	for i := 1; i <= totalPages; i++ {
-		pages <- i
+		log.Fatalln(err)
 	}
 
-	close(pages)
+	movieApiConfig := models.CreateMovieApiConfig(apicontent)
+	apiData := NewApiData()
+	apiData.GetData(movieApiConfig, db)
 }
 
-// create workers
-func CreateWorkerThread(noOfWorkers int) []MovieData {
-	var wg sync.WaitGroup
-	for i := 1; i <= noOfWorkers; i++ {
-		//means add the number of worker semaphore
-		wg.Add(1)
-		go worker(&wg)
+type IData interface {
+	GetData(db *gorm.DB)
+}
+
+type FileData struct {
+	JsonFolderPath   string
+	TargetFolderPath string
+	Converter        func(data []byte, v any) error
+	Cities           []struct {
+		Name    string `json:"city"`
+		State   string `json:"state"`
+		ZipCode int    `json:"zip_code"`
 	}
-	wg.Wait()
-
-	return movielist
-}
-
-// receive jobs
-func worker(wg *sync.WaitGroup) {
-	for page := range pages {
-		fmt.Println("Page #", page)
-		resp := getMovieData(page)
-		AddMovieToList(resp.MovieDatas)
+	Cinemas []struct {
+		Name        string `json:"city"`
+		CinemaHalls int    `json:"cinemahalls"`
 	}
-	wg.Done()
-}
 
-func AddMovieToList(movieDatasResponse []MovieData) {
-	for _, moviedata := range movieDatasResponse {
-		movie := entities.Movie{
-			Id:           sequentialguid.New().String(),
-			Title:        moviedata.OriginalTitle,
-			Description:  sql.NullString{String: moviedata.Overview, Valid: true},
-			Duration:     sql.NullInt32{Valid: false},
-			ReleaseDate:  time.Time(moviedata.ReleaseDate),
-			Genre:        rand.Intn(len(genres)),
-			Language:     moviedata.OriginalLanguage,
-			Popularity:   moviedata.Popularity,
-			VoteCount:    moviedata.VoteCount,
-			IsDeprecated: false,
-		}
-		movies = append(movies, movie)
+	Cinemahalls []struct {
+		Name       string `json:"city"`
+		TotalSeats int    `json:"totalseats"`
 	}
 }
 
-func createDataBaseEntities(db *gorm.DB, entities ...interface{}) error {
-	for _, entity := range entities {
-		if !db.Migrator().HasTable(entity) {
-			err := db.Migrator().CreateTable(entity)
-			if err != nil {
-				return err
-			}
-		}
+func NewFileData(folderPath string) *FileData {
+	fileData := &FileData{
+		JsonFolderPath:   "jsondata",
+		TargetFolderPath: folderPath,
+		Converter: func(data []byte, v any) error {
+			err := json.Unmarshal(data, v)
+			return err
+		},
+		Cities: []struct {
+			Name    string `json:"city"`
+			State   string `json:"state"`
+			ZipCode int    `json:"zip_code"`
+		}{},
+
+		Cinemas: []struct {
+			Name        string `json:"city"`
+			CinemaHalls int    `json:"cinemahalls"`
+		}{},
+
+		Cinemahalls: []struct {
+			Name       string `json:"city"`
+			TotalSeats int    `json:"totalseats"`
+		}{},
 	}
-	return nil
+
+	return fileData
 }
 
-func getJsonData(folderPath string, db *gorm.DB) {
-	currentWorkingDirectory, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	targetFolderPath := "ticketmaster-backend"
-	index := strings.Index(currentWorkingDirectory, targetFolderPath)
-	if index == -1 {
-		log.Fatal("Target folder not found")
-	}
-
-	path := filepath.Join(currentWorkingDirectory[:index], targetFolderPath, folderPath, "\\*.json")
+func (fileData *FileData) GetData(db *gorm.DB) {
+	path := filepath.Join(fileData.TargetFolderPath, fileData.JsonFolderPath, "\\*.json")
 	files, err := filepath.Glob(path)
 
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	cities := []struct {
-		Name    string `json:"city"`
-		State   string `json:"state"`
-		ZipCode int    `json:"zip_code"`
-	}{}
-
-	cinemas := []struct {
-		Name        string `json:"city"`
-		CinemaHalls int    `json:"cinemahalls"`
-	}{}
-
-	cinemahalls := []struct {
-		Name       string `json:"city"`
-		TotalSeats int    `json:"totalseats"`
-	}{}
 
 	for _, file := range files {
 		if filepath.Ext(file) == ".json" {
@@ -247,23 +184,19 @@ func getJsonData(folderPath string, db *gorm.DB) {
 
 			switch filepath.Base(file) {
 			case "city.json":
-				err = json.Unmarshal(content, &cities)
+				_ = fileData.Converter(content, &fileData.Cities)
 			case "cinema.json":
-				err = json.Unmarshal(content, &cinemas)
+				_ = fileData.Converter(content, &fileData.Cinemas)
 			case "cinemahall.json":
-				err = json.Unmarshal(content, &cinemahalls)
+				_ = fileData.Converter(content, &fileData.Cinemahalls)
 			default:
-				log.Fatalln("File not available for processing")
-			}
-
-			if err != nil {
 				continue
 			}
 		}
 	}
 
 	cityEntities := []entities.City{}
-	for _, city := range cities {
+	for _, city := range fileData.Cities {
 		cityentity := entities.City{
 			Id:           sequentialguid.New().String(),
 			Name:         city.Name,
@@ -278,7 +211,7 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	sort.Sort(entities.ByID[entities.City](cityEntities))
 
 	cinemaEntities := []entities.Cinema{}
-	for _, cinema := range cinemas {
+	for _, cinema := range fileData.Cinemas {
 		cinemaentity := entities.Cinema{
 			Id:                sequentialguid.New().String(),
 			Name:              cinema.Name,
@@ -293,7 +226,7 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	sort.Sort(entities.ByID[entities.Cinema](cinemaEntities))
 
 	cinemaHallEntities := []entities.CinemaHall{}
-	for _, cinemaHall := range cinemahalls {
+	for _, cinemaHall := range fileData.Cinemahalls {
 		cinemahallentity := entities.CinemaHall{
 			Id:           sequentialguid.New().String(),
 			Name:         cinemaHall.Name,
@@ -363,4 +296,141 @@ func getJsonData(folderPath string, db *gorm.DB) {
 	}
 
 	fmt.Println("All Data sucessfully saved into the newly created tables")
+}
+
+type ApiData struct {
+	MovieApiConfig models.MovieApiConfig
+	WorkerPoolSize int
+	Pages          chan int
+	Wg             *sync.WaitGroup
+}
+
+func NewApiData() *ApiData {
+	apiData := &ApiData{
+		WorkerPoolSize: workerPoolSize,
+		Pages:          make(chan int, workerPoolSize),
+		Wg:             &sync.WaitGroup{},
+	}
+
+	return apiData
+}
+
+func (apiData *ApiData) GetData(config models.MovieApiConfig, db *gorm.DB) {
+	go apiData.allocateJobs(MaxPage)
+	apiData.createWorkerThread(config, apiData.WorkerPoolSize)
+
+	//sort the data
+	sort.Sort(entities.ByID[entities.Movie](movies))
+	for _, movie := range movies {
+		tx := db.Create(&movie)
+		if tx.Error != nil {
+			continue
+		}
+	}
+}
+
+// AllocateJobs - create jobs to be done - sender
+func (apiData *ApiData) allocateJobs(totalPages int) {
+	for i := 1; i <= totalPages; i++ {
+		apiData.Pages <- i
+	}
+
+	close(apiData.Pages)
+}
+
+// create workers
+func (apiData *ApiData) createWorkerThread(movieConfig models.MovieApiConfig, noOfWorkers int) {
+	var wg sync.WaitGroup
+	for i := 1; i <= noOfWorkers; i++ {
+		//means add the number of worker semaphore
+		wg.Add(1)
+		go apiData.worker(movieConfig, &wg)
+	}
+	wg.Wait()
+}
+
+// receive jobs
+func (apiData *ApiData) worker(movieConfig models.MovieApiConfig, wg *sync.WaitGroup) {
+	for page := range apiData.Pages {
+		fmt.Println("Page #", page)
+		resp := getMovieData(movieConfig, page)
+		addMovieToList(resp.MovieDatas)
+	}
+	wg.Done()
+}
+
+func getMovieData(movieConfig models.MovieApiConfig, page int) ResponseData {
+	url := fmt.Sprintf("%s&page=%d", movieConfig.Url, page)
+	req, _ := http.NewRequest("GET", url, nil)
+
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("api_key", movieConfig.ApiKey)
+	req.Header.Add("Authorization", movieConfig.Auth)
+
+	res, _ := http.DefaultClient.Do(req)
+
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+
+	var responseData ResponseData
+	err := json.Unmarshal(body, &responseData)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	return responseData
+}
+
+func addMovieToList(movieDatasResponse []MovieData) {
+	for _, moviedata := range movieDatasResponse {
+		movie := entities.Movie{
+			Id:           sequentialguid.New().String(),
+			Title:        moviedata.OriginalTitle,
+			Description:  sql.NullString{String: moviedata.Overview, Valid: true},
+			Duration:     sql.NullInt32{Valid: false},
+			ReleaseDate:  time.Time(moviedata.ReleaseDate),
+			Genre:        rand.Intn(len(genres)),
+			Language:     moviedata.OriginalLanguage,
+			Popularity:   moviedata.Popularity,
+			VoteCount:    moviedata.VoteCount,
+			IsDeprecated: false,
+		}
+		movies = append(movies, movie)
+	}
+}
+
+func createDataBaseEntities(db *gorm.DB, entities ...interface{}) error {
+	for _, entity := range entities {
+		if !db.Migrator().HasTable(entity) {
+			err := db.Migrator().CreateTable(entity)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type MovieData struct {
+	Adult            bool               `json:"adult"`
+	BackDropPath     string             `json:"backdrop_path"`
+	GenreIDs         []int              `json:"genre_ids"`
+	ID               int                `json:"id"`
+	OriginalLanguage string             `json:"original_language"`
+	OriginalTitle    string             `json:"original_title"`
+	Overview         string             `json:"overview"`
+	Popularity       float32            `json:"popularity"`
+	PosterPath       string             `json:"poster_path"`
+	ReleaseDate      utilities.Datetime `json:"release_date"`
+	Title            string             `json:"title"`
+	Video            bool               `json:"video"`
+	VoteAverage      float32            `json:"vote_average"`
+	VoteCount        int                `json:"vote_count"`
+}
+
+type ResponseData struct {
+	Page         int         `json:"page"`
+	TotalPages   int         `json:"total_pages"`
+	TotalResults int         `json:"total_results"`
+	MovieDatas   []MovieData `json:"results"`
 }
