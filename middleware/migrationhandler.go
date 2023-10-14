@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	db "github.com/Wolechacho/ticketmaster-backend/database"
+	"github.com/Wolechacho/ticketmaster-backend/core"
 	"github.com/labstack/echo/v4"
 )
 
@@ -18,26 +18,32 @@ const (
 	TargetFolderPath = "database\\migrations"
 )
 
+var ()
+
+type MigrationChanges struct {
+	App *core.BaseApp
+}
+
 // Loop through all the files getting the timestamp of each and check it match the latest migration row in _migration tables
-func CheckMigrationCompatibility(next echo.HandlerFunc) echo.HandlerFunc {
+func (mc MigrationChanges) CheckMigrationCompatibility(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if c.Request().Method != "GET" {
-			if !db.IsMigrationChecked {
-				data := getRecentMigrationData()
+			if mc.App.IsMigrationChecked {
+				data := mc.getRecentMigrationData()
 				if !reflect.ValueOf(data).IsZero() {
-					latestTimestamp := getRecentMigrationFile()
+					latestTimestamp := mc.getRecentMigrationFile()
 					if latestTimestamp != data.VersionId {
 						log.Fatal("Database model has changed. Please pull the recent migration changes")
 					}
 				}
-				db.IsMigrationChecked = true
+				mc.App.IsMigrationChecked = true
 			}
 		}
 		return nil
 	}
 }
 
-func getRecentMigrationFile() int64 {
+func (mc MigrationChanges) getRecentMigrationFile() int64 {
 	currentWorkingDirectory, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -72,9 +78,9 @@ func getRecentMigrationFile() int64 {
 	return maxTimeStamp
 }
 
-func getRecentMigrationData() MigrationModel {
+func (mc MigrationChanges) getRecentMigrationData() MigrationModel {
 	model := &MigrationModel{}
-	db.DB.Table("_migrations").
+	mc.App.DB.Table("_migrations").
 		Where("_migrations.is_applied = ?", 1).
 		Order("id DESC").
 		First(model)

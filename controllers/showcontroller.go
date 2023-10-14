@@ -1,19 +1,15 @@
 package controllers
 
 import (
-	"database/sql"
 	"fmt"
 	"math"
 	"net/http"
 	"time"
 
-	db "github.com/Wolechacho/ticketmaster-backend/database"
+	"github.com/Wolechacho/ticketmaster-backend/core"
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
-	"github.com/Wolechacho/ticketmaster-backend/enums"
-	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 )
 
 const (
@@ -22,65 +18,66 @@ const (
 )
 
 type ShowController struct {
+	App *core.BaseApp
 }
 
 func (showController *ShowController) CreateShow(showContext echo.Context) error {
-	var err error
-	request := new(createShowRequest)
-	err = showContext.Bind(request)
-	fmt.Println(request)
-	if err != nil {
-		return showContext.JSON(http.StatusBadRequest, err.Error())
-	}
+	// var err error
+	// request := new(createShowRequest)
+	// err = showContext.Bind(request)
+	// fmt.Println(request)
+	// if err != nil {
+	// 	return showContext.JSON(http.StatusBadRequest, err.Error())
+	// }
 
-	fieldErrors := validateRequiredFields(*request)
-	if len(fieldErrors) != 0 {
-		errors := []string{}
-		for _, fieldError := range fieldErrors {
-			errors = append(errors, fieldError.Error())
-		}
-		return showContext.JSON(http.StatusBadRequest, errors)
-	}
+	// fieldErrors := validateRequiredFields(*request)
+	// if len(fieldErrors) != 0 {
+	// 	errors := []string{}
+	// 	for _, fieldError := range fieldErrors {
+	// 		errors = append(errors, fieldError.Error())
+	// 	}
+	// 	return showContext.JSON(http.StatusBadRequest, errors)
+	// }
 
-	showTimeErrors := validateShowTime(*request)
-	if len(showTimeErrors) != 0 {
-		errors := []string{}
-		for _, showTimeError := range showTimeErrors {
-			errors = append(errors, showTimeError.Error())
-		}
-		return showContext.JSON(http.StatusBadRequest, errors)
-	}
+	// showTimeErrors := validateShowTime(*request)
+	// if len(showTimeErrors) != 0 {
+	// 	errors := []string{}
+	// 	for _, showTimeError := range showTimeErrors {
+	// 		errors = append(errors, showTimeError.Error())
+	// 	}
+	// 	return showContext.JSON(http.StatusBadRequest, errors)
+	// }
 
 	response := new(createShowResponse)
 
-	err = db.DB.Transaction(func(tx *gorm.DB) error {
-		for _, showTime := range request.ShowTimes {
-			show := &entities.Show{
-				Id:                 sequentialguid.New().String(),
-				Date:               showTime.StartDateTime,
-				StartTime:          showTime.StartDateTime.Unix(),
-				EndTime:            showTime.EndDateTime.Unix(),
-				MovieId:            request.MovieId,
-				CinemaHallId:       request.CinemaHallId,
-				IsDeprecated:       false,
-				IsCancelled:        false,
-				CancellationReason: sql.NullString{Valid: false},
-			}
+	// err = db.DB.Transaction(func(tx *gorm.DB) error {
+	// 	for _, showTime := range request.ShowTimes {
+	// 		show := &entities.Show{
+	// 			Id:                 sequentialguid.New().String(),
+	// 			Date:               showTime.StartDateTime,
+	// 			StartTime:          showTime.StartDateTime.Unix(),
+	// 			EndTime:            showTime.EndDateTime.Unix(),
+	// 			MovieId:            request.MovieId,
+	// 			CinemaHallId:       request.CinemaHallId,
+	// 			IsDeprecated:       false,
+	// 			IsCancelled:        false,
+	// 			CancellationReason: sql.NullString{Valid: false},
+	// 		}
 
-			result := tx.Create(&show)
-			if result.Error != nil || result.RowsAffected < 1 {
-				return result.Error
-			}
+	// 		result := tx.Create(&show)
+	// 		if result.Error != nil || result.RowsAffected < 1 {
+	// 			return result.Error
+	// 		}
 
-			response.ShowIds = append(response.ShowIds, show.Id)
-		}
+	// 		response.ShowIds = append(response.ShowIds, show.Id)
+	// 	}
 
-		return nil
-	})
+	// 	return nil
+	// })
 
-	if err != nil {
-		return showContext.JSON(http.StatusBadRequest, err)
-	}
+	// if err != nil {
+	// 	return showContext.JSON(http.StatusBadRequest, err)
+	// }
 
 	return showContext.JSON(http.StatusOK, response)
 }
@@ -100,89 +97,89 @@ type createShowResponse struct {
 }
 
 func (showController ShowController) GetShowsByUserLocation(showContext echo.Context) error {
-	var err error
-	request := new(GetShowsByLocationRequest)
+	// var err error
+	// request := new(GetShowsByLocationRequest)
 
-	err = showContext.Bind(request)
-	if err != nil {
-		return showContext.JSON(http.StatusBadRequest, err.Error())
-	}
+	// err = showContext.Bind(request)
+	// if err != nil {
+	// 	return showContext.JSON(http.StatusBadRequest, err.Error())
+	// }
 
-	//get show that are not deprecated nor cancelled
-	//sort them by the earliest show date and time
+	// //get show that are not deprecated nor cancelled
+	// //sort them by the earliest show date and time
 
-	userQuery, err := db.DB.Table("users").
-		Where("users.Id = ?", request.UserId).
-		Where("users.IsDeprecated = ?", false).
-		Joins("join addresses on users.Id = addresses.EntityId").
-		Where("addresses.EntityId = ?", request.UserId).
-		Where("addresses.IsDeprecated = ?", false).
-		Where("addresses.AddressType = ?", enums.User).
-		Select("users.Id AS UserId, users.IsDeprecated, addresses.CityId,addresses.Coordinates").
-		Rows()
+	// userQuery, err := db.DB.Table("users").
+	// 	Where("users.Id = ?", request.UserId).
+	// 	Where("users.IsDeprecated = ?", false).
+	// 	Joins("join addresses on users.Id = addresses.EntityId").
+	// 	Where("addresses.EntityId = ?", request.UserId).
+	// 	Where("addresses.IsDeprecated = ?", false).
+	// 	Where("addresses.AddressType = ?", enums.User).
+	// 	Select("users.Id AS UserId, users.IsDeprecated, addresses.CityId,addresses.Coordinates").
+	// 	Rows()
 
-	defer userQuery.Close()
-	if err != nil {
-		showContext.JSON(http.StatusInternalServerError, err.Error())
-	}
+	// defer userQuery.Close()
+	// if err != nil {
+	// 	showContext.JSON(http.StatusInternalServerError, err.Error())
+	// }
 
-	var user UserDTO
-	i := 0
-	for userQuery.Next() {
-		if i > 1 {
-			break
-		}
-		err = userQuery.Scan(&user.UserId, &user.IsDeprecated, &user.CityId, &user.Coordinates)
-		if err != nil {
-			return showContext.JSON(http.StatusInternalServerError, err.Error())
-		}
-		i++
-	}
+	// var user UserDTO
+	// i := 0
+	// for userQuery.Next() {
+	// 	if i > 1 {
+	// 		break
+	// 	}
+	// 	err = userQuery.Scan(&user.UserId, &user.IsDeprecated, &user.CityId, &user.Coordinates)
+	// 	if err != nil {
+	// 		return showContext.JSON(http.StatusInternalServerError, err.Error())
+	// 	}
+	// 	i++
+	// }
 
-	showQuery, err := db.DB.Table("addresses").
-		Where("addresses.CityId = ?", user.CityId).
-		Where("addresses.IsDeprecated = ?", false).
-		Where("addresses.AddressType = ?", enums.Cinema).
-		Joins("join cinemas on addresses.EntityId = cinemas.Id").
-		Where("cinemas.IsDeprecated = ?", false).
-		Joins("join cinemaHalls on cinemas.Id = cinemaHalls.CinemaId").
-		Where("cinemaHalls.IsDeprecated = ?", false).
-		Joins("join shows on cinemaHalls.Id = shows.CinemaHallId").
-		Where("shows.IsDeprecated = ?", false).
-		Where("shows.IsCancelled = ?", false).
-		Joins("join movies on shows.MovieId = movies.Id").
-		Where("movies.IsDeprecated = ?", false).
-		Select("shows.Id AS ShowId, shows.Date, shows.StartTime, shows.EndTime,movies.Id AS MovieId, movies.Title, movies.Description, movies.Language, movies.Genre,addresses.AddressLine, addresses.Coordinates").
-		Rows()
+	// showQuery, err := db.DB.Table("addresses").
+	// 	Where("addresses.CityId = ?", user.CityId).
+	// 	Where("addresses.IsDeprecated = ?", false).
+	// 	Where("addresses.AddressType = ?", enums.Cinema).
+	// 	Joins("join cinemas on addresses.EntityId = cinemas.Id").
+	// 	Where("cinemas.IsDeprecated = ?", false).
+	// 	Joins("join cinemaHalls on cinemas.Id = cinemaHalls.CinemaId").
+	// 	Where("cinemaHalls.IsDeprecated = ?", false).
+	// 	Joins("join shows on cinemaHalls.Id = shows.CinemaHallId").
+	// 	Where("shows.IsDeprecated = ?", false).
+	// 	Where("shows.IsCancelled = ?", false).
+	// 	Joins("join movies on shows.MovieId = movies.Id").
+	// 	Where("movies.IsDeprecated = ?", false).
+	// 	Select("shows.Id AS ShowId, shows.Date, shows.StartTime, shows.EndTime,movies.Id AS MovieId, movies.Title, movies.Description, movies.Language, movies.Genre,addresses.AddressLine, addresses.Coordinates").
+	// 	Rows()
 
-	defer showQuery.Close()
-	if err != nil {
-		return showContext.JSON(http.StatusInternalServerError, err.Error())
-	}
+	// defer showQuery.Close()
+	// if err != nil {
+	// 	return showContext.JSON(http.StatusInternalServerError, err.Error())
+	// }
 
-	shows := []ShowsDTO{}
-	for showQuery.Next() {
-		show := &ShowsDTO{}
-		err = showQuery.Scan(&show.ShowId, &show.Date, &show.startTime, &show.endTime, &show.MovieId, &show.Title,
-			&show.Description, &show.Language, &show.Genre, &show.AddressLine, &show.Coordinates)
+	// shows := []ShowsDTO{}
+	// for showQuery.Next() {
+	// 	show := &ShowsDTO{}
+	// 	err = showQuery.Scan(&show.ShowId, &show.Date, &show.startTime, &show.endTime, &show.MovieId, &show.Title,
+	// 		&show.Description, &show.Language, &show.Genre, &show.AddressLine, &show.Coordinates)
 
-		if err != nil {
-			return showContext.JSON(http.StatusInternalServerError, err.Error())
-		}
+	// 	if err != nil {
+	// 		return showContext.JSON(http.StatusInternalServerError, err.Error())
+	// 	}
 
-		show.StartTime = time.Unix(show.startTime, 0)
-		show.EndTime = time.Unix(show.endTime, 0)
+	// 	show.StartTime = time.Unix(show.startTime, 0)
+	// 	show.EndTime = time.Unix(show.endTime, 0)
 
-		show.Distance = distance(user.Coordinates, show.Coordinates)
+	// 	show.Distance = distance(user.Coordinates, show.Coordinates)
 
-		shows = append(shows, *show)
-	}
+	// 	shows = append(shows, *show)
+	// }
 
 	response := new(GetShowsByLocationResponse)
-	response.Results = shows
+	//response.Results = shows
 
-	fmt.Println(shows)
-	return showContext.JSON(http.StatusOK, shows)
+	//fmt.Println(shows)
+	return showContext.JSON(http.StatusOK, response)
 }
 
 type GetShowsByLocationRequest struct {

@@ -2,11 +2,12 @@ package routes
 
 import (
 	"github.com/Wolechacho/ticketmaster-backend/controllers"
+	"github.com/Wolechacho/ticketmaster-backend/core"
 	"github.com/labstack/echo/v4"
 )
 
-func showRoutes(group *echo.Group) {
-	showController := controllers.ShowController{}
+func showRoutes(app *core.BaseApp, group *echo.Group) {
+	showController := controllers.ShowController{App: app}
 	group.POST("shows", showController.CreateShow)
 	group.GET("shows/user-location", showController.GetShowsByUserLocation)
 }
