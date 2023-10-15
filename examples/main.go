@@ -16,9 +16,9 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-// @title Echo Swagger Example API
+// @title TicketMaster Endpoints
 // @version 1.0
-// @description This is a sample server server.
+// @description Contains all the endpoint for the ticketmaster app
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support

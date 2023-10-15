@@ -13,6 +13,7 @@ type CityController struct {
 	App *core.BaseApp
 }
 
+
 func (cityController *CityController) GetCityById(cityContext echo.Context) error {
 	var err error
 	req := new(services.GetCityByIdRequest)
