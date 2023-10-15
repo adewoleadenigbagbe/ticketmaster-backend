@@ -8,7 +8,7 @@ import (
 
 func movieRoutes(app *core.BaseApp, group *echo.Group) {
 	movieController := controllers.MovieController{App: app}
-	group.GET("movies", movieController.GetMovies)
-	group.GET("movies/:id", movieController.GetMovieById)
-	group.GET("movies/search", movieController.SearchMovie)
+	group.GET("movies", movieController.GetMoviesHandler)
+	group.GET("movies/:id", movieController.GetMovieByIdHandler)
+	group.GET("movies/search", movieController.SearchMovieHandler)
 }
