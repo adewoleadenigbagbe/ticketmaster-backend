@@ -45,3 +45,19 @@ func (cinemaController CinemaController) CreateCinemaHallHandler(cinemaContext e
 	}
 	return cinemaContext.JSON(http.StatusOK, response)
 }
+
+func (cinemaController CinemaController) CreateCinemaSeatHandler(cinemaContext echo.Context) error {
+	var err error
+	request := new(services.CreateCinemaSeatRequest)
+	err = cinemaContext.Bind(request)
+
+	if err != nil {
+		return cinemaContext.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	resp, err := cinemaController.App.CinemaService.AddCinemaSeat(*request)
+	if err != nil {
+		return cinemaContext.JSON(http.StatusBadRequest, err.Error())
+	}
+	return cinemaContext.JSON(http.StatusOK, resp)
+}

@@ -30,6 +30,10 @@ import (
 
 // @host localhost:8185
 // @BasePath /
+// Consumes:
+//      - application/json
+//   Produces:
+//   - application/json
 // @schemes http
 func main() {
 

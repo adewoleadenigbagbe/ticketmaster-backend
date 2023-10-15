@@ -23,7 +23,7 @@ func (movieService MovieService) GetMovieById(request GetMovieByIdRequest) (GetM
 
 	result := movieService.DB.First(movie)
 	if result.Error != nil {
-		return GetMovieByIdResponse{StatusCode: http.StatusNotFound}, errors.New("Movie Record not found")
+		return GetMovieByIdResponse{StatusCode: http.StatusNotFound}, errors.New("movie Record not found")
 	}
 
 	movieDataResp := MovieDataResponse{

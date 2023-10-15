@@ -85,10 +85,11 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		Select("users.Id AS UserId, users.IsDeprecated, addresses.CityId,addresses.Coordinates").
 		Rows()
 
-	defer userQuery.Close()
 	if err != nil {
 		return GetShowsByLocationResponse{StatusCode: http.StatusInternalServerError}, err
 	}
+
+	defer userQuery.Close()
 
 	var user UserDTO
 	i := 0
@@ -119,10 +120,11 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		Select("shows.Id AS ShowId, shows.Date, shows.StartTime, shows.EndTime,movies.Id AS MovieId, movies.Title, movies.Description, movies.Language, movies.Genre,addresses.AddressLine, addresses.Coordinates").
 		Rows()
 
-	defer showQuery.Close()
 	if err != nil {
 		return GetShowsByLocationResponse{StatusCode: http.StatusInternalServerError}, err
 	}
+
+	defer showQuery.Close()
 
 	shows := []ShowsDTO{}
 	for showQuery.Next() {
