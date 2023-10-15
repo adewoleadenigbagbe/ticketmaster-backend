@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 )
@@ -19,7 +18,6 @@ type GetCityByIdResponse struct {
 }
 
 func (cityService CityService) GetCityById(request GetCityByIdRequest) (GetCityByIdResponse, error) {
-	fmt.Println("Did we get here first")
 	var err error
 	city := &entities.City{
 		Id:           request.Id,
@@ -28,11 +26,10 @@ func (cityService CityService) GetCityById(request GetCityByIdRequest) (GetCityB
 
 	result := cityService.DB.First(city)
 	if result.Error != nil {
-		err = errors.New("city Record not found")
+		err = errors.New("city record not found")
 		return GetCityByIdResponse{}, err
 	}
 
-	fmt.Println("Did we get here")
 	response := new(GetCityByIdResponse)
 	response.Id = city.Id
 	response.Name = city.Name

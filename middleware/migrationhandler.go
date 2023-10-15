@@ -37,9 +37,10 @@ func (mc MigrationChanges) CheckMigrationCompatibility(next echo.HandlerFunc) ec
 					}
 				}
 				mc.App.IsMigrationChecked = true
+				return next(c)
 			}
 		}
-		return nil
+		return next(c)
 	}
 }
 
