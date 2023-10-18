@@ -25,6 +25,18 @@ func (cinemaController CinemaController) CreateCinemaHandler(cinemaContext echo.
 	return cinemaContext.JSON(http.StatusOK, response)
 }
 
+// CreateCinemaHall godoc
+// @Summary      Create a halls to existing cinema
+// @Description  Create a halls to existing cinema
+// @Tags         cinemas
+// @Accept       json
+// @Produce      json
+// @Param        id  path  string  true  "Id"
+// @Param        CinemaHallRequest  body  services.CinemaHallRequest  true  "CinemaHallRequest"
+// @Success      200  {object}  services.CinemaHallResponse
+// @Failure      400  {object}  []string
+// @Failure      404  {object}  []string
+// @Router       /api/v1/cinemas/{id}/cinemaHall [get]
 func (cinemaController CinemaController) CreateCinemaHallHandler(cinemaContext echo.Context) error {
 	var err error
 	request := new(services.CinemaHallRequest)

@@ -1,5 +1,47 @@
 basePath: /
 definitions:
+  enums.SeatType:
+    enum:
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - Premium
+    - Standard
+    - Gold
+  services.CinemaHallModel:
+    properties:
+      cinemaSeats:
+        items:
+          $ref: '#/definitions/services.CinemaSeatModel'
+        type: array
+      name:
+        type: string
+      totalSeat:
+        type: integer
+    type: object
+  services.CinemaHallRequest:
+    properties:
+      cinemaId:
+        type: string
+      halls:
+        items:
+          $ref: '#/definitions/services.CinemaHallModel'
+        type: array
+    type: object
+  services.CinemaHallResponse:
+    properties:
+      CinemaId:
+        type: string
+    type: object
+  services.CinemaSeatModel:
+    properties:
+      seatNumber:
+        type: integer
+      type:
+        $ref: '#/definitions/enums.SeatType'
+    type: object
   services.CityModelResponse:
     properties:
       id:
@@ -60,6 +102,45 @@ paths:
       summary: Show the status of server.
       tags:
       - root
+  /api/v1/cinemas/{id}/cinemaHall:
+    get:
+      consumes:
+      - application/json
+      description: Create a halls to existing cinema
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: CinemaHallRequest
+        in: body
+        name: CinemaHallRequest
+        required: true
+        schema:
+          $ref: '#/definitions/services.CinemaHallRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.CinemaHallResponse'
+        "400":
+          description: Bad Request
+          schema:
+            items:
+              type: string
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            items:
+              type: string
+            type: array
+      summary: Create a halls to existing cinema
+      tags:
+      - cinemas
   /api/v1/city/{id}:
     get:
       consumes:

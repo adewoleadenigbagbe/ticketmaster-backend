@@ -45,6 +45,65 @@
                 }
             }
         },
+        "/api/v1/cinemas/{id}/cinemaHall": {
+            "get": {
+                "description": "Create a halls to existing cinema",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cinemas"
+                ],
+                "summary": "Create a halls to existing cinema",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "CinemaHallRequest",
+                        "name": "CinemaHallRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.CinemaHallRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.CinemaHallResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/city/{id}": {
             "get": {
                 "description": "Get a particular city by ID",
@@ -135,6 +194,69 @@
         }
     },
     "definitions": {
+        "enums.SeatType": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3
+            ],
+            "x-enum-varnames": [
+                "Premium",
+                "Standard",
+                "Gold"
+            ]
+        },
+        "services.CinemaHallModel": {
+            "type": "object",
+            "properties": {
+                "cinemaSeats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.CinemaSeatModel"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "totalSeat": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.CinemaHallRequest": {
+            "type": "object",
+            "properties": {
+                "cinemaId": {
+                    "type": "string"
+                },
+                "halls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.CinemaHallModel"
+                    }
+                }
+            }
+        },
+        "services.CinemaHallResponse": {
+            "type": "object",
+            "properties": {
+                "CinemaId": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.CinemaSeatModel": {
+            "type": "object",
+            "properties": {
+                "seatNumber": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/enums.SeatType"
+                }
+            }
+        },
         "services.CityModelResponse": {
             "type": "object",
             "properties": {
