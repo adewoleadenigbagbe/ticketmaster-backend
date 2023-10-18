@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
+	"gorm.io/gorm"
 )
 
 type GetMovieByIdRequest struct {
@@ -17,13 +18,11 @@ type GetMovieByIdResponse struct {
 }
 
 func (movieService MovieService) GetMovieById(request GetMovieByIdRequest) (GetMovieByIdResponse, error) {
-	movie := &entities.Movie{
-		Id: request.Id,
-	}
+	movie := &entities.Movie{}
+	result := movieService.DB.Where("Id = ? AND IsDeprecated = ?", request.Id, false).First(&movie)
 
-	result := movieService.DB.First(movie)
-	if result.Error != nil {
-		return GetMovieByIdResponse{StatusCode: http.StatusNotFound}, errors.New("movie Record not found")
+	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return GetMovieByIdResponse{StatusCode: http.StatusNotFound}, errors.New("movie Record  not found")
 	}
 
 	movieDataResp := MovieDataResponse{

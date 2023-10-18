@@ -1,16 +1,47 @@
 basePath: /
+definitions:
+  services.CityModelResponse:
+    properties:
+      id:
+        type: string
+      isDeprecated:
+        type: boolean
+      name:
+        type: string
+      state:
+        type: string
+    type: object
+  services.MovieDataResponse:
+    properties:
+      description:
+        type: string
+      genre:
+        type: integer
+      id:
+        type: string
+      language:
+        type: string
+      popularity:
+        type: number
+      releaseDate:
+        type: string
+      title:
+        type: string
+      voteCount:
+        type: integer
+    type: object
 host: localhost:8185
 info:
   contact:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: This is a sample server server.
+  description: Contains all the endpoint for the ticketmaster app
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: Echo Swagger Example API
+  title: TicketMaster Endpoints
   version: "1.0"
 paths:
   /:
@@ -29,6 +60,64 @@ paths:
       summary: Show the status of server.
       tags:
       - root
+  /api/v1/city/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a particular city by ID
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.CityModelResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Get city by ID
+      tags:
+      - cities
+  /api/v1/movies/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a particular movie by ID
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.MovieDataResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Get movie by ID
+      tags:
+      - movies
 schemes:
 - http
 swagger: "2.0"

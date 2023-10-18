@@ -12,7 +12,7 @@ type MovieController struct {
 	App *core.BaseApp
 }
 
-func (movieController *MovieController) GetMoviesHandler(movieContext echo.Context) error {
+func (movieController MovieController) GetMoviesHandler(movieContext echo.Context) error {
 	req := new(services.GetMoviesRequest)
 	err := movieContext.Bind(req)
 	if err != nil {
@@ -23,7 +23,18 @@ func (movieController *MovieController) GetMoviesHandler(movieContext echo.Conte
 	return movieContext.JSON(http.StatusOK, resp)
 }
 
-func (movieController *MovieController) GetMovieByIdHandler(movieContext echo.Context) error {
+// GetMovieByID godoc
+// @Summary      Get movie by ID
+// @Description  Get a particular movie by ID
+// @Tags         movies
+// @Accept       json
+// @Produce      json
+// @Param        id  path  string  true  "Id"
+// @Success      200  {object}  services.MovieDataResponse
+// @Failure      400  {object}  string
+// @Failure      404  {object}  string
+// @Router       /api/v1/movies/{id} [get]
+func (movieController MovieController) GetMovieByIdHandler(movieContext echo.Context) error {
 	req := new(services.GetMovieByIdRequest)
 
 	err := movieContext.Bind(req)
@@ -37,7 +48,7 @@ func (movieController *MovieController) GetMovieByIdHandler(movieContext echo.Co
 		return movieContext.JSON(resp.StatusCode, err.Error())
 	}
 
-	return movieContext.JSON(http.StatusOK, resp)
+	return movieContext.JSON(http.StatusOK, resp.Movie)
 }
 
 func (movieController MovieController) SearchMovieHandler(movieContext echo.Context) error {
