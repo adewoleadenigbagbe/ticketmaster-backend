@@ -36,7 +36,7 @@ func (cinemaController CinemaController) CreateCinemaHandler(cinemaContext echo.
 // @Success      200  {object}  services.CinemaHallResponse
 // @Failure      400  {object}  []string
 // @Failure      404  {object}  []string
-// @Router       /api/v1/cinemas/{id}/cinemaHall [get]
+// @Router       /api/v1/cinemas/{id}/cinemahall [get]
 func (cinemaController CinemaController) CreateCinemaHallHandler(cinemaContext echo.Context) error {
 	var err error
 	request := new(services.CinemaHallRequest)

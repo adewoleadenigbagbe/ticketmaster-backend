@@ -49,7 +49,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/cinemas/{id}/cinemaHall": {
+        "/api/v1/cinemas/{id}/cinemahall": {
             "get": {
                 "description": "Create a halls to existing cinema",
                 "consumes": [

@@ -3,7 +3,6 @@ package services
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
@@ -14,22 +13,22 @@ import (
 )
 
 type CinemaHallRequest struct {
-	CinemaId string            `json:"cinemaId"`
-	Halls    []CinemaHallModel `json:"halls"`
+	Id    string            `param:"Id"`
+	Halls []CinemaHallModel `json:"halls"`
 }
 
 type CinemaHallResponse struct {
 	CinemaId string `json:"CinemaId"`
 }
 
-func (service CinemaService) AddCinemaHall(request CinemaHallRequest) (CinemaHallResponse, []error) {
+func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (CinemaHallResponse, []error) {
 	var err error
-	var errors []error
+	var errs []error
 
 	//validate request
-	errors = validateCinemaHallRequiredFields(request)
-	if len(errors) > 0 {
-		return CinemaHallResponse{}, errors
+	errs = validateCinemaHallRequiredFields(request)
+	if len(errs) > 0 {
+		return CinemaHallResponse{}, errs
 	}
 
 	//check for duplicate hall names
@@ -40,61 +39,47 @@ func (service CinemaService) AddCinemaHall(request CinemaHallRequest) (CinemaHal
 
 	duplicateHallNames := lo.FindDuplicates(hallNames)
 	if len(duplicateHallNames) > 0 {
-		errors = append(errors, fmt.Errorf("should not have duplicate hall name : %s", strings.Join(duplicateHallNames, ",")))
-		return CinemaHallResponse{}, errors
+		errs = append(errs, fmt.Errorf("should not have duplicate hall names : %s", strings.Join(duplicateHallNames, ",")))
+		return CinemaHallResponse{}, errs
 	}
 
 	//check for duplicate seat number
-	seatNumbers := []int{}
 	for _, hall := range request.Halls {
+		seatNumbers := []int{}
 		for _, seat := range hall.CinemaSeats {
 			seatNumbers = append(seatNumbers, seat.SeatNumber)
 		}
+
+		duplicateSeatNumbers := lo.FindDuplicates(seatNumbers)
+		if len(duplicateSeatNumbers) > 0 {
+			errs = append(errs, fmt.Errorf("should not have duplicate seat numbers for hall name: %s", hall.Name))
+			return CinemaHallResponse{}, errs
+		}
 	}
 
-	duplicateSeatNumbers := lo.FindDuplicates(seatNumbers)
-	if len(duplicateSeatNumbers) > 0 {
-		duplicateStrs := lo.Map(duplicateSeatNumbers, func(x int, index int) string {
-			return strconv.FormatInt(int64(x), 10)
-		})
-		errors = append(errors, fmt.Errorf("should not have duplicate seat numbers : %s", strings.Join(duplicateStrs, ",")))
-		return CinemaHallResponse{}, errors
-	}
-
-	cinema := &entities.Cinema{
-		Id:           request.CinemaId,
-		IsDeprecated: false,
-	}
-
-	result := service.DB.First(cinema)
-	if result.Error != nil {
-		errors = append(errors, result.Error)
-		return CinemaHallResponse{}, errors
+	cinema := &entities.Cinema{}
+	result := cinemaService.DB.Where("Id = ? AND IsDeprecated = ?", request.Id, false).First(cinema)
+	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		errs = append(errs, errors.New("cinema record not found"))
+		return CinemaHallResponse{}, errs
 	}
 
 	//check if the not duplicate names in the DB
 	var countResult int64
-	service.DB.Find(&entities.CinemaHall{IsDeprecated: false}, duplicateHallNames).Count(&countResult)
+	cinemaService.DB.Model(&entities.CinemaHall{}).Where("Name IN ? AND CinemaId = ? AND IsDeprecated = ?", hallNames, cinema.Id, false).Count(&countResult)
 	if countResult > 0 {
-		errors = append(errors, fmt.Errorf(("cinemaHall Name Already exist")))
-		return CinemaHallResponse{}, errors
+		errs = append(errs, fmt.Errorf(("cinemaHall name already exist in system")))
+		return CinemaHallResponse{}, errs
 	}
 
-	//check if the not duplicate names in the DB
-	service.DB.Find(&entities.CinemaSeat{IsDeprecated: false}, duplicateSeatNumbers).Count(&countResult)
-	if countResult > 0 {
-		errors = append(errors, fmt.Errorf(("cinemaseat number already exist")))
-		return CinemaHallResponse{}, errors
-	}
-
-	err = service.DB.Transaction(func(tx *gorm.DB) error {
+	err = cinemaService.DB.Transaction(func(tx *gorm.DB) error {
 		if len(request.Halls) != 0 {
 			for _, hall := range request.Halls {
 				cinemaHall := entities.CinemaHall{
 					Id:           sequentialguid.New().String(),
 					Name:         hall.Name,
 					TotalSeat:    hall.TotalSeat,
-					CinemaId:     request.CinemaId,
+					CinemaId:     request.Id,
 					IsDeprecated: false,
 				}
 
@@ -127,23 +112,23 @@ func (service CinemaService) AddCinemaHall(request CinemaHallRequest) (CinemaHal
 	})
 
 	if err != nil {
-		errors = append(errors, result.Error)
-		return CinemaHallResponse{}, errors
+		errs = append(errs, result.Error)
+		return CinemaHallResponse{}, errs
 	}
 
 	resp := CinemaHallResponse{
-		CinemaId: request.CinemaId,
+		CinemaId: request.Id,
 	}
 	return resp, nil
 }
 
 func validateCinemaHallRequiredFields(request CinemaHallRequest) []error {
 	validationErrors := []error{}
-	if len(request.CinemaId) == 0 || len(request.CinemaId) < 36 {
+	if len(request.Id) == 0 || len(request.Id) < 36 {
 		validationErrors = append(validationErrors, errors.New("cinemaId is a required field  with 36 characters"))
 	}
 
-	if request.CinemaId == utilities.DEFAULT_UUID {
+	if request.Id == utilities.DEFAULT_UUID {
 		validationErrors = append(validationErrors, errors.New("cinemaId should have a valid UUID"))
 	}
 
@@ -153,20 +138,20 @@ func validateCinemaHallRequiredFields(request CinemaHallRequest) []error {
 		}
 
 		if hall.TotalSeat <= 0 {
-			validationErrors = append(validationErrors, errors.New("cinemahall[%d].TotalSeat should not be lesss than or equal to zero"))
+			validationErrors = append(validationErrors, fmt.Errorf("cinemahall[%d].TotalSeat should not be lesss than or equal to zero", i))
 		}
 
-		if hall.TotalSeat > len(hall.CinemaSeats) {
-			validationErrors = append(validationErrors, fmt.Errorf("total Seat : %d is greater than the length of seats : %d to be inserted", hall.TotalSeat, len(hall.CinemaSeats)))
+		if len(hall.CinemaSeats) > hall.TotalSeat {
+			validationErrors = append(validationErrors, fmt.Errorf("total Seat: %d is less than the number of seats for a hall: %d to be inserted", hall.TotalSeat, len(hall.CinemaSeats)))
 		}
 
 		for j, seat := range hall.CinemaSeats {
 			if seat.SeatNumber <= 0 {
-				validationErrors = append(validationErrors, fmt.Errorf("CinemaSeat[%d].SeatNumber should not have a negative number", j))
+				validationErrors = append(validationErrors, fmt.Errorf("Halls[%d].CinemaSeat[%d].SeatNumber should not have a negative number", i, j))
 			}
 
 			if seat.Type <= 0 {
-				validationErrors = append(validationErrors, fmt.Errorf("CinemaSeat[%d].Type should not have a negative number", j))
+				validationErrors = append(validationErrors, fmt.Errorf("Halls[%d].CinemaSeat[%d].Type should not have a negative number", i, j))
 			}
 		}
 	}

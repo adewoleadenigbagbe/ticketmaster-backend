@@ -9,6 +9,6 @@ import (
 func cinemaRoutes(app *core.BaseApp, group *echo.Group) {
 	cinemaController := controllers.CinemaController{App: app}
 	group.POST("cinemas", cinemaController.CreateCinemaHandler)
-	group.POST("cinemas/:id/cinemaHall", cinemaController.CreateCinemaHallHandler)
-	group.POST("cinemas/:id/cinemaHall/:cinemaHallId", cinemaController.CreateCinemaSeatHandler)
+	group.POST("cinemas/:id/cinemahall", cinemaController.CreateCinemaHallHandler)
+	group.POST("cinemas/:id/cinemahall/:cinemahallId", cinemaController.CreateCinemaSeatHandler)
 }

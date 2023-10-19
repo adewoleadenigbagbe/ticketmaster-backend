@@ -102,7 +102,7 @@ paths:
       summary: Show the status of server.
       tags:
       - root
-  /api/v1/cinemas/{id}/cinemaHall:
+  /api/v1/cinemas/{id}/cinemahall:
     get:
       consumes:
       - application/json
