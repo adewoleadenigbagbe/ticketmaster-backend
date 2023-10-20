@@ -23,12 +23,12 @@ definitions:
     type: object
   services.CinemaHallRequest:
     properties:
-      cinemaId:
-        type: string
       halls:
         items:
           $ref: '#/definitions/services.CinemaHallModel'
         type: array
+      id:
+        type: string
     type: object
   services.CinemaHallResponse:
     properties:
@@ -52,6 +52,22 @@ definitions:
         type: string
       state:
         type: string
+    type: object
+  services.CreateCinemaSeatRequest:
+    properties:
+      cinemaHallId:
+        type: string
+      cinemaSeats:
+        items:
+          $ref: '#/definitions/services.CinemaSeatModel'
+        type: array
+      id:
+        type: string
+    type: object
+  services.CreateCinemaSeatResponse:
+    properties:
+      statusCode:
+        type: integer
     type: object
   services.MovieDataResponse:
     properties:
@@ -103,7 +119,7 @@ paths:
       tags:
       - root
   /api/v1/cinemas/{id}/cinemahall:
-    get:
+    post:
       consumes:
       - application/json
       description: Create a halls to existing cinema
@@ -139,6 +155,46 @@ paths:
               type: string
             type: array
       summary: Create a halls to existing cinema
+      tags:
+      - cinemas
+  /api/v1/cinemas/{id}/cinemahall/{cinemahallId}/seat:
+    post:
+      consumes:
+      - application/json
+      description: Create a existing seats to halls
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: CinemaHallId
+        in: path
+        name: cinemahallId
+        required: true
+        type: string
+      - description: CreateCinemaSeatRequest
+        in: body
+        name: CreateCinemaSeatRequest
+        required: true
+        schema:
+          $ref: '#/definitions/services.CreateCinemaSeatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.CreateCinemaSeatResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Create a existing seats to halls
       tags:
       - cinemas
   /api/v1/city/{id}:

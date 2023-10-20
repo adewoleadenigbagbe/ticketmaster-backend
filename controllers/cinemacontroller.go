@@ -36,7 +36,7 @@ func (cinemaController CinemaController) CreateCinemaHandler(cinemaContext echo.
 // @Success      200  {object}  services.CinemaHallResponse
 // @Failure      400  {object}  []string
 // @Failure      404  {object}  []string
-// @Router       /api/v1/cinemas/{id}/cinemahall [get]
+// @Router       /api/v1/cinemas/{id}/cinemahall [post]
 func (cinemaController CinemaController) CreateCinemaHallHandler(cinemaContext echo.Context) error {
 	var err error
 	request := new(services.CinemaHallRequest)
@@ -65,11 +65,12 @@ func (cinemaController CinemaController) CreateCinemaHallHandler(cinemaContext e
 // @Accept       json
 // @Produce      json
 // @Param        id  path  string  true  "Id"
+// @Param        cinemahallId  path  string  true  "CinemaHallId"
 // @Param        CreateCinemaSeatRequest  body  services.CreateCinemaSeatRequest  true  "CreateCinemaSeatRequest"
 // @Success      200  {object}  services.CreateCinemaSeatResponse
 // @Failure      400  {object}  string
 // @Failure      404  {object}  string
-// @Router       /api/v1/cinemas/{id}/cinemahall/{cinemahallId} [get]
+// @Router       /api/v1/cinemas/{id}/cinemahall/{cinemahallId}/seat [post]
 func (cinemaController CinemaController) CreateCinemaSeatHandler(cinemaContext echo.Context) error {
 	var err error
 	request := new(services.CreateCinemaSeatRequest)
@@ -84,8 +85,9 @@ func (cinemaController CinemaController) CreateCinemaSeatHandler(cinemaContext e
 	for _, er := range respErrors {
 		errors = append(errors, er.Error())
 	}
-	if err != nil {
-		return cinemaContext.JSON(http.StatusBadRequest, errors)
+
+	if len(errors) != 0 {
+		return cinemaContext.JSON(resp.StatusCode, errors)
 	}
 	return cinemaContext.JSON(http.StatusOK, resp)
 }

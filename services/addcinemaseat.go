@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
@@ -34,6 +35,7 @@ type CinemaSeatDTO struct {
 }
 
 func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest) (CreateCinemaSeatResponse, []error) {
+
 	validationErrors := validateCinemSeatRequiredFields(request)
 	if len(validationErrors) > 0 {
 		return CreateCinemaSeatResponse{StatusCode: http.StatusBadRequest}, validationErrors
@@ -80,8 +82,11 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 		i++
 	}
 
-	numOfSeats := len(request.Seats)
-	if existingHalls.TotalSeat < numOfSeats {
+	if reflect.ValueOf(existingHalls).IsZero() {
+		return CreateCinemaSeatResponse{StatusCode: http.StatusBadRequest}, []error{errors.New("cinema info not found")}
+	}
+
+	if existingHalls.TotalSeat < len(request.Seats) {
 		return CreateCinemaSeatResponse{StatusCode: http.StatusBadRequest}, []error{fmt.Errorf(("total number of cinema seats in the system is less that the new seats to add"))}
 	}
 
@@ -117,7 +122,7 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 	for _, exSeat := range existingSeats {
 		for _, seat := range request.Seats {
 			if exSeat.SeatNumber == seat.SeatNumber {
-				return CreateCinemaSeatResponse{StatusCode: http.StatusBadRequest}, []error{errors.New("seat number already exist in the db")}
+				return CreateCinemaSeatResponse{StatusCode: http.StatusBadRequest}, []error{errors.New("seat number already exist in the system")}
 			}
 		}
 	}
@@ -131,6 +136,7 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 					SeatNumber:   seat.SeatNumber,
 					Type:         int(seat.Type),
 					IsDeprecated: false,
+					CinemaHallId: request.CinemaHallId,
 				}
 
 				if err = tx.Create(&cinemaSeat).Error; err != nil {
@@ -170,11 +176,11 @@ func validateCinemSeatRequiredFields(request CreateCinemaSeatRequest) []error {
 
 	for i, seat := range request.Seats {
 		if seat.SeatNumber <= 0 {
-			validationErrors = append(validationErrors, fmt.Errorf("CinemaSeat[%d].SeatNumber should not have a negative number", i))
+			validationErrors = append(validationErrors, fmt.Errorf("CinemaSeat[%d].SeatNumber should not have be zero or negative number", i))
 		}
 
 		if seat.Type <= 0 {
-			validationErrors = append(validationErrors, fmt.Errorf("CinemaSeat[%d].Type should not have a negative number", i))
+			validationErrors = append(validationErrors, fmt.Errorf("CinemaSeat[%d].Type should not have be zero or negative number", i))
 		}
 
 	}

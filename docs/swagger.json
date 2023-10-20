@@ -46,7 +46,7 @@
             }
         },
         "/api/v1/cinemas/{id}/cinemahall": {
-            "get": {
+            "post": {
                 "description": "Create a halls to existing cinema",
                 "consumes": [
                     "application/json"
@@ -99,6 +99,66 @@
                             "items": {
                                 "type": "string"
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/cinemas/{id}/cinemahall/{cinemahallId}/seat": {
+            "post": {
+                "description": "Create a existing seats to halls",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cinemas"
+                ],
+                "summary": "Create a existing seats to halls",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CinemaHallId",
+                        "name": "cinemahallId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "CreateCinemaSeatRequest",
+                        "name": "CreateCinemaSeatRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.CreateCinemaSeatRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.CreateCinemaSeatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -227,14 +287,14 @@
         "services.CinemaHallRequest": {
             "type": "object",
             "properties": {
-                "cinemaId": {
-                    "type": "string"
-                },
                 "halls": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/services.CinemaHallModel"
                     }
+                },
+                "id": {
+                    "type": "string"
                 }
             }
         },
@@ -271,6 +331,31 @@
                 },
                 "state": {
                     "type": "string"
+                }
+            }
+        },
+        "services.CreateCinemaSeatRequest": {
+            "type": "object",
+            "properties": {
+                "cinemaHallId": {
+                    "type": "string"
+                },
+                "cinemaSeats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.CinemaSeatModel"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.CreateCinemaSeatResponse": {
+            "type": "object",
+            "properties": {
+                "statusCode": {
+                    "type": "integer"
                 }
             }
         },
