@@ -79,9 +79,13 @@ func (cinemaController CinemaController) CreateCinemaSeatHandler(cinemaContext e
 		return cinemaContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	resp, err := cinemaController.App.CinemaService.AddCinemaSeat(*request)
+	resp, respErrors := cinemaController.App.CinemaService.AddCinemaSeat(*request)
+	errors := []string{}
+	for _, er := range respErrors {
+		errors = append(errors, er.Error())
+	}
 	if err != nil {
-		return cinemaContext.JSON(http.StatusBadRequest, err.Error())
+		return cinemaContext.JSON(http.StatusBadRequest, errors)
 	}
 	return cinemaContext.JSON(http.StatusOK, resp)
 }
