@@ -85,7 +85,6 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 		return CreateCinemaSeatResponse{StatusCode: http.StatusBadRequest}, []error{fmt.Errorf(("total number of cinema seats in the system is less that the new seats to add"))}
 	}
 
-	//check for duplicates seat number in the DB
 	cinemaHallQuery, err := cinemaService.DB.Table("cinemaHalls").
 		Where("cinemaHalls.Id = ?", existingHalls.CinemaHallId).
 		Where("cinemaHalls.IsDeprecated = ?", false).
@@ -93,6 +92,12 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 		Where("cinemaSeats.IsDeprecated = ?", false).
 		Select("cinemaHalls.Id AS CinemaHallId, cinemaSeats.SeatNumber AS SeatNumber").
 		Rows()
+
+	if err != nil {
+		return CreateCinemaSeatResponse{StatusCode: http.StatusInternalServerError}, []error{err}
+	}
+
+	defer cinemaHallQuery.Close()
 
 	var existingSeats []CinemaSeatDTO
 	for cinemaHallQuery.Next() {
