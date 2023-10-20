@@ -58,6 +58,18 @@ func (cinemaController CinemaController) CreateCinemaHallHandler(cinemaContext e
 	return cinemaContext.JSON(http.StatusOK, response)
 }
 
+// CreateCinemaSeat godoc
+// @Summary      Create a existing seats to halls
+// @Description   Create a existing seats to halls
+// @Tags         cinemas
+// @Accept       json
+// @Produce      json
+// @Param        id  path  string  true  "Id"
+// @Param        CreateCinemaSeatRequest  body  services.CreateCinemaSeatRequest  true  "CreateCinemaSeatRequest"
+// @Success      200  {object}  services.CreateCinemaSeatResponse
+// @Failure      400  {object}  string
+// @Failure      404  {object}  string
+// @Router       /api/v1/cinemas/{id}/cinemahall/{cinemahallId} [get]
 func (cinemaController CinemaController) CreateCinemaSeatHandler(cinemaContext echo.Context) error {
 	var err error
 	request := new(services.CreateCinemaSeatRequest)
