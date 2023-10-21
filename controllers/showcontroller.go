@@ -60,7 +60,20 @@ func (showController ShowController) GetShowsByUserLocationHandler(showContext e
 // @Failure      400  {object}  []string
 // @Failure      404  {object}  []string
 // @Router       /api/v1/shows/{id}/available-seat [get]
-func (showController ShowController) GetAvailableShowSeat(showContext echo.Context) error {
+func (showController ShowController) GetAvailableShowSeatHandler(showContext echo.Context) error {
+	var err error
+	request := new(services.GetAvailableSeatRequest)
+	err = showContext.Bind(request)
+
+	if err != nil {
+		return showContext.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	resp, err := showController.App.ShowService.GetAvailableShowSeat(*request)
+
+	if err != nil{
+		
+	}
 
 	return nil
 }
