@@ -47,3 +47,20 @@ func (showController ShowController) GetShowsByUserLocationHandler(showContext e
 	}
 	return showContext.JSON(http.StatusOK, resp)
 }
+
+// GetAvailableShowSeat godoc
+// @Summary      Get the available seat for a particular show
+// @Description  Get the available seat for a particular show
+// @Tags         shows
+// @Accept       json
+// @Produce      json
+// @Param        id  path  string  true  "Id"
+// @Param        CinemaHallRequest  body  services.CinemaHallRequest  true  "CinemaHallRequest"
+// @Success      200  {object}  services.CinemaHallResponse
+// @Failure      400  {object}  []string
+// @Failure      404  {object}  []string
+// @Router       /api/v1/shows/{id}/available-seat [get]
+func (showController ShowController) GetAvailableShowSeat(showContext echo.Context) error {
+
+	return nil
+}
