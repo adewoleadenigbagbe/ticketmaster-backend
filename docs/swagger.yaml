@@ -1,16 +1,105 @@
 basePath: /
+definitions:
+  enums.SeatType:
+    enum:
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - Premium
+    - Standard
+    - Gold
+  services.CinemaHallModel:
+    properties:
+      cinemaSeats:
+        items:
+          $ref: '#/definitions/services.CinemaSeatModel'
+        type: array
+      name:
+        type: string
+      totalSeat:
+        type: integer
+    type: object
+  services.CinemaHallRequest:
+    properties:
+      halls:
+        items:
+          $ref: '#/definitions/services.CinemaHallModel'
+        type: array
+      id:
+        type: string
+    type: object
+  services.CinemaHallResponse:
+    properties:
+      CinemaId:
+        type: string
+    type: object
+  services.CinemaSeatModel:
+    properties:
+      seatNumber:
+        type: integer
+      type:
+        $ref: '#/definitions/enums.SeatType'
+    type: object
+  services.CityModelResponse:
+    properties:
+      id:
+        type: string
+      isDeprecated:
+        type: boolean
+      name:
+        type: string
+      state:
+        type: string
+    type: object
+  services.CreateCinemaSeatRequest:
+    properties:
+      cinemaHallId:
+        type: string
+      cinemaSeats:
+        items:
+          $ref: '#/definitions/services.CinemaSeatModel'
+        type: array
+      id:
+        type: string
+    type: object
+  services.CreateCinemaSeatResponse:
+    properties:
+      statusCode:
+        type: integer
+    type: object
+  services.MovieDataResponse:
+    properties:
+      description:
+        type: string
+      genre:
+        type: integer
+      id:
+        type: string
+      language:
+        type: string
+      popularity:
+        type: number
+      releaseDate:
+        type: string
+      title:
+        type: string
+      voteCount:
+        type: integer
+    type: object
 host: localhost:8185
 info:
   contact:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: This is a sample server server.
+  description: Contains all the endpoint for the ticketmaster app
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: Echo Swagger Example API
+  title: TicketMaster Endpoints
   version: "1.0"
 paths:
   /:
@@ -29,6 +118,143 @@ paths:
       summary: Show the status of server.
       tags:
       - root
+  /api/v1/cinemas/{id}/cinemahall:
+    post:
+      consumes:
+      - application/json
+      description: Create a halls to existing cinema
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: CinemaHallRequest
+        in: body
+        name: CinemaHallRequest
+        required: true
+        schema:
+          $ref: '#/definitions/services.CinemaHallRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.CinemaHallResponse'
+        "400":
+          description: Bad Request
+          schema:
+            items:
+              type: string
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            items:
+              type: string
+            type: array
+      summary: Create a halls to existing cinema
+      tags:
+      - cinemas
+  /api/v1/cinemas/{id}/cinemahall/{cinemahallId}/seat:
+    post:
+      consumes:
+      - application/json
+      description: Create a existing seats to halls
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: CinemaHallId
+        in: path
+        name: cinemahallId
+        required: true
+        type: string
+      - description: CreateCinemaSeatRequest
+        in: body
+        name: CreateCinemaSeatRequest
+        required: true
+        schema:
+          $ref: '#/definitions/services.CreateCinemaSeatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.CreateCinemaSeatResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Create a existing seats to halls
+      tags:
+      - cinemas
+  /api/v1/city/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a particular city by ID
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.CityModelResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Get city by ID
+      tags:
+      - cities
+  /api/v1/movies/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a particular movie by ID
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.MovieDataResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Get movie by ID
+      tags:
+      - movies
 schemes:
 - http
 swagger: "2.0"

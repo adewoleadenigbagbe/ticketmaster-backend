@@ -2,12 +2,13 @@ package routes
 
 import (
 	"github.com/Wolechacho/ticketmaster-backend/controllers"
+	"github.com/Wolechacho/ticketmaster-backend/core"
 	"github.com/labstack/echo/v4"
 )
 
-func movieRoutes(group *echo.Group) {
-	movieController := controllers.MovieController{}
-	group.GET("movies", movieController.GetMovies)
-	group.GET("movies/:id", movieController.GetMovieById)
-	group.GET("movies/search", movieController.SearchMovie)
+func movieRoutes(app *core.BaseApp, group *echo.Group) {
+	movieController := controllers.MovieController{App: app}
+	group.GET("movies", movieController.GetMoviesHandler)
+	group.GET("movies/:id", movieController.GetMovieByIdHandler)
+	group.GET("movies/search", movieController.SearchMovieHandler)
 }

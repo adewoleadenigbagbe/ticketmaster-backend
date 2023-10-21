@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"time"
 
-	db "github.com/Wolechacho/ticketmaster-backend/database"
+	"github.com/Wolechacho/ticketmaster-backend/core"
 	_ "github.com/Wolechacho/ticketmaster-backend/docs"
 	middlewares "github.com/Wolechacho/ticketmaster-backend/middleware"
 	"github.com/Wolechacho/ticketmaster-backend/routes"
@@ -16,9 +16,9 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-// @title Echo Swagger Example API
+// @title TicketMaster Endpoints
 // @version 1.0
-// @description This is a sample server server.
+// @description Contains all the endpoint for the ticketmaster app
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support
@@ -30,37 +30,36 @@ import (
 
 // @host localhost:8185
 // @BasePath /
+// Consumes:
+//      - application/json
+//   Produces:
+//   - application/json
 // @schemes http
 func main() {
 
-	//create a database connection
-	db.ConnectToDatabase()
-
-	// Create a new Echo instance
-	e := echo.New()
+	//configure application
+	app := core.ConfigureApp()
 
 	// set migration middleware
-	e.Use(middlewares.CheckMigrationCompatibility)
+	mc := middlewares.MigrationChanges{App: app}
+	app.Echo.Use(mc.CheckMigrationCompatibility)
 
-	e.Logger.SetLevel(log.INFO)
+	app.Echo.Logger.SetLevel(log.INFO)
 
 	// Define a route
-	e.GET("/", func(c echo.Context) error {
+	app.Echo.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 
-	e.GET("/swagger/*", echoSwagger.WrapHandler)
+	app.Echo.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	//Register All Routes
-	routes.RegisterAllRoutes(e)
-
-	// Start the server
-	e.Start(":8185")
+	routes.RegisterAllRoutes(app)
 
 	// Start server
 	go func() {
-		if err := e.Start(":8185"); err != nil && err != http.ErrServerClosed {
-			e.Logger.Fatal("shutting down the server")
+		if err := app.Echo.Start(":8185"); err != nil && err != http.ErrServerClosed {
+			app.Echo.Logger.Fatal("shutting down the server")
 		}
 	}()
 
@@ -70,8 +69,8 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := e.Shutdown(ctx); err != nil {
-		e.Logger.Fatal(err)
+	if err := app.Echo.Shutdown(ctx); err != nil {
+		app.Echo.Logger.Fatal(err)
 	}
 }
 
