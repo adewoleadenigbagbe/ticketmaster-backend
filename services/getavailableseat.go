@@ -65,6 +65,7 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 
 	defer seatQuery.Close()
 
+	//TODO: something needs to be done when there no show seat already
 	var seatsDTO []SeatDTO
 	for seatQuery.Next() {
 		seatDTO := SeatDTO{}
