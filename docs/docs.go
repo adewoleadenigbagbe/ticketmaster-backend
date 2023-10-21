@@ -48,6 +48,349 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/cinemas/{id}/cinemahall": {
+            "post": {
+                "description": "Create a halls to existing cinema",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cinemas"
+                ],
+                "summary": "Create a halls to existing cinema",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "CinemaHallRequest",
+                        "name": "CinemaHallRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.CinemaHallRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.CinemaHallResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/cinemas/{id}/cinemahall/{cinemahallId}/seat": {
+            "post": {
+                "description": "Create a existing seats to halls",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cinemas"
+                ],
+                "summary": "Create a existing seats to halls",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CinemaHallId",
+                        "name": "cinemahallId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "CreateCinemaSeatRequest",
+                        "name": "CreateCinemaSeatRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.CreateCinemaSeatRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.CreateCinemaSeatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/city/{id}": {
+            "get": {
+                "description": "Get a particular city by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cities"
+                ],
+                "summary": "Get city by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.CityModelResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/movies/{id}": {
+            "get": {
+                "description": "Get a particular movie by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "movies"
+                ],
+                "summary": "Get movie by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.MovieDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "enums.SeatType": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3
+            ],
+            "x-enum-varnames": [
+                "Premium",
+                "Standard",
+                "Gold"
+            ]
+        },
+        "services.CinemaHallModel": {
+            "type": "object",
+            "properties": {
+                "cinemaSeats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.CinemaSeatModel"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "totalSeat": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.CinemaHallRequest": {
+            "type": "object",
+            "properties": {
+                "halls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.CinemaHallModel"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.CinemaHallResponse": {
+            "type": "object",
+            "properties": {
+                "CinemaId": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.CinemaSeatModel": {
+            "type": "object",
+            "properties": {
+                "seatNumber": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/enums.SeatType"
+                }
+            }
+        },
+        "services.CityModelResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "isDeprecated": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.CreateCinemaSeatRequest": {
+            "type": "object",
+            "properties": {
+                "cinemaHallId": {
+                    "type": "string"
+                },
+                "cinemaSeats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.CinemaSeatModel"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.CreateCinemaSeatResponse": {
+            "type": "object",
+            "properties": {
+                "statusCode": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.MovieDataResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "genre": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "popularity": {
+                    "type": "number"
+                },
+                "releaseDate": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "voteCount": {
+                    "type": "integer"
+                }
+            }
         }
     }
 }`
@@ -58,8 +401,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8185",
 	BasePath:         "/",
 	Schemes:          []string{"http"},
-	Title:            "Echo Swagger Example API",
-	Description:      "This is a sample server server.",
+	Title:            "TicketMaster Endpoints",
+	Description:      "Contains all the endpoint for the ticketmaster app",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

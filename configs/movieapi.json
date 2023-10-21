@@ -1,0 +1,5 @@
+{
+    "url" : "https://api.themoviedb.org/3/movie/popular?language=en-US",
+    "apiKey" : "6a4af6431ecf275b09f733a9ed14fe96",
+    "auth" : "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2YTRhZjY0MzFlY2YyNzViMDlmNzMzYTllZDE0ZmU5NiIsInN1YiI6IjY0YWU3ZGVjNjZhMGQzMDEwMGRiYTFhYiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WS39L-os2iWGQyRJAflD_VzuWLda4BvpWkBHcXOgbG0"
+}

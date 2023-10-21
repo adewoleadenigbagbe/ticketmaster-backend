@@ -1,12 +1,15 @@
 package routes
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/Wolechacho/ticketmaster-backend/core"
 )
 
 // RegisterRoutes - Configuration for all incoming routes
-func RegisterAllRoutes(echo *echo.Echo) {
-	//movie routes
-	group := echo.Group("/api/v1/")
-	movieRoutes(group)
+func RegisterAllRoutes(app *core.BaseApp) {
+	group := app.Echo.Group("/api/v1/")
+	movieRoutes(app, group)
+	showRoutes(app, group)
+	cityRoutes(app, group)
+	cinemaRoutes(app, group)
+	userRoutes(app, group)
 }
