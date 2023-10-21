@@ -61,19 +61,23 @@ func (showController ShowController) GetShowsByUserLocationHandler(showContext e
 // @Failure      404  {object}  []string
 // @Router       /api/v1/shows/{id}/available-seat [get]
 func (showController ShowController) GetAvailableShowSeatHandler(showContext echo.Context) error {
-	var err error
 	request := new(services.GetAvailableSeatRequest)
-	err = showContext.Bind(request)
+	err := showContext.Bind(request)
 
 	if err != nil {
 		return showContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	resp, err := showController.App.ShowService.GetAvailableShowSeat(*request)
+	resp, errors := showController.App.ShowService.GetAvailableShowSeat(*request)
 
-	if err != nil{
-		
+	if err != nil {
+		respErrors := []string{}
+		for _, err := range errors {
+			respErrors = append(respErrors, err.Error())
+		}
+
+		return showContext.JSON(resp.StatusCode, respErrors)
 	}
 
-	return nil
+	return showContext.JSON(http.StatusOK, resp)
 }

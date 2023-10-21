@@ -65,17 +65,43 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 
 	defer seatQuery.Close()
 
-	var seats []SeatDTO
+	var seatsDTO []SeatDTO
 	for seatQuery.Next() {
 		seatDTO := SeatDTO{}
 		err = seatQuery.Scan(&seatDTO.SeatNumber, &seatDTO.BookingId, &seatDTO.CinemaSeatId, &seatDTO.Price, &seatDTO.SeatId, &seatDTO.SeatType, &seatDTO.Status)
 		if err != nil {
 			return GetAvailableSeatResponse{StatusCode: http.StatusInternalServerError}, []error{err}
 		}
-		seats = append(seats, seatDTO)
+		seatsDTO = append(seatsDTO, seatDTO)
 	}
 
-	return nil
+	resp := GetAvailableSeatResponse{StatusCode: http.StatusOK, Id: request.Id}
+
+	// groupedSeats := lo.GroupBy(seatsDTO, func(item SeatDTO) enums.ShowSeatStatus {
+	// 	return enums.ShowSeatStatus(item.Status)
+	// })
+
+	for _, seatDTO := range seatsDTO {
+		seat := ShowSeatResponse{
+			SeatId:       seatDTO.SeatId,
+			CinemaSeatId: seatDTO.CinemaSeatId,
+			SeatNumber:   seatDTO.SeatNumber,
+			SeatType:     enums.SeatType(seatDTO.SeatType),
+			Price:        seatDTO.Price,
+		}
+
+		if seatDTO.Status == int(enums.Available) {
+			seat.Status = enums.Available
+			resp.AvailableShowSeats = append(resp.AvailableShowSeats, seat)
+		} else if seatDTO.Status == int(enums.Reserved) {
+			seat.Status = enums.Reserved
+			resp.ReservedShowSeats = append(resp.ReservedShowSeats, seat)
+		} else if seatDTO.Status == int(enums.Booked) {
+			seat.Status = enums.Booked
+			resp.BookedShowSeats = append(resp.BookedShowSeats, seat)
+		}
+	}
+	return resp, nil
 }
 
 func validateAvailableSeat(request GetAvailableSeatRequest) []error {
