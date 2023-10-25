@@ -23,23 +23,23 @@ type GetAvailableSeatResponse struct {
 }
 
 type ShowSeatResponse struct {
-	SeatId       string               `json:"seatId"`
-	CinemaSeatId string               `json:"cinemaSeatId"`
-	BookingId    string               `json:"bookingId"`
+	SeatId       sql.NullString       `json:"seatId"`
+	CinemaSeatId sql.NullString       `json:"cinemaSeatId"`
+	BookingId    sql.NullString       `json:"bookingId"`
 	SeatNumber   int                  `json:"seatNumber"`
 	SeatType     enums.SeatType       `json:"seatType"`
 	Status       enums.ShowSeatStatus `json:"status"`
-	Price        float64              `json:"price"`
+	Price        sql.NullFloat64      `json:"price"`
 }
 
 type SeatDTO struct {
-	SeatId       string
-	CinemaSeatId string
+	SeatId       sql.NullString
+	CinemaSeatId sql.NullString
 	BookingId    sql.NullString
 	SeatNumber   int
 	SeatType     int
-	Status       int
-	Price        float64
+	Status       sql.NullInt32
+	Price        sql.NullFloat64
 }
 
 func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequest) (GetAvailableSeatResponse, []error) {
@@ -64,8 +64,6 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 	}
 
 	defer seatQuery.Close()
-
-	//TODO: something needs to be done when there no show seat already
 	var seatsDTO []SeatDTO
 	for seatQuery.Next() {
 		seatDTO := SeatDTO{}
@@ -78,10 +76,6 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 
 	resp := GetAvailableSeatResponse{StatusCode: http.StatusOK, Id: request.Id}
 
-	// groupedSeats := lo.GroupBy(seatsDTO, func(item SeatDTO) enums.ShowSeatStatus {
-	// 	return enums.ShowSeatStatus(item.Status)
-	// })
-
 	for _, seatDTO := range seatsDTO {
 		seat := ShowSeatResponse{
 			SeatId:       seatDTO.SeatId,
@@ -89,18 +83,25 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 			SeatNumber:   seatDTO.SeatNumber,
 			SeatType:     enums.SeatType(seatDTO.SeatType),
 			Price:        seatDTO.Price,
+			BookingId:    seatDTO.BookingId,
 		}
 
-		if seatDTO.Status == int(enums.Available) {
+		if !seatDTO.SeatId.Valid && seat.SeatId.String == "" {
 			seat.Status = enums.Available
 			resp.AvailableShowSeats = append(resp.AvailableShowSeats, seat)
-		} else if seatDTO.Status == int(enums.Reserved) {
-			seat.Status = enums.Reserved
-			resp.ReservedShowSeats = append(resp.ReservedShowSeats, seat)
-		} else if seatDTO.Status == int(enums.Booked) {
-			seat.Status = enums.Booked
-			resp.BookedShowSeats = append(resp.BookedShowSeats, seat)
+		} else {
+			if int(seatDTO.Status.Int32) == int(enums.Booked) {
+				seat.Status = enums.Booked
+				resp.BookedShowSeats = append(resp.BookedShowSeats, seat)
+			} else if int(seatDTO.Status.Int32) == int(enums.Reserved) {
+				seat.Status = enums.Reserved
+				resp.ReservedShowSeats = append(resp.ReservedShowSeats, seat)
+			} else {
+				seat.Status = enums.Available
+				resp.AvailableShowSeats = append(resp.AvailableShowSeats, seat)
+			}
 		}
+
 	}
 	return resp, nil
 }

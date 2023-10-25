@@ -11,15 +11,15 @@ import (
 )
 
 type ShowSeat struct {
-	Id           string         `gorm:"column:Id"`
-	Status       int            `gorm:"column:Status"`
-	Price        float64        `gorm:"column:Price"`
-	CinemaSeatId string         `gorm:"column:CinemaSeatId"`
-	ShowId       string         `gorm:"column:ShowId"`
-	BookingId    sql.NullString `gorm:"column:BookingId"`
-	IsDeprecated bool           `gorm:"column:IsDeprecated"`
-	CreatedOn    time.Time      `gorm:"column:CreatedOn;autoCreateTime"`
-	ModifiedOn   time.Time      `gorm:"column:ModifiedOn;autoUpdateTime"`
+	Id           string               `gorm:"column:Id"`
+	Status       enums.ShowSeatStatus `gorm:"column:Status"`
+	Price        float64              `gorm:"column:Price"`
+	CinemaSeatId string               `gorm:"column:CinemaSeatId"`
+	ShowId       string               `gorm:"column:ShowId"`
+	BookingId    sql.NullString       `gorm:"column:BookingId"`
+	IsDeprecated bool                 `gorm:"column:IsDeprecated"`
+	CreatedOn    time.Time            `gorm:"column:CreatedOn;autoCreateTime"`
+	ModifiedOn   time.Time            `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
 func (showSeat *ShowSeat) BeforeCreate(tx *gorm.DB) (err error) {
