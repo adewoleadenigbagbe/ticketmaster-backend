@@ -12,4 +12,5 @@ func RegisterAllRoutes(app *core.BaseApp) {
 	cityRoutes(app, group)
 	cinemaRoutes(app, group)
 	userRoutes(app, group)
+	bookingRoutes(app, group)
 }
