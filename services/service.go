@@ -21,3 +21,7 @@ type ShowService struct {
 type UserService struct {
 	DB *gorm.DB
 }
+
+type AuthService struct {
+	DB *gorm.DB
+}
