@@ -13,12 +13,14 @@ type User struct {
 	Id           string         `gorm:"column:Id"`
 	FirstName    string         `gorm:"column:FirstName"`
 	LastName     string         `gorm:"column:LastName"`
+	RoleId       string         `gorm:"column:RoleId"`
 	Email        string         `gorm:"column:Email"`
 	PhoneNumber  sql.NullString `gorm:"column:PhoneNumber"`
 	Password     string         `gorm:"column:Password"`
 	IsDeprecated bool           `gorm:"column:IsDeprecated"`
 	CreatedOn    time.Time      `gorm:"column:CreatedOn;autoCreateTime"`
 	ModifiedOn   time.Time      `gorm:"column:ModifiedOn;autoUpdateTime"`
+	UserRole     UserRole       `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:RESTRICT;"`
 }
 
 func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
