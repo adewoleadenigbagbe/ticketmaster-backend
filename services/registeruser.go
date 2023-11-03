@@ -76,7 +76,7 @@ func validateUser(request CreateUserRequest) []error {
 	return validationErrors
 }
 
-func (userService UserService) CreateUser(request CreateUserRequest) CreateUserResponse {
+func (authService AuthService) RegisterUser(request CreateUserRequest) CreateUserResponse {
 	var err error
 	fieldsErrors := validateUser(request)
 	if len(fieldsErrors) != 0 {
@@ -93,7 +93,7 @@ func (userService UserService) CreateUser(request CreateUserRequest) CreateUserR
 		IsDeprecated: false,
 	}
 
-	err = userService.DB.Transaction(func(tx *gorm.DB) error {
+	err = authService.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&user).Error; err != nil {
 			// return any error will rollback
 			return err

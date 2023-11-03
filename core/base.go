@@ -17,6 +17,7 @@ type BaseApp struct {
 	MovieService       services.MovieService
 	ShowService        services.ShowService
 	UserService        services.UserService
+	AuthService        services.AuthService
 }
 
 func ConfigureApp() *BaseApp {
@@ -32,6 +33,7 @@ func ConfigureApp() *BaseApp {
 		MovieService:       services.MovieService{DB: db},
 		ShowService:        services.ShowService{DB: db},
 		UserService:        services.UserService{DB: db},
+		AuthService:        services.AuthService{DB: db},
 	}
 
 	return app

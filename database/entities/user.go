@@ -2,10 +2,13 @@ package entities
 
 import (
 	"database/sql"
+	"html"
+	"strings"
 	"time"
 
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -24,11 +27,23 @@ type User struct {
 }
 
 func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
-	if len(user.Id) == 0 || user.Id == utilities.DEFAULT_UUID {
+	if len(user.Id) < 36 || user.Id == utilities.DEFAULT_UUID {
 		user.Id = sequentialguid.New().String()
 	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	user.Password = string(passwordHash)
+	user.FirstName = html.EscapeString(strings.TrimSpace(user.FirstName))
+	user.LastName = html.EscapeString(strings.TrimSpace(user.LastName))
 	user.IsDeprecated = false
 	return
+}
+
+func (user *User) BeforeSave(tx *gorm.DB) (err error) {
+	
 }
 
 func (user User) GetId() string {
