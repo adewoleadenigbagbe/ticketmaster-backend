@@ -166,13 +166,40 @@ CREATE TABLE Users (
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE Bookings;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 DROP TABLE Cinemas;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 DROP TABLE CinemaHalls;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 DROP TABLE CinemaSeats;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 DROP TABLE Cities;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 DROP TABLE Movies;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 DROP TABLE Payments;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 DROP TABLE Shows;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 DROP TABLE ShowSeats;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 DROP TABLE Users;
 -- +goose StatementEnd
