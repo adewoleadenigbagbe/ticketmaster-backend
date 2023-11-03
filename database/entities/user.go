@@ -2,6 +2,8 @@ package entities
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
 	"html"
 	"strings"
 	"time"
@@ -43,7 +45,24 @@ func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 func (user *User) BeforeSave(tx *gorm.DB) (err error) {
-	
+	var result *gorm.DB
+	result = tx.Where("Email = ?", user.Email).
+		Where("IsDeprecated = ?", false).
+		First(user)
+
+	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("email already in use")
+	}
+
+	result = tx.Where("Password = ?", user.Password).
+		Where("IsDeprecated = ?", false).
+		First(user)
+
+	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("password already taken")
+	}
+
+	return nil
 }
 
 func (user User) GetId() string {

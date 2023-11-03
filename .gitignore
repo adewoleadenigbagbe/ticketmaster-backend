@@ -15,13 +15,5 @@
 # vendor/
 tmp
 
-
 # Environmental variables
-.env
-
-
-# Environmental variables
-.env
-
-#Environmental variables
 .env

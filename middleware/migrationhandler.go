@@ -18,8 +18,6 @@ const (
 	TargetFolderPath = "database\\migrations"
 )
 
-var ()
-
 type MigrationChanges struct {
 	App *core.BaseApp
 }
