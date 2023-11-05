@@ -25,7 +25,11 @@ type User struct {
 	IsDeprecated bool           `gorm:"column:IsDeprecated"`
 	CreatedOn    time.Time      `gorm:"column:CreatedOn;autoCreateTime"`
 	ModifiedOn   time.Time      `gorm:"column:ModifiedOn;autoUpdateTime"`
-	UserRole     UserRole       `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:RESTRICT;"`
+	UserRole     UserRole       `gorm:"foreignKey:RoleId;references:Id;constraint:OnUpdate:RESTRICT,OnDelete:RESTRICT"`
+}
+
+func (User) TableName() string {
+	return "Users"
 }
 
 func (user *User) BeforeCreate(tx *gorm.DB) (err error) {

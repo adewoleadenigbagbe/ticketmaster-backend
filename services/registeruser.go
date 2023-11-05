@@ -24,6 +24,7 @@ type CreateUserRequest struct {
 	Email       string  `json:"email"`
 	Password    string  `json:"password"`
 	PhoneNumber string  `json:"phoneNumber"`
+	RoleId      string  `json:"roleId"`
 	CityId      string  `json:"cityId"`
 	Address     string  `json:"address"`
 	Longitude   float32 `json:"longitude"`
@@ -31,9 +32,8 @@ type CreateUserRequest struct {
 }
 
 type CreateUserResponse struct {
-	UserId     string  `json:"userId"`
-	Errors     []error `json:"errors"`
-	StatusCode int     `json:"statusCode"`
+	UserId     string `json:"userId"`
+	StatusCode int    `json:"statusCode"`
 }
 
 func validateUser(request CreateUserRequest) []error {
@@ -76,11 +76,11 @@ func validateUser(request CreateUserRequest) []error {
 	return validationErrors
 }
 
-func (authService AuthService) RegisterUser(request CreateUserRequest) CreateUserResponse {
+func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUserResponse, []error) {
 	var err error
 	fieldsErrors := validateUser(request)
 	if len(fieldsErrors) != 0 {
-		return CreateUserResponse{Errors: fieldsErrors, StatusCode: http.StatusBadRequest}
+		return CreateUserResponse{StatusCode: http.StatusBadRequest}, fieldsErrors
 	}
 
 	user := entities.User{
@@ -88,10 +88,12 @@ func (authService AuthService) RegisterUser(request CreateUserRequest) CreateUse
 		FirstName:    request.FirstName,
 		LastName:     request.LastName,
 		Email:        request.Email,
+		RoleId:       request.RoleId,
 		Password:     request.Password,
 		PhoneNumber:  sql.NullString{String: request.PhoneNumber, Valid: true},
 		IsDeprecated: false,
 	}
+
 
 	err = authService.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&user).Error; err != nil {
@@ -121,8 +123,8 @@ func (authService AuthService) RegisterUser(request CreateUserRequest) CreateUse
 	})
 
 	if err != nil {
-		return CreateUserResponse{Errors: []error{err}, StatusCode: http.StatusBadRequest}
+		return CreateUserResponse{StatusCode: http.StatusBadRequest}, []error{err}
 	}
 
-	return CreateUserResponse{UserId: user.Id, Errors: []error{}, StatusCode: http.StatusOK}
+	return CreateUserResponse{UserId: user.Id, StatusCode: http.StatusOK}, nil
 }
