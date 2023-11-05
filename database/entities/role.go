@@ -27,9 +27,9 @@ func (userRole *UserRole) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 func (UserRole) TableName() string {
-	return "Cinemas"
+	return "UserRoles"
 }
 
-func (user UserRole) GetId() string {
-	return user.Id
+func (userRole UserRole) GetId() string {
+	return userRole.Id
 }

@@ -16,6 +16,7 @@ type CreateRoleRequest struct {
 }
 
 type CreateRoleResponse struct {
+	UserRoleId string `json:"userRoleId"`
 	StatusCode int
 }
 
@@ -39,7 +40,7 @@ func (userService UserService) AddRole(request CreateRoleRequest) (CreateRoleRes
 		return CreateRoleResponse{StatusCode: http.StatusBadRequest}, []error{err}
 	}
 
-	return CreateRoleResponse{StatusCode: http.StatusOK}, nil
+	return CreateRoleResponse{StatusCode: http.StatusOK, UserRoleId: userRole.Id}, nil
 }
 
 func validateRole(request CreateRoleRequest) []error {
@@ -52,7 +53,7 @@ func validateRole(request CreateRoleRequest) []error {
 		vErrors = append(vErrors, fmt.Errorf("description field is required"))
 	}
 
-	if request.Role < 0 {
+	if request.Role <= 0 {
 		vErrors = append(vErrors, fmt.Errorf("role field is required"))
 	}
 
