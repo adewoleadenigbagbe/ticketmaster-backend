@@ -43,6 +43,17 @@ func (authController AuthController) RegisterHandler(authContext echo.Context) e
 	return authContext.JSON(http.StatusOK, response)
 }
 
+// Auth godoc
+// @Summary     SignIn user
+// @Description    SignIn user
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Param        SignInRequest  body  services.SignInRequest  true  "SignInRequest"
+// @Success      200  {object}  services.SignInResponse
+// @Failure      400  {object}  []string
+// @Failure      404  {object}  []string
+// @Router       /api/v1/auth/signin [post]
 func (authController AuthController) SignInHandler(authContext echo.Context) error {
 	var err error
 	request := new(services.SignInRequest)
@@ -60,4 +71,9 @@ func (authController AuthController) SignInHandler(authContext echo.Context) err
 		return authContext.JSON(resp.StatusCode, messageErrors)
 	}
 	return authContext.JSON(http.StatusOK, resp)
+}
+
+func (authController AuthController) SignOutHandler(authContext echo.Context) error {
+	authContext.SetCookie(&http.Cookie{})
+	return authContext.JSON(http.StatusOK, "success")
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
+	"github.com/Wolechacho/ticketmaster-backend/enums"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
@@ -75,7 +76,7 @@ func ValidateAdminRoleJWT(context echo.Context) error {
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
 	userRole := uint(claims["role"].(float64))
-	if ok && token.Valid && userRole == 1 {
+	if ok && token.Valid && userRole == uint(enums.Admin) {
 		return nil
 	}
 	return errors.New("invalid admin token provided")
@@ -89,25 +90,8 @@ func ValidateUserRoleJWT(context echo.Context) error {
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
 	userRole := uint(claims["role"].(float64))
-	if ok && token.Valid && userRole == 2 || userRole == 1 {
+	if ok && token.Valid && userRole == uint(enums.EndUser) {
 		return nil
 	}
-	return errors.New("invalid user or admin token provided")
+	return errors.New("invalid user token provided")
 }
-
-// fetch user details from the token
-// func CurrentUser(context *echo.Context) entities.User {
-// 	err := ValidateJWT(context)
-// 	if err != nil {
-// 		return entities.User{}
-// 	}
-// 	token, _ := getToken(context)
-// 	claims, _ := token.Claims.(jwt.MapClaims)
-// 	userId := uint(claims["id"].(float64))
-
-// 	user, err := model.GetUserById(userId)
-// 	if err != nil {
-// 		return model.User{}
-// 	}
-// 	return user
-// }

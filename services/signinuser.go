@@ -29,19 +29,23 @@ func (authService AuthService) SignIn(request SignInRequest) (SignInResponse, []
 	if len(validationErrors) > 0 {
 		return SignInResponse{StatusCode: http.StatusBadRequest}, validationErrors
 	}
-	var user entities.User
-	hashedPassword := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
+
+	var user *entities.User
 	err = authService.DB.Where("Email = ?", request.Email).
-		Where("Password = ?", hashedPassword).
 		Where("IsDeprecated = ?", false).
-		Preload("userroles").
-		First(user).Error
+		Preload("UserRole").
+		First(&user).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return SignInResponse{StatusCode: http.StatusBadRequest}, []error{fmt.Errorf("email or password not found")}
 	}
 
-	token, err := jwtauth.GenerateJWT(user)
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
+	if err != nil {
+		return SignInResponse{StatusCode: http.StatusBadRequest}, []error{fmt.Errorf("email or password not found")}
+	}
+
+	token, err := jwtauth.GenerateJWT(*user)
 	if err != nil {
 		return SignInResponse{StatusCode: http.StatusBadRequest}, []error{err}
 	}

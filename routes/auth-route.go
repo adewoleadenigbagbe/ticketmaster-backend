@@ -9,4 +9,6 @@ import (
 func authRoutes(app *core.BaseApp, group *echo.Group) {
 	authController := controllers.AuthController{App: app}
 	group.POST("auth/register", authController.RegisterHandler)
+	group.POST("auth/signin", authController.SignInHandler)
+	group.POST("auth/signout", authController.SignOutHandler)
 }

@@ -12,12 +12,12 @@ func AuthorizeUser(next echo.HandlerFunc) echo.HandlerFunc {
 		var err error
 		err = jwtauth.ValidateJWT(context)
 		if err != nil {
-			context.JSON(http.StatusUnauthorized, "Authentication required")
+			return context.JSON(http.StatusUnauthorized, "Authentication required")
 		}
 
 		err = jwtauth.ValidateUserRoleJWT(context)
 		if err != nil {
-			context.JSON(http.StatusForbidden, "You are not allowed to access this resource")
+			return context.JSON(http.StatusForbidden, "You are not allowed to access this resource")
 		}
 		return next(context)
 	}
@@ -28,12 +28,12 @@ func AuthorizeAdmin(next echo.HandlerFunc) echo.HandlerFunc {
 		var err error
 		err = jwtauth.ValidateJWT(context)
 		if err != nil {
-			context.JSON(http.StatusUnauthorized, "Authentication required")
+			return context.JSON(http.StatusUnauthorized, "Authentication required")
 		}
 
 		err = jwtauth.ValidateAdminRoleJWT(context)
 		if err != nil {
-			context.JSON(http.StatusForbidden, "You are not allowed to access this resource")
+			return context.JSON(http.StatusForbidden, "You are not allowed to access this resource")
 		}
 		return next(context)
 	}
