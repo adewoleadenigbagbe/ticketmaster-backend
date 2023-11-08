@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/Wolechacho/ticketmaster-backend/enums"
@@ -12,6 +13,8 @@ import (
 type GetAvailableSeatRequest struct {
 	Id           string `param:"id"`
 	CinemaHallId string `json:"cinemaHallId"`
+	SortBy       string `json:"sortBy"`
+	Order        string `json:"order"`
 }
 
 type GetAvailableSeatResponse struct {
@@ -23,13 +26,13 @@ type GetAvailableSeatResponse struct {
 }
 
 type ShowSeatResponse struct {
-	SeatId       sql.NullString       `json:"seatId"`
-	CinemaSeatId sql.NullString       `json:"cinemaSeatId"`
-	BookingId    sql.NullString       `json:"bookingId"`
-	SeatNumber   int                  `json:"seatNumber"`
-	SeatType     enums.SeatType       `json:"seatType"`
-	Status       enums.ShowSeatStatus `json:"status"`
-	Price        sql.NullFloat64      `json:"price"`
+	SeatId       utilities.JsonNullString `json:"seatId"`
+	CinemaSeatId utilities.JsonNullString `json:"cinemaSeatId"`
+	BookingId    utilities.JsonNullString `json:"bookingId"`
+	SeatNumber   int                      `json:"seatNumber"`
+	SeatType     enums.SeatType           `json:"seatType"`
+	Status       enums.ShowSeatStatus     `json:"status"`
+	Price        utilities.JsonNullFloat  `json:"price"`
 }
 
 type SeatDTO struct {
@@ -48,15 +51,25 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 		return GetAvailableSeatResponse{StatusCode: http.StatusBadRequest}, errs
 	}
 
+	if request.SortBy == "" {
+		request.SortBy = "SeatNumber"
+	}
+
+	if request.Order == "" {
+		request.Order = "asc"
+	}
+
+	sortOrder := fmt.Sprint(request.SortBy, " ", request.Order)
+
 	var err error
 	seatQuery, err := showService.DB.Table("cinemaseats").
 		Where("cinemaseats.CinemaHallId = ?", request.CinemaHallId).
 		Where("cinemaseats.IsDeprecated = ?", false).
 		Joins("left join showseats on cinemaseats.Id = showseats.CinemaSeatId").
-		Where("showseats.ShowId = ?", request.Id).
-		Where("showseats.IsDeprecated = ?", false).
+		Where("showseats.ShowId = ? OR showseats.ShowId IS NULL", request.Id).
+		Where("showseats.IsDeprecated = ? OR showseats.IsDeprecated IS NULL", false).
 		Select("cinemaseats.SeatNumber AS SeatNumber, cinemaseats.Type AS SeatType, showseats.Id AS SeatId, showseats.Status AS Status,showseats.Price AS SeatPrice, showseats.CinemaSeatId AS CinemaSeatId, showseats.BookingId AS BookingId").
-		Group("Status").
+		Order(sortOrder).
 		Rows()
 
 	if err != nil {
@@ -67,23 +80,28 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 	var seatsDTO []SeatDTO
 	for seatQuery.Next() {
 		seatDTO := SeatDTO{}
-		err = seatQuery.Scan(&seatDTO.SeatNumber, &seatDTO.BookingId, &seatDTO.CinemaSeatId, &seatDTO.Price, &seatDTO.SeatId, &seatDTO.SeatType, &seatDTO.Status)
+		err = seatQuery.Scan(&seatDTO.SeatNumber, &seatDTO.SeatType, &seatDTO.SeatId, &seatDTO.Status, &seatDTO.Price, &seatDTO.CinemaSeatId, &seatDTO.BookingId)
 		if err != nil {
 			return GetAvailableSeatResponse{StatusCode: http.StatusInternalServerError}, []error{err}
 		}
 		seatsDTO = append(seatsDTO, seatDTO)
 	}
 
-	resp := GetAvailableSeatResponse{StatusCode: http.StatusOK, Id: request.Id}
+	resp := GetAvailableSeatResponse{StatusCode: http.StatusOK,
+		Id:                 request.Id,
+		AvailableShowSeats: []ShowSeatResponse{},
+		ReservedShowSeats:  []ShowSeatResponse{},
+		BookedShowSeats:    []ShowSeatResponse{},
+	}
 
 	for _, seatDTO := range seatsDTO {
 		seat := ShowSeatResponse{
-			SeatId:       seatDTO.SeatId,
-			CinemaSeatId: seatDTO.CinemaSeatId,
+			SeatId:       utilities.JsonNullString{NullString: seatDTO.SeatId},
+			CinemaSeatId: utilities.JsonNullString{NullString: seatDTO.CinemaSeatId},
 			SeatNumber:   seatDTO.SeatNumber,
 			SeatType:     enums.SeatType(seatDTO.SeatType),
-			Price:        seatDTO.Price,
-			BookingId:    seatDTO.BookingId,
+			Price:        utilities.JsonNullFloat{NullFloat64: seatDTO.Price},
+			BookingId:    utilities.JsonNullString{NullString: seatDTO.BookingId},
 		}
 
 		if !seatDTO.SeatId.Valid && seat.SeatId.String == "" {

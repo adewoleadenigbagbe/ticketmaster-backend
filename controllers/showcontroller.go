@@ -70,7 +70,7 @@ func (showController ShowController) GetAvailableShowSeatHandler(showContext ech
 
 	resp, errors := showController.App.ShowService.GetAvailableShowSeat(*request)
 
-	if err != nil {
+	if len(errors) != 0 {
 		respErrors := []string{}
 		for _, err := range errors {
 			respErrors = append(respErrors, err.Error())
