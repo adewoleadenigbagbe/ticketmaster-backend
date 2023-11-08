@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,6 +12,7 @@ import (
 	_ "github.com/Wolechacho/ticketmaster-backend/docs"
 	middlewares "github.com/Wolechacho/ticketmaster-backend/middleware"
 	"github.com/Wolechacho/ticketmaster-backend/routes"
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -36,6 +38,12 @@ import (
 //   - application/json
 // @schemes http
 func main() {
+	//load env variables
+	err := godotenv.Load("..//.env")
+	if err != nil {
+		fmt.Println(err)
+		log.Fatal("Error loading .env file")
+	}
 
 	//configure application
 	app := core.ConfigureApp()

@@ -14,9 +14,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// retrieve JWT key from .env file
-var privateKey = []byte(os.Getenv("JWT_PRIVATE_KEY"))
-
 // generate JWT token
 func GenerateJWT(user entities.User) (string, error) {
 	tokenTTL, _ := strconv.Atoi(os.Getenv("TOKEN_TTL"))
@@ -24,10 +21,12 @@ func GenerateJWT(user entities.User) (string, error) {
 		"id":    user.Id,
 		"role":  user.UserRole.Role,
 		"email": user.Email,
-		"exp":   tokenTTL,
+		"exp":    time.Now().Add(time.Second * time.Duration(tokenTTL)).Unix(),
 		"iat":   time.Now().Unix(),
 		"eat":   time.Now().Add(time.Second * time.Duration(tokenTTL)).Unix(),
 	})
+
+	privateKey := []byte(os.Getenv("JWT_PRIVATE_KEY"))
 	return token.SignedString(privateKey)
 }
 
@@ -51,7 +50,7 @@ func getToken(context echo.Context) (*jwt.Token, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-
+		privateKey := []byte(os.Getenv("JWT_PRIVATE_KEY"))
 		return privateKey, nil
 	})
 	return token, err
@@ -75,8 +74,9 @@ func ValidateAdminRoleJWT(context echo.Context) error {
 		return err
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
-	userRole := uint(claims["role"].(float64))
-	if ok && token.Valid && userRole == uint(enums.Admin) {
+	role := uint(claims["role"].(float64))
+
+	if ok && token.Valid && role == uint(enums.Admin) {
 		return nil
 	}
 	return errors.New("invalid admin token provided")
@@ -89,8 +89,8 @@ func ValidateUserRoleJWT(context echo.Context) error {
 		return err
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
-	userRole := uint(claims["role"].(float64))
-	if ok && token.Valid && userRole == uint(enums.EndUser) {
+	role := uint(claims["role"].(float64))
+	if ok && token.Valid && role == uint(enums.EndUser) {
 		return nil
 	}
 	return errors.New("invalid user token provided")
