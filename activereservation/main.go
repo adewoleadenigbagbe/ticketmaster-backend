@@ -103,13 +103,11 @@ func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn) {
 		}
 
 		//add to cache
-		//cache.Lock()
 		if !cache.Exists(message.UserId) {
 			cache.Add(message.UserId, 0, message)
 		} else {
 			fmt.Println("already done before")
 		}
-		//cache.Unlock()
 	})
 }
 
@@ -227,9 +225,7 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, showId string
 
 				//no error
 				if dbErr == nil {
-					cache.Lock()
 					cache.Delete(showId)
-					cache.Unlock()
 				}
 			}
 		}
