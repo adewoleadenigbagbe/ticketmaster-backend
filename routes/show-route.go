@@ -10,4 +10,5 @@ func showRoutes(app *core.BaseApp, group *echo.Group) {
 	showController := controllers.ShowController{App: app}
 	group.POST("shows", showController.CreateShowHandler)
 	group.GET("shows/user-location", showController.GetShowsByUserLocationHandler)
+	group.GET("shows/:id/available-seat", showController.GetAvailableShowSeatHandler)
 }

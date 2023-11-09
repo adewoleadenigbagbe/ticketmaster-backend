@@ -8,6 +8,7 @@ require (
 	github.com/labstack/gommon v0.4.0
 	github.com/nats-io/nats.go v1.31.0
 	github.com/samber/lo v1.38.1
+	github.com/samber/lo v1.38.1
 	github.com/swaggo/echo-swagger v1.4.0
 	github.com/swaggo/swag v1.16.1
 	gorm.io/driver/mysql v1.5.1
