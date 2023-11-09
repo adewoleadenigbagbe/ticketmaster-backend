@@ -6,6 +6,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/core"
 	"github.com/Wolechacho/ticketmaster-backend/services"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 )
 
 type BookingController struct {
@@ -21,7 +22,13 @@ func (bookingController BookingController) BookShowHandler(bookingContext echo.C
 		return bookingContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	bookingController.App.BookService.BookShow(*request)
+	resp, errors := bookingController.App.BookService.BookShow(*request)
+	if len(errors) > 0 {
+		errs := lo.Map(errors, func(e error, index int) string {
+			return e.Error()
+		})
+		return bookingContext.JSON(resp.StatusCode, errs)
+	}
 
-	return nil
+	return bookingContext.JSON(http.StatusOK, resp)
 }

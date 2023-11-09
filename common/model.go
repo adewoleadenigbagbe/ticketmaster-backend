@@ -10,7 +10,7 @@ type BookingMessage struct {
 	UserId          string
 	ShowId          string
 	CinemaSeatIds   []string
-	Status          enums.BookingStatus
+	Status          enums.ShowSeatStatus
 	BookingDateTime time.Time
 	ExpiryDateTime  time.Time
 }

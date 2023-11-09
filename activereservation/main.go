@@ -29,10 +29,11 @@ type DbQuery struct {
 
 type ShowSeatDTO struct {
 	Id           string
-	Status       enums.BookingStatus
+	Status       enums.ShowSeatStatus
 	CinemaSeatId string
 	ShowId       string
 	SeatNumber   int
+	UserId       string
 }
 
 func main() {
@@ -84,29 +85,31 @@ func main() {
 	}
 
 	addMessagetoCache(cache, nc)
-	checkExpiredReservation(cache, db)
+	fmt.Println(db.Error)
+	///checkExpiredReservation(cache, db)
 
 	wg.Wait()
 }
 
 func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn) {
 	nc.Subscribe(common.EventSubject, func(m *nats.Msg) {
-		fmt.Print("Received a message:")
-
 		buf := bytes.NewBuffer(m.Data)
 		dec := gob.NewDecoder(buf)
 		var message common.BookingMessage
 		err := dec.Decode(&message)
+		fmt.Println("Receiving Message:", message)
 		if err != nil {
 			log.Fatal("decode error:", err)
 		}
 
 		//add to cache
-		cache.Lock()
-		cache.Add(message.UserId, 0, message)
-		cache.Unlock()
-
-		//cache.SetAboutToDeleteItemCallback()
+		//cache.Lock()
+		if !cache.Exists(message.UserId) {
+			cache.Add(message.UserId, 0, message)
+		} else {
+			fmt.Println("already done before")
+		}
+		//cache.Unlock()
 	})
 }
 
@@ -150,7 +153,7 @@ func checkExpiredReservation(cache *cache2go.CacheTable, db *gorm.DB) {
 					if len(mapQueries) > 0 {
 						for key, val := range mapQueries {
 							for _, v := range val {
-								setStatusToAvailable(db, key, v.CinemaSeatIds)
+								setStatusToAvailable(db, cache, key, v.CinemaSeatIds)
 							}
 						}
 
@@ -164,13 +167,14 @@ func checkExpiredReservation(cache *cache2go.CacheTable, db *gorm.DB) {
 	fmt.Println("Ticker stopped")
 }
 
-func setStatusToAvailable(db *gorm.DB, showId string, cinemaIds []string) {
+func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, showId string, cinemaIds []string) {
 	showSeatsQuery, err := db.Table("showseats").
 		Where("CinemaSeatId IN ?", cinemaIds).
 		Where("showseats.ShowId = ?", showId).
 		Where("showseats.IsDeprecated = ?", false).
 		Joins("join cinemaSeats on showseats.CinemaSeatId = cinemaSeats.Id").
-		Select("showseats.Id, showseats.Status, showseats.CinemaSeatId,showseats.ShowId,cinemaSeats.SeatNumber").
+		Joins("join bookings on showseats.BookingId = bookings.Id").
+		Select("showseats.Id, showseats.Status, showseats.CinemaSeatId,showseats.ShowId,cinemaSeats.SeatNumber,bookings.UserId").
 		Rows()
 
 	if err != nil {
@@ -182,9 +186,16 @@ func setStatusToAvailable(db *gorm.DB, showId string, cinemaIds []string) {
 	showSeats := []ShowSeatDTO{}
 	for showSeatsQuery.Next() {
 		var showSeatDTO ShowSeatDTO
-		err = showSeatsQuery.Scan(&showSeatDTO.Id, &showSeatDTO.Status, &showSeatDTO.CinemaSeatId, &showSeatDTO.ShowId, &showSeatDTO.SeatNumber)
+		err = showSeatsQuery.Scan(&showSeatDTO.Id,
+			&showSeatDTO.Status,
+			&showSeatDTO.CinemaSeatId,
+			&showSeatDTO.ShowId,
+			&showSeatDTO.SeatNumber,
+			&showSeatDTO.UserId)
+
 		if err != nil {
 			fmt.Println(err)
+			return
 		}
 		showSeats = append(showSeats, showSeatDTO)
 	}
@@ -192,8 +203,34 @@ func setStatusToAvailable(db *gorm.DB, showId string, cinemaIds []string) {
 	//update
 	_ = db.Transaction(func(tx *gorm.DB) error {
 		for _, showSeat := range showSeats {
-			if showSeat.Status == enums.Reserved || showSeat.Status == enums.PendingBook {
-				db.Table("showseats").Where("ShowId = ? AND CinemaSeatId = ?", showSeat.ShowId, showSeat.CinemaSeatId).Update("status", enums.Available)
+			if showSeat.Status == enums.Reserved || showSeat.Status == enums.PendingAssignment {
+				var dbErr error
+				dbErr = db.Transaction(func(tx *gorm.DB) error {
+					dbErr = db.Table("showseats").
+						Where("ShowId = ? AND CinemaSeatId = ?", showSeat.ShowId, showSeat.CinemaSeatId).
+						Where("IsDeprecated = ?", false).
+						Update("status", enums.Available).Error
+
+					if dbErr != nil {
+						return dbErr
+					}
+
+					dbErr = db.Table("bookings").
+						Where("ShowId = ? AND UserId = ?", showSeat.ShowId, showSeat.UserId).
+						Update("status", enums.Expired).Error
+
+					if dbErr != nil {
+						return dbErr
+					}
+					return nil
+				})
+
+				//no error
+				if dbErr == nil {
+					cache.Lock()
+					cache.Delete(showId)
+					cache.Unlock()
+				}
 			}
 		}
 		return nil

@@ -109,7 +109,7 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 			resp.AvailableShowSeats = append(resp.AvailableShowSeats, seat)
 		} else {
 			if int(seatDTO.Status.Int32) == int(enums.Booked) {
-				seat.Status = enums.Booked
+				seat.Status = enums.Assigned
 				resp.BookedShowSeats = append(resp.BookedShowSeats, seat)
 			} else if int(seatDTO.Status.Int32) == int(enums.Reserved) {
 				seat.Status = enums.Reserved

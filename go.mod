@@ -6,8 +6,8 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/labstack/gommon v0.4.0
+	github.com/muesli/cache2go v0.0.0-20221011235721-518229cd8021
 	github.com/nats-io/nats.go v1.31.0
-	github.com/samber/lo v1.38.1
 	github.com/samber/lo v1.38.1
 	github.com/swaggo/echo-swagger v1.4.0
 	github.com/swaggo/swag v1.16.1
@@ -32,7 +32,6 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/muesli/cache2go v0.0.0-20221011235721-518229cd8021 // indirect
 	github.com/nats-io/nkeys v0.4.5 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
