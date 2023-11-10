@@ -13,7 +13,7 @@ type CinemaHall struct {
 	Name         string       `gorm:"column:Name"`
 	TotalSeat    int          `gorm:"column:TotalSeat"`
 	CinemaId     string       `gorm:"column:CinemaId"`
-	CinemaSeats  []CinemaSeat `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	CinemaSeats  []CinemaSeat `gorm:"foreignKey:CinemaHallId;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	IsDeprecated bool         `gorm:"column:IsDeprecated"`
 	CreatedOn    time.Time    `gorm:"column:CreatedOn;autoCreateTime"`
 	ModifiedOn   time.Time    `gorm:"column:ModifiedOn;autoUpdateTime"`
