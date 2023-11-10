@@ -9,13 +9,14 @@ import (
 )
 
 type Cinema struct {
-	Id                string    `gorm:"column:Id"`
-	Name              string    `gorm:"column:Name"`
-	TotalCinemalHalls int       `gorm:"column:TotalCinemalHalls"`
-	CityId            string    `gorm:"column:CityId"`
-	IsDeprecated      bool      `gorm:"column:IsDeprecated"`
-	CreatedOn         time.Time `gorm:"column:CreatedOn;autoCreateTime"`
-	ModifiedOn        time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
+	Id                string       `gorm:"column:Id"`
+	Name              string       `gorm:"column:Name"`
+	TotalCinemalHalls int          `gorm:"column:TotalCinemalHalls"`
+	CityId            string       `gorm:"column:CityId"`
+	CinemaHalls       []CinemaHall `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	IsDeprecated      bool         `gorm:"column:IsDeprecated"`
+	CreatedOn         time.Time    `gorm:"column:CreatedOn;autoCreateTime"`
+	ModifiedOn        time.Time    `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
 func (Cinema) TableName() string {
