@@ -5,26 +5,22 @@ import (
 	"encoding/gob"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/Wolechacho/ticketmaster-backend/common"
+	db "github.com/Wolechacho/ticketmaster-backend/database"
 	"github.com/Wolechacho/ticketmaster-backend/enums"
-	"github.com/Wolechacho/ticketmaster-backend/models"
 	"github.com/muesli/cache2go"
 	"github.com/nats-io/nats.go"
 	"github.com/samber/lo"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
 )
 
 type DbQuery struct {
 	ShowId        string
 	CinemaSeatIds []string
+	UserId        string
 }
 
 type ShowSeatDTO struct {
@@ -51,47 +47,24 @@ func main() {
 	}
 
 	//connec to the db
-	rootFolderPath := "ticketmaster-backend"
-	dbConfigFilePath := "configs\\database.json"
+	db := db.ConnectToDatabase()
 
-	currentWorkingDirectory, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
+	addMessagetoCache(cache, nc, db)
+	setSeatStatusAfterExpiration(cache, db)
 
-	index := strings.Index(currentWorkingDirectory, rootFolderPath)
-	if index == -1 {
-		log.Fatal("App Root Folder Path not found")
-	}
-
-	rootPath := filepath.Join(currentWorkingDirectory[:index], rootFolderPath)
-
-	dbConfigPath := filepath.Join(rootPath, dbConfigFilePath)
-	content, err := os.ReadFile(dbConfigPath)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	dbConfig := models.CreateDbConfig(content)
-	dsn := dbConfig.GetDsn()
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{
-			NoLowerCase: true,
-		},
-	})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	addMessagetoCache(cache, nc)
-	fmt.Println(db.Error)
-	///checkExpiredReservation(cache, db)
+	// message := common.BookingMessage{
+	// 	UserId:          "200a0000-9fcd-3434-3262-316137392d30",
+	// 	ShowId:          "210a0000-642c-6361-3162-326437372d30",
+	// 	CinemaSeatIds:   []string{"210a0000-1d2c-6662-3636-366564622d39", "210a0000-1d2c-6361-3762-376363662d64"},
+	// 	Status:          2,
+	// 	BookingDateTime: time.Now(),
+	// 	ExpiryDateTime:  time.Now(),
+	// }
 
 	wg.Wait()
 }
 
-func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn) {
+func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn, db *gorm.DB) {
 	nc.Subscribe(common.EventSubject, func(m *nats.Msg) {
 		buf := bytes.NewBuffer(m.Data)
 		dec := gob.NewDecoder(buf)
@@ -111,7 +84,7 @@ func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn) {
 	})
 }
 
-func checkExpiredReservation(cache *cache2go.CacheTable, db *gorm.DB) {
+func setSeatStatusAfterExpiration(cache *cache2go.CacheTable, db *gorm.DB) {
 	ticker := time.NewTicker(5 * time.Minute)
 	done := make(chan bool)
 	go func() {
@@ -126,37 +99,7 @@ func checkExpiredReservation(cache *cache2go.CacheTable, db *gorm.DB) {
 				//expired reserve seat now available , while doing so
 				// check if the seat is already book while seating in cache
 				// do nothing if seat is already book
-
-				if cache.Count() > 0 {
-					filters := []DbQuery{}
-					now := time.Now()
-					cache.Foreach(func(key interface{}, item *cache2go.CacheItem) {
-						message, ok := item.Data().(*common.BookingMessage)
-						if ok {
-							if now.After(message.BookingDateTime) && now.After(message.ExpiryDateTime) {
-								query := DbQuery{
-									message.ShowId,
-									message.CinemaSeatIds,
-								}
-								filters = append(filters, query)
-							}
-						}
-					})
-
-					//group them
-					mapQueries := lo.GroupBy(filters, func(item DbQuery) string {
-						return item.ShowId
-					})
-
-					if len(mapQueries) > 0 {
-						for key, val := range mapQueries {
-							for _, v := range val {
-								setStatusToAvailable(db, cache, key, v.CinemaSeatIds)
-							}
-						}
-
-					}
-				}
+				checkAndSetExpiredItems(cache, db)
 			}
 		}
 	}()
@@ -165,9 +108,9 @@ func checkExpiredReservation(cache *cache2go.CacheTable, db *gorm.DB) {
 	fmt.Println("Ticker stopped")
 }
 
-func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, showId string, cinemaIds []string) {
+func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, showId string, filter DbQuery) {
 	showSeatsQuery, err := db.Table("showseats").
-		Where("CinemaSeatId IN ?", cinemaIds).
+		Where("CinemaSeatId IN ?", filter.CinemaSeatIds).
 		Where("showseats.ShowId = ?", showId).
 		Where("showseats.IsDeprecated = ?", false).
 		Joins("join cinemaSeats on showseats.CinemaSeatId = cinemaSeats.Id").
@@ -222,13 +165,45 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, showId string
 					}
 					return nil
 				})
-
-				//no error
-				if dbErr == nil {
-					cache.Delete(showId)
-				}
 			}
 		}
+
+		//no error
+		cache.Delete(filter.UserId)
 		return nil
 	})
+}
+
+func checkAndSetExpiredItems(cache *cache2go.CacheTable, db *gorm.DB) {
+	if cache.Count() > 0 {
+		filters := []DbQuery{}
+		now := time.Now()
+		cache.Foreach(func(key interface{}, item *cache2go.CacheItem) {
+			message, ok := item.Data().(common.BookingMessage)
+			if ok {
+				if now.After(message.BookingDateTime) && now.After(message.ExpiryDateTime) {
+					query := DbQuery{
+						message.ShowId,
+						message.CinemaSeatIds,
+						message.UserId,
+					}
+					filters = append(filters, query)
+				}
+			}
+		})
+
+		//group them
+		mapQueries := lo.GroupBy(filters, func(item DbQuery) string {
+			return item.ShowId
+		})
+
+		if len(mapQueries) > 0 {
+			for key, val := range mapQueries {
+				for _, v := range val {
+					setStatusToAvailable(db, cache, key, v)
+				}
+			}
+
+		}
+	}
 }
