@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"net/http"
+	"reflect"
 
 	"github.com/Wolechacho/ticketmaster-backend/core"
 	"github.com/Wolechacho/ticketmaster-backend/services"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 )
 
 type AuthController struct {
@@ -31,15 +33,14 @@ func (authController AuthController) RegisterHandler(authContext echo.Context) e
 		return authContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	response, errs := authController.App.AuthService.RegisterUser(*request)
-
-	if len(errs) > 0 {
-		respErrors := []string{}
-		for _, e := range errs {
-			respErrors = append(respErrors, e.Error())
-		}
-		return authContext.JSON(response.StatusCode, respErrors)
+	response, errResp := authController.App.AuthService.RegisterUser(*request)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
+		})
+		return authContext.JSON(errResp.StatusCode, errs)
 	}
+
 	return authContext.JSON(http.StatusOK, response)
 }
 
@@ -62,13 +63,12 @@ func (authController AuthController) SignInHandler(authContext echo.Context) err
 		return authContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	resp, errors := authController.App.AuthService.SignIn(*request)
-	if len(errors) > 0 {
-		messageErrors := []string{}
-		for _, er := range errors {
-			messageErrors = append(messageErrors, er.Error())
-		}
-		return authContext.JSON(resp.StatusCode, messageErrors)
+	resp, errResp := authController.App.AuthService.SignIn(*request)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
+		})
+		return authContext.JSON(errResp.StatusCode, errs)
 	}
 	return authContext.JSON(http.StatusOK, resp)
 }
