@@ -15,7 +15,10 @@
 # vendor/
 tmp
 
-#Environmental variables
+# Environmental variables
 .env
+
+*.vscode
+
 
 launch.json
