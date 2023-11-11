@@ -10,6 +10,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
+	"github.com/Wolechacho/ticketmaster-backend/models"
 	"gorm.io/gorm"
 )
 
@@ -32,8 +33,59 @@ type CreateUserRequest struct {
 }
 
 type CreateUserResponse struct {
-	UserId     string `json:"userId"`
-	StatusCode int    `json:"statusCode"`
+	UserId string `json:"userId"`
+}
+
+func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUserResponse, models.ErrrorResponse) {
+	var err error
+	fieldsErrors := validateUser(request)
+	if len(fieldsErrors) != 0 {
+		return CreateUserResponse{}, models.ErrrorResponse{Errors: fieldsErrors, StatusCode: http.StatusBadRequest}
+	}
+
+	user := entities.User{
+		Id:           sequentialguid.New().String(),
+		FirstName:    request.FirstName,
+		LastName:     request.LastName,
+		Email:        request.Email,
+		RoleId:       request.RoleId,
+		Password:     request.Password,
+		PhoneNumber:  sql.NullString{String: request.PhoneNumber, Valid: true},
+		IsDeprecated: false,
+	}
+
+	err = authService.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&user).Error; err != nil {
+			// return any error will rollback
+			return err
+		}
+
+		address := entities.Address{
+			Id:          sequentialguid.New().String(),
+			EntityId:    user.Id,
+			AddressType: enums.User,
+			AddressLine: request.Address,
+			CityId:      request.CityId,
+			Coordinates: entities.Coordinate{
+				Longitude: request.Longitude,
+				Latitude:  request.Latitude,
+			},
+			IsDeprecated: false,
+		}
+
+		if err := tx.Create(&address).Error; err != nil {
+			// return any error will rollback
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return CreateUserResponse{}, models.ErrrorResponse{Errors: []error{err}, StatusCode: http.StatusBadRequest}
+	}
+
+	return CreateUserResponse{UserId: user.Id}, models.ErrrorResponse{}
 }
 
 func validateUser(request CreateUserRequest) []error {
@@ -74,57 +126,4 @@ func validateUser(request CreateUserRequest) []error {
 	}
 
 	return validationErrors
-}
-
-func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUserResponse, []error) {
-	var err error
-	fieldsErrors := validateUser(request)
-	if len(fieldsErrors) != 0 {
-		return CreateUserResponse{StatusCode: http.StatusBadRequest}, fieldsErrors
-	}
-
-	user := entities.User{
-		Id:           sequentialguid.New().String(),
-		FirstName:    request.FirstName,
-		LastName:     request.LastName,
-		Email:        request.Email,
-		RoleId:       request.RoleId,
-		Password:     request.Password,
-		PhoneNumber:  sql.NullString{String: request.PhoneNumber, Valid: true},
-		IsDeprecated: false,
-	}
-
-
-	err = authService.DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&user).Error; err != nil {
-			// return any error will rollback
-			return err
-		}
-
-		address := entities.Address{
-			Id:          sequentialguid.New().String(),
-			EntityId:    user.Id,
-			AddressType: enums.User,
-			AddressLine: request.Address,
-			CityId:      request.CityId,
-			Coordinates: entities.Coordinate{
-				Longitude: request.Longitude,
-				Latitude:  request.Latitude,
-			},
-			IsDeprecated: false,
-		}
-
-		if err := tx.Create(&address).Error; err != nil {
-			// return any error will rollback
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return CreateUserResponse{StatusCode: http.StatusBadRequest}, []error{err}
-	}
-
-	return CreateUserResponse{UserId: user.Id, StatusCode: http.StatusOK}, nil
 }
