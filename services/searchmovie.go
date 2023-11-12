@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/Wolechacho/ticketmaster-backend/models"
 )
 
 type GetSearchRequest struct {
@@ -11,13 +13,12 @@ type GetSearchRequest struct {
 }
 
 type GetSearchResponse struct {
-	StatusCode int
-	Result     []MovieDataResponse `json:"results"`
+	Result []MovieDataResponse `json:"results"`
 }
 
-func (movieService MovieService) SearchMovie(request GetSearchRequest) (GetSearchResponse, error) {
+func (movieService MovieService) SearchMovie(request GetSearchRequest) (GetSearchResponse, models.ErrrorResponse) {
 	if len(request.Term) == 0 {
-		return GetSearchResponse{StatusCode: http.StatusBadRequest}, errors.New("enter a search term")
+		return GetSearchResponse{}, models.ErrrorResponse{Errors: []error{errors.New("enter a search term")}, StatusCode: http.StatusBadRequest}
 	}
 
 	var movieResult []MovieDataResponse
@@ -25,7 +26,7 @@ func (movieService MovieService) SearchMovie(request GetSearchRequest) (GetSearc
 	dbResult := movieService.DB.Raw(sqlQuery).Scan(&movieResult)
 
 	if dbResult.Error != nil {
-		return GetSearchResponse{StatusCode: http.StatusInternalServerError}, errors.New(dbResult.Error.Error())
+		return GetSearchResponse{}, models.ErrrorResponse{Errors: []error{dbResult.Error}, StatusCode: http.StatusInternalServerError}
 	}
-	return GetSearchResponse{Result: movieResult, StatusCode: http.StatusOK}, nil
+	return GetSearchResponse{Result: movieResult}, models.ErrrorResponse{}
 }

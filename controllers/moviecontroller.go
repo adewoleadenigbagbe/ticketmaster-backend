@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"net/http"
+	"reflect"
 
 	"github.com/Wolechacho/ticketmaster-backend/core"
 	"github.com/Wolechacho/ticketmaster-backend/services"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 )
 
 type MovieController struct {
@@ -42,13 +44,14 @@ func (movieController MovieController) GetMovieByIdHandler(movieContext echo.Con
 		return movieContext.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	resp, err := movieController.App.MovieService.GetMovieById(*req)
-
-	if err != nil {
-		return movieContext.JSON(resp.StatusCode, err.Error())
+	dataResp, errResp := movieController.App.MovieService.GetMovieById(*req)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
+		})
+		return movieContext.JSON(errResp.StatusCode, errs)
 	}
-
-	return movieContext.JSON(http.StatusOK, resp.Movie)
+	return movieContext.JSON(http.StatusOK, dataResp)
 }
 
 func (movieController MovieController) SearchMovieHandler(movieContext echo.Context) error {
@@ -60,11 +63,12 @@ func (movieController MovieController) SearchMovieHandler(movieContext echo.Cont
 		return movieContext.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	resp, err := movieController.App.MovieService.SearchMovie(*req)
-
-	if err != nil {
-		return movieContext.JSON(resp.StatusCode, err.Error())
+	dataResp, errResp := movieController.App.MovieService.SearchMovie(*req)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
+		})
+		return movieContext.JSON(errResp.StatusCode, errs)
 	}
-
-	return movieContext.JSON(http.StatusOK, resp)
+	return movieContext.JSON(http.StatusOK, dataResp)
 }
