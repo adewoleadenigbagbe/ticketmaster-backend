@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"net/http"
+	"reflect"
 
 	"github.com/Wolechacho/ticketmaster-backend/core"
 	"github.com/Wolechacho/ticketmaster-backend/services"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 )
 
 type CinemaController struct {
@@ -21,8 +23,14 @@ func (cinemaController CinemaController) CreateCinemaHandler(cinemaContext echo.
 		return cinemaContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	response := cinemaController.App.CinemaService.CreateCinema(*request)
-	return cinemaContext.JSON(http.StatusOK, response)
+	dataResp, errResp := cinemaController.App.CinemaService.CreateCinema(*request)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
+		})
+		return cinemaContext.JSON(errResp.StatusCode, errs)
+	}
+	return cinemaContext.JSON(http.StatusOK, dataResp)
 }
 
 // CreateCinemaHall godoc
@@ -46,16 +54,14 @@ func (cinemaController CinemaController) CreateCinemaHallHandler(cinemaContext e
 		return cinemaContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	response, fieldErrors := cinemaController.App.CinemaService.AddCinemaHall(*request)
-
-	if len(fieldErrors) > 0 {
-		errors := []string{}
-		for _, err = range fieldErrors {
-			errors = append(errors, err.Error())
-		}
-		return cinemaContext.JSON(http.StatusBadRequest, errors)
+	dataResp, errResp := cinemaController.App.CinemaService.AddCinemaHall(*request)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
+		})
+		return cinemaContext.JSON(errResp.StatusCode, errs)
 	}
-	return cinemaContext.JSON(http.StatusOK, response)
+	return cinemaContext.JSON(http.StatusOK, dataResp)
 }
 
 // CreateCinemaSeat godoc
@@ -80,14 +86,12 @@ func (cinemaController CinemaController) CreateCinemaSeatHandler(cinemaContext e
 		return cinemaContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	resp, respErrors := cinemaController.App.CinemaService.AddCinemaSeat(*request)
-	errors := []string{}
-	for _, er := range respErrors {
-		errors = append(errors, er.Error())
+	dataResp, errResp := cinemaController.App.CinemaService.AddCinemaSeat(*request)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
+		})
+		return cinemaContext.JSON(errResp.StatusCode, errs)
 	}
-
-	if len(errors) != 0 {
-		return cinemaContext.JSON(resp.StatusCode, errors)
-	}
-	return cinemaContext.JSON(http.StatusOK, resp)
+	return cinemaContext.JSON(http.StatusOK, dataResp)
 }
