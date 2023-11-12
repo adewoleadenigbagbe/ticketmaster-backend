@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"net/http"
+	"reflect"
 
 	"github.com/Wolechacho/ticketmaster-backend/core"
 	"github.com/Wolechacho/ticketmaster-backend/services"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 )
 
 type ShowController struct {
@@ -20,16 +22,14 @@ func (showController *ShowController) CreateShowHandler(showContext echo.Context
 		return showContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	resp, errors := showController.App.ShowService.CreateShow(*request)
-	respErrors := []string{}
-	if len(errors) != 0 {
-		for _, er := range errors {
-			respErrors = append(respErrors, er.Error())
-		}
-		return showContext.JSON(http.StatusBadRequest, respErrors)
+	dataResp, errResp := showController.App.ShowService.CreateShow(*request)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
+		})
+		return showContext.JSON(errResp.StatusCode, errs)
 	}
-
-	return showContext.JSON(http.StatusOK, resp)
+	return showContext.JSON(http.StatusOK, dataResp)
 }
 
 func (showController ShowController) GetShowsByUserLocationHandler(showContext echo.Context) error {
@@ -41,9 +41,12 @@ func (showController ShowController) GetShowsByUserLocationHandler(showContext e
 		return showContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	resp, err := showController.App.ShowService.GetShowsByUserLocation(*request)
-	if err != nil {
-		return showContext.JSON(resp.StatusCode, err.Error())
+	dataResp, errResp := showController.App.ShowService.GetShowsByUserLocation(*request)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
+		})
+		return showContext.JSON(errResp.StatusCode, errs)
 	}
-	return showContext.JSON(http.StatusOK, resp)
+	return showContext.JSON(http.StatusOK, dataResp)
 }
