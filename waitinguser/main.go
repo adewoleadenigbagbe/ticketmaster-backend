@@ -55,6 +55,12 @@ func main() {
 		//add to cache
 		if !cache.Exists(message.ShowId) {
 			cache.Add(message.ShowId, 0, message)
+		} else {
+			value, _ := cache.Value(message.ShowId)
+			cacheItem, _ := value.Data().(common.SeatAvailableMessage)
+			cache.Delete(message.ShowId)
+			message.CinemaSeatIds = append(message.CinemaSeatIds, cacheItem.CinemaSeatIds...)
+			cache.Add(message.ShowId, 0, message)
 		}
 
 		eventChan <- true
