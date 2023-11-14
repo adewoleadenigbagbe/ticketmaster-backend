@@ -18,6 +18,7 @@ import (
 )
 
 type DbQuery struct {
+	ItemKey       string
 	ShowId        string
 	CinemaSeatIds []string
 	UserId        string
@@ -161,7 +162,7 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, showId string
 		}
 
 		//no error
-		cache.Delete(filter.UserId)
+		cache.Delete(filter.ItemKey)
 		return nil
 	})
 }
@@ -174,10 +175,12 @@ func checkAndSetExpiredItems(cache *cache2go.CacheTable, db *gorm.DB) {
 			message, ok := item.Data().(common.BookingMessage)
 			if ok {
 				if now.After(message.BookingDateTime) && now.After(message.ExpiryDateTime) {
+					itemKey, _ := key.(string)
 					query := DbQuery{
-						message.ShowId,
-						message.CinemaSeatIds,
-						message.UserId,
+						ItemKey:       itemKey,
+						ShowId:        message.ShowId,
+						CinemaSeatIds: message.CinemaSeatIds,
+						UserId:        message.UserId,
 					}
 					filters = append(filters, query)
 				}
