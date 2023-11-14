@@ -38,7 +38,7 @@ func main() {
 	wg.Add(1)
 
 	// Accessing a new cache table for the first time will create it.
-	cache := cache2go.Cache("myCache")
+	cache := cache2go.Cache("reservationCache")
 
 	// connect to nats
 	nc, err := nats.Connect(nats.DefaultURL)
@@ -51,16 +51,6 @@ func main() {
 
 	addMessagetoCache(cache, nc, db)
 	setSeatStatusAfterExpiration(cache, db)
-
-	// message := common.BookingMessage{
-	// 	UserId:          "200a0000-9fcd-3434-3262-316137392d30",
-	// 	ShowId:          "210a0000-642c-6361-3162-326437372d30",
-	// 	CinemaSeatIds:   []string{"210a0000-1d2c-6662-3636-366564622d39", "210a0000-1d2c-6361-3762-376363662d64"},
-	// 	Status:          2,
-	// 	BookingDateTime: time.Now(),
-	// 	ExpiryDateTime:  time.Now(),
-	// }
-
 	wg.Wait()
 }
 
@@ -75,11 +65,13 @@ func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn, db *gorm.DB) {
 			log.Fatal("decode error:", err)
 		}
 
+		//make a unique , append with nano time
+		now := time.Now().UnixNano()
+		key := fmt.Sprint(now, message.UserId)
+
 		//add to cache
-		if !cache.Exists(message.UserId) {
-			cache.Add(message.UserId, 0, message)
-		} else {
-			fmt.Println("already done before")
+		if !cache.Exists(key) {
+			cache.Add(key, 0, message)
 		}
 	})
 }
