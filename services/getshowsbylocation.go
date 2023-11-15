@@ -23,16 +23,16 @@ type ShowsDTO struct {
 	Date        time.Time `json:"showDate"`
 	startTime   int64
 	endTime     int64
-	MovieId     string              `json:"movieId"`
-	Title       string              `json:"movieTitle"`
-	Description string              `json:"movieDescription"`
-	Language    string              `json:"language"`
-	Genre       int                 `json:"genre"`
-	StartTime   time.Time           `json:"showStartTime"`
-	EndTime     time.Time           `json:"showEndTime"`
-	AddressLine string              `json:"address"`
-	Coordinates entities.Coordinate `json:"coordinates"`
-	Distance    float64             `json:"distance"`
+	MovieId     string    `json:"movieId"`
+	Title       string    `json:"movieTitle"`
+	Description string    `json:"movieDescription"`
+	Language    string    `json:"language"`
+	Genre       int       `json:"genre"`
+	StartTime   time.Time `json:"showStartTime"`
+	EndTime     time.Time `json:"showEndTime"`
+	AddressLine string    `json:"address"`
+	//Coordinates entities.Coordinate `json:"coordinates"`
+	Distance float64 `json:"distance"`
 }
 
 type UserDTO struct {
@@ -104,6 +104,22 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		i++
 	}
 
+	// showQuery, err := showService.DB.Table("addresses").
+	// 	Where("addresses.CityId = ?", user.CityId).
+	// 	Where("addresses.IsDeprecated = ?", false).
+	// 	Where("addresses.AddressType = ?", enums.Cinema).
+	// 	Joins("join cinemas on addresses.EntityId = cinemas.Id").
+	// 	Where("cinemas.IsDeprecated = ?", false).
+	// 	Joins("join cinemaHalls on cinemas.Id = cinemaHalls.CinemaId").
+	// 	Where("cinemaHalls.IsDeprecated = ?", false).
+	// 	Joins("join shows on cinemaHalls.Id = shows.CinemaHallId").
+	// 	Where("shows.IsDeprecated = ?", false).
+	// 	Where("shows.IsCancelled = ?", false).
+	// 	Joins("join movies on shows.MovieId = movies.Id").
+	// 	Where("movies.IsDeprecated = ?", false).
+	// 	Select("shows.Id AS ShowId, shows.Date, shows.StartTime, shows.EndTime,movies.Id AS MovieId, movies.Title, movies.Description, movies.Language, movies.Genre,addresses.AddressLine, addresses.Coordinates").
+	// 	Rows()
+
 	showQuery, err := showService.DB.Table("addresses").
 		Where("addresses.CityId = ?", user.CityId).
 		Where("addresses.IsDeprecated = ?", false).
@@ -117,9 +133,9 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		Where("shows.IsCancelled = ?", false).
 		Joins("join movies on shows.MovieId = movies.Id").
 		Where("movies.IsDeprecated = ?", false).
-		Select("shows.Id AS ShowId, shows.Date, shows.StartTime, shows.EndTime,movies.Id AS MovieId, movies.Title, movies.Description, movies.Language, movies.Genre,addresses.AddressLine, addresses.Coordinates").
+		Select("shows.Id AS ShowId", "shows.Date", "shows.StartTime", "shows.EndTime", "movies.Id AS MovieId", "movies.Title", "movies.Description", "movies.Language", "movies.Genre", "addresses.AddressLine").
+		Select("ST_Distance_Sphere(addresses.Coordinates,?) AS Distance", user.Coordinates).
 		Rows()
-
 	if err != nil {
 		return GetShowsByLocationResponse{StatusCode: http.StatusInternalServerError}, err
 	}
@@ -130,16 +146,16 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 	for showQuery.Next() {
 		show := &ShowsDTO{}
 		err = showQuery.Scan(&show.ShowId, &show.Date, &show.startTime, &show.endTime, &show.MovieId, &show.Title,
-			&show.Description, &show.Language, &show.Genre, &show.AddressLine, &show.Coordinates)
+			&show.Description, &show.Language, &show.Genre, &show.AddressLine, &show.Distance)
 
 		if err != nil {
 			return GetShowsByLocationResponse{StatusCode: http.StatusInternalServerError}, err
 		}
 
-		show.StartTime = time.Unix(show.startTime, 0)
-		show.EndTime = time.Unix(show.endTime, 0)
+		// show.StartTime = time.Unix(show.startTime, 0)
+		// show.EndTime = time.Unix(show.endTime, 0)
 
-		show.Distance = distance(user.Coordinates, show.Coordinates)
+		// show.Distance = distance(user.Coordinates, show.Coordinates)
 
 		shows = append(shows, *show)
 	}
