@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"net/http"
+	"reflect"
 
 	"github.com/Wolechacho/ticketmaster-backend/core"
 	"github.com/Wolechacho/ticketmaster-backend/services"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 )
 
 type CinemaController struct {
@@ -90,4 +92,36 @@ func (cinemaController CinemaController) CreateCinemaSeatHandler(cinemaContext e
 		return cinemaContext.JSON(resp.StatusCode, errors)
 	}
 	return cinemaContext.JSON(http.StatusOK, resp)
+}
+
+// CinemaRateRequest godoc
+// @Summary      Add new rate for cinema
+// @Description   Add new rate for cinema
+// @Tags         cinemas
+// @Accept       json
+// @Produce      json
+// @Param        CinemaId  path  string  true  "CinemaId"
+// @Param        CinemaRateRequest  body  services.CinemaRateRequest  true  "CinemaRateRequest"
+// @Success      200  {object}  services.CinemaRateResponse
+// @Failure      400  {object}  string
+// @Failure      404  {object}  string
+// @Router       /api/v1/cinemas/{id}/rate [post]
+func (cinemaController CinemaController) AddCinemaRateHandler(cinemaContext echo.Context) error {
+	var err error
+	request := new(services.CinemaRateRequest)
+	err = cinemaContext.Bind(request)
+
+	if err != nil {
+		return cinemaContext.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	dataResp, errResp := cinemaController.App.CinemaService.AddCinemaRate(*request)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
+		})
+		return cinemaContext.JSON(errResp.StatusCode, errs)
+	}
+	return cinemaContext.JSON(http.StatusOK, dataResp)
+
 }
