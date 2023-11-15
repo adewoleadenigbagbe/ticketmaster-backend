@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"math"
 	"net/http"
 	"time"
@@ -104,22 +105,7 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		i++
 	}
 
-	// showQuery, err := showService.DB.Table("addresses").
-	// 	Where("addresses.CityId = ?", user.CityId).
-	// 	Where("addresses.IsDeprecated = ?", false).
-	// 	Where("addresses.AddressType = ?", enums.Cinema).
-	// 	Joins("join cinemas on addresses.EntityId = cinemas.Id").
-	// 	Where("cinemas.IsDeprecated = ?", false).
-	// 	Joins("join cinemaHalls on cinemas.Id = cinemaHalls.CinemaId").
-	// 	Where("cinemaHalls.IsDeprecated = ?", false).
-	// 	Joins("join shows on cinemaHalls.Id = shows.CinemaHallId").
-	// 	Where("shows.IsDeprecated = ?", false).
-	// 	Where("shows.IsCancelled = ?", false).
-	// 	Joins("join movies on shows.MovieId = movies.Id").
-	// 	Where("movies.IsDeprecated = ?", false).
-	// 	Select("shows.Id AS ShowId, shows.Date, shows.StartTime, shows.EndTime,movies.Id AS MovieId, movies.Title, movies.Description, movies.Language, movies.Genre,addresses.AddressLine, addresses.Coordinates").
-	// 	Rows()
-
+	distanceSelect := fmt.Sprintf("ST_Distance_Sphere(addresses.Coordinates,point(%f,%f)) AS Distance", user.Coordinates.Longitude, user.Coordinates.Latitude)
 	showQuery, err := showService.DB.Table("addresses").
 		Where("addresses.CityId = ?", user.CityId).
 		Where("addresses.IsDeprecated = ?", false).
@@ -133,9 +119,11 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		Where("shows.IsCancelled = ?", false).
 		Joins("join movies on shows.MovieId = movies.Id").
 		Where("movies.IsDeprecated = ?", false).
-		Select("shows.Id AS ShowId", "shows.Date", "shows.StartTime", "shows.EndTime", "movies.Id AS MovieId", "movies.Title", "movies.Description", "movies.Language", "movies.Genre", "addresses.AddressLine").
-		Select("ST_Distance_Sphere(addresses.Coordinates,?) AS Distance", user.Coordinates).
+		Select("shows.Id AS ShowId", "shows.Date", "shows.StartTime", "shows.EndTime", "movies.Id AS MovieId", "movies.Title", "movies.Description", "movies.Language", "movies.Genre", "addresses.AddressLine", distanceSelect).
+		Order("Distance ASC").
+		Limit(10).
 		Rows()
+
 	if err != nil {
 		return GetShowsByLocationResponse{StatusCode: http.StatusInternalServerError}, err
 	}
@@ -151,12 +139,8 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		if err != nil {
 			return GetShowsByLocationResponse{StatusCode: http.StatusInternalServerError}, err
 		}
-
-		// show.StartTime = time.Unix(show.startTime, 0)
-		// show.EndTime = time.Unix(show.endTime, 0)
-
-		// show.Distance = distance(user.Coordinates, show.Coordinates)
-
+		show.StartTime = time.Unix(show.startTime, 0)
+		show.EndTime = time.Unix(show.endTime, 0)
 		shows = append(shows, *show)
 	}
 
