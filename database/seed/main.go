@@ -281,32 +281,24 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 
 	err = db.Transaction(func(tx *gorm.DB) error {
 		// do some database operations in the transaction (use 'tx' from this point, not 'db')
-		for _, city := range cityEntities {
-			if err := tx.Create(&city).Error; err != nil {
-				// return any error will rollback
-				return err
-			}
+		if err := tx.CreateInBatches(&cityEntities, 50).Error; err != nil {
+			// return any error will rollback
+			return err
 		}
 
-		for _, cinema := range cinemaEntities {
-			if err := tx.Create(&cinema).Error; err != nil {
-				// return any error will rollback
-				return err
-			}
+		if err := tx.CreateInBatches(&cinemaEntities, 50).Error; err != nil {
+			// return any error will rollback
+			return err
 		}
 
-		for _, cinemaHall := range cinemaHallEntities {
-			if err := tx.Create(&cinemaHall).Error; err != nil {
-				// return any error will rollback
-				return err
-			}
+		if err := tx.CreateInBatches(&cinemaHallEntities, 50).Error; err != nil {
+			// return any error will rollback
+			return err
 		}
 
-		for _, cinemaSeat := range cinemaSeatsEntities {
-			if err := tx.Create(&cinemaSeat).Error; err != nil {
-				// return any error will rollback
-				return err
-			}
+		if err := tx.CreateInBatches(&cinemaSeatsEntities, 50).Error; err != nil {
+			// return any error will rollback
+			return err
 		}
 
 		// return nil will commit the whole transaction
@@ -341,13 +333,15 @@ func (apiData *ApiData) GetData(config models.MovieApiConfig, db *gorm.DB) {
 	go apiData.allocateJobs(MaxPage)
 	apiData.createWorkerThread(config, apiData.WorkerPoolSize)
 
+	movies = lo.UniqBy(movies, func(movie entities.Movie) string {
+		return movie.Id
+	})
+
 	//sort the data
 	sort.Sort(entities.ByID[entities.Movie](movies))
-	for _, movie := range movies {
-		tx := db.Create(&movie)
-		if tx.Error != nil {
-			continue
-		}
+	tx := db.CreateInBatches(&movies, 50)
+	if tx.Error != nil {
+		return
 	}
 }
 
