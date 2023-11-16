@@ -21,6 +21,7 @@ import (
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"github.com/Wolechacho/ticketmaster-backend/models"
+	"github.com/samber/lo"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -215,6 +216,9 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	}
 
 	//sort the cities
+	cityEntities = lo.UniqBy(cityEntities, func(city entities.City) string {
+		return city.Id
+	})
 	sort.Sort(entities.ByID[entities.City](cityEntities))
 
 	cinemaEntities := []entities.Cinema{}
@@ -231,6 +235,9 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 
 	// add the address of cinema
 
+	cinemaEntities = lo.UniqBy(cinemaEntities, func(cinema entities.Cinema) string {
+		return cinema.Id
+	})
 	//sort the cinemas
 	sort.Sort(entities.ByID[entities.Cinema](cinemaEntities))
 
@@ -246,6 +253,9 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 		cinemaHallEntities = append(cinemaHallEntities, cinemahallentity)
 	}
 
+	cinemaHallEntities = lo.UniqBy(cinemaHallEntities, func(cinemaHall entities.CinemaHall) string {
+		return cinemaHall.Id
+	})
 	// sort the cinemahall
 	sort.Sort(entities.ByID[entities.CinemaHall](cinemaHallEntities))
 
@@ -264,6 +274,9 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	}
 
 	//sort the entities cinema seats
+	cinemaSeatsEntities = lo.UniqBy(cinemaSeatsEntities, func(cinemaSeat entities.CinemaSeat) string {
+		return cinemaSeat.Id
+	})
 	sort.Sort(entities.ByID[entities.CinemaSeat](cinemaSeatsEntities))
 
 	err = db.Transaction(func(tx *gorm.DB) error {
