@@ -32,8 +32,7 @@ type ShowsDTO struct {
 	StartTime   time.Time `json:"showStartTime"`
 	EndTime     time.Time `json:"showEndTime"`
 	AddressLine string    `json:"address"`
-	//Coordinates entities.Coordinate `json:"coordinates"`
-	Distance float64 `json:"distance"`
+	Distance    float64   `json:"distance"`
 }
 
 type UserDTO struct {
