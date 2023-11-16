@@ -12,7 +12,7 @@ import (
 )
 
 type CinemaRateRequest struct {
-	CinemaId   string                  `param:"cinemaId"`
+	CinemaId   string                  `param:"id"`
 	BaseFee    float32                 `json:"baseFee"`
 	Discount   utilities.JsonNullFloat `json:"discount"`
 	IsSpecials utilities.JsonNullBool  `json:"isSpecials"`
@@ -38,11 +38,12 @@ func (cinemaService CinemaService) AddCinemaRate(request CinemaRateRequest) (Cin
 		IsActive:   true,
 	}
 	err = cinemaService.DB.Transaction(func(tx *gorm.DB) error {
-		// set the existing rate to be inactive
-		cinemaService.DB.Table("cinemarates").Update("CinemaId = ?", request.CinemaId).Set("IsActive", false)
+		if err = tx.Table("cinemarates").Where("CinemaId = ? AND IsActive = ?", request.CinemaId, true).Update("IsActive", false).Error; err != nil {
+			return err
+		}
 
 		//add the new rate
-		if err = cinemaService.DB.Create(&cinemaRate).Error; err != nil {
+		if err = tx.Create(&cinemaRate).Error; err != nil {
 			return err
 		}
 
