@@ -12,4 +12,5 @@ func cinemaRoutes(app *core.BaseApp, group *echo.Group) {
 	group.POST("cinemas", cinemaController.CreateCinemaHandler, middlewares.AuthorizeAdmin)
 	group.POST("cinemas/:id/cinemahall", cinemaController.CreateCinemaHallHandler, middlewares.AuthorizeAdmin)
 	group.POST("cinemas/:id/cinemahall/:cinemahallId/seat", cinemaController.CreateCinemaSeatHandler, middlewares.AuthorizeAdmin)
+	group.POST("cinemas/:id/rate", cinemaController.AddCinemaRateHandler, middlewares.AuthorizeAdmin)
 }
