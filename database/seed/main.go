@@ -265,7 +265,7 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 			cinemaSeat := entities.CinemaSeat{
 				Id:           sequentialguid.New().String(),
 				SeatNumber:   i,
-				Type:         rand.Intn(len(seats)),
+				Type:         enums.SeatType(rand.Intn(len(seats)) + 1),
 				CinemaHallId: cinemaHallEntity.Id,
 				IsDeprecated: false,
 			}

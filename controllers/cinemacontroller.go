@@ -14,6 +14,17 @@ type CinemaController struct {
 	App *core.BaseApp
 }
 
+// CreateCinema godoc
+// @Summary      Create a new cinema
+// @Description   Create a new cinema
+// @Tags         cinemas
+// @Accept       json
+// @Produce      json
+// @Param        CreateCinemaRequest  body  services.CreateCinemaRequest  true  "CreateCinemaRequest"
+// @Success      200  {object}  services.CreateCinemaResponse
+// @Failure      400  {object}  []string
+// @Failure      404  {object}  []string
+// @Router       /api/v1/cinemas [post]
 func (cinemaController CinemaController) CreateCinemaHandler(cinemaContext echo.Context) error {
 	var err error
 	request := new(services.CreateCinemaRequest)
@@ -23,7 +34,14 @@ func (cinemaController CinemaController) CreateCinemaHandler(cinemaContext echo.
 		return cinemaContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	response := cinemaController.App.CinemaService.CreateCinema(*request)
+	response, fieldErrors := cinemaController.App.CinemaService.CreateCinema(*request)
+	if len(fieldErrors) > 0 {
+		errors := []string{}
+		for _, err = range fieldErrors {
+			errors = append(errors, err.Error())
+		}
+		return cinemaContext.JSON(http.StatusBadRequest, errors)
+	}
 	return cinemaContext.JSON(http.StatusOK, response)
 }
 

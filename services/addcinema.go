@@ -34,15 +34,14 @@ type CreateCinemaRequest struct {
 
 type CreateCinemaResponse struct {
 	CinemaId   string `json:"CinemaId"`
-	Errors     []error
 	StatusCode int
 }
 
-func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) CreateCinemaResponse {
+func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) (CreateCinemaResponse, []error) {
 	var err error
 	fieldErrors := validateCinema(request)
 	if len(fieldErrors) != 0 {
-		return CreateCinemaResponse{Errors: fieldErrors, StatusCode: http.StatusBadRequest}
+		return CreateCinemaResponse{StatusCode: http.StatusBadRequest}, fieldErrors
 	}
 
 	cinema := entities.Cinema{
@@ -97,7 +96,7 @@ func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) Cre
 						seat := entities.CinemaSeat{
 							Id:           sequentialguid.New().String(),
 							SeatNumber:   seat.SeatNumber,
-							Type:         int(seat.Type),
+							Type:         seat.Type,
 							CinemaHallId: cinemaHall.Id,
 							IsDeprecated: false,
 						}
@@ -116,10 +115,10 @@ func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) Cre
 	})
 
 	if err != nil {
-		return CreateCinemaResponse{Errors: []error{err}, StatusCode: http.StatusBadRequest}
+		return CreateCinemaResponse{StatusCode: http.StatusBadRequest}, []error{err}
 	}
 
-	return CreateCinemaResponse{CinemaId: cinema.Id, Errors: []error{}, StatusCode: http.StatusOK}
+	return CreateCinemaResponse{CinemaId: cinema.Id, StatusCode: http.StatusOK}, nil
 }
 
 func validateCinema(request CreateCinemaRequest) []error {
