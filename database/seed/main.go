@@ -21,6 +21,7 @@ import (
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"github.com/Wolechacho/ticketmaster-backend/models"
+	"github.com/samber/lo"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -83,21 +84,8 @@ func main() {
 	fmt.Println("SucessFully Connected to the Database")
 
 	//create database entities
-	createCommand := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s;", dbConfig.DatabaseName)
 	useDBCommand := fmt.Sprintf("USE %s;", dbConfig.DatabaseName)
-
-	db.Exec(createCommand)
 	db.Exec(useDBCommand)
-
-	err = createDataBaseEntities(db, &entities.City{},
-		&entities.Show{}, &entities.Cinema{}, &entities.CinemaHall{},
-		&entities.CinemaSeat{}, &entities.Show{}, &entities.Movie{})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("All Tables are sucessfully created in the DB")
 
 	filedata := NewFileData(rootPath)
 	filedata.GetData(db)
@@ -129,8 +117,10 @@ type FileData struct {
 		Longitude float32 `json:"longitude"`
 	}
 	Cinemas []struct {
+		Id          int    `json:"id"`
 		Name        string `json:"name"`
 		CinemaHalls int    `json:"cinemahalls"`
+		Address     string `json:"address"`
 	}
 
 	Cinemahalls []struct {
@@ -156,8 +146,10 @@ func NewFileData(folderPath string) *FileData {
 		}{},
 
 		Cinemas: []struct {
+			Id          int    `json:"id"`
 			Name        string `json:"name"`
 			CinemaHalls int    `json:"cinemahalls"`
+			Address     string `json:"address"`
 		}{},
 
 		Cinemahalls: []struct {
@@ -215,24 +207,50 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	}
 
 	//sort the cities
+	cityEntities = lo.UniqBy(cityEntities, func(city entities.City) string {
+		return city.Id
+	})
 	sort.Sort(entities.ByID[entities.City](cityEntities))
 
 	cinemaEntities := []entities.Cinema{}
+	cinemaAddressEntities := []entities.Address{}
 	for _, cinema := range fileData.Cinemas {
+		city := cityEntities[rand.Intn(len(cityEntities))]
 		cinemaentity := entities.Cinema{
 			Id:                sequentialguid.New().String(),
 			Name:              cinema.Name,
 			TotalCinemalHalls: cinema.CinemaHalls,
-			CityId:            cityEntities[rand.Intn(len(cityEntities))].Id,
+			CityId:            city.Id,
 			IsDeprecated:      false,
 		}
+
+		addressEntity := entities.Address{
+			Id:           sequentialguid.New().String(),
+			AddressLine:  cinema.Address,
+			EntityId:     cinemaentity.Id,
+			CityId:       cinemaentity.CityId,
+			Coordinates:  city.Coordinates,
+			AddressType:  enums.Cinema,
+			IsDeprecated: false,
+		}
+
 		cinemaEntities = append(cinemaEntities, cinemaentity)
+		cinemaAddressEntities = append(cinemaAddressEntities, addressEntity)
 	}
 
-	// add the address of cinema
+	cinemaEntities = lo.UniqBy(cinemaEntities, func(cinema entities.Cinema) string {
+		return cinema.Id
+	})
 
 	//sort the cinemas
 	sort.Sort(entities.ByID[entities.Cinema](cinemaEntities))
+
+	cinemaAddressEntities = lo.UniqBy(cinemaAddressEntities, func(address entities.Address) string {
+		return address.Id
+	})
+
+	//sort the address
+	sort.Sort(entities.ByID[entities.Address](cinemaAddressEntities))
 
 	cinemaHallEntities := []entities.CinemaHall{}
 	for _, cinemaHall := range fileData.Cinemahalls {
@@ -246,6 +264,9 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 		cinemaHallEntities = append(cinemaHallEntities, cinemahallentity)
 	}
 
+	cinemaHallEntities = lo.UniqBy(cinemaHallEntities, func(cinemaHall entities.CinemaHall) string {
+		return cinemaHall.Id
+	})
 	// sort the cinemahall
 	sort.Sort(entities.ByID[entities.CinemaHall](cinemaHallEntities))
 
@@ -255,7 +276,7 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 			cinemaSeat := entities.CinemaSeat{
 				Id:           sequentialguid.New().String(),
 				SeatNumber:   i,
-				Type:         rand.Intn(len(seats)),
+				Type:         enums.SeatType(rand.Intn(len(seats)) + 1),
 				CinemaHallId: cinemaHallEntity.Id,
 				IsDeprecated: false,
 			}
@@ -264,36 +285,36 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	}
 
 	//sort the entities cinema seats
+	cinemaSeatsEntities = lo.UniqBy(cinemaSeatsEntities, func(cinemaSeat entities.CinemaSeat) string {
+		return cinemaSeat.Id
+	})
 	sort.Sort(entities.ByID[entities.CinemaSeat](cinemaSeatsEntities))
 
 	err = db.Transaction(func(tx *gorm.DB) error {
 		// do some database operations in the transaction (use 'tx' from this point, not 'db')
-		for _, city := range cityEntities {
-			if err := tx.Create(&city).Error; err != nil {
-				// return any error will rollback
-				return err
-			}
+		if err := tx.CreateInBatches(&cityEntities, 50).Error; err != nil {
+			// return any error will rollback
+			return err
 		}
 
-		for _, cinema := range cinemaEntities {
-			if err := tx.Create(&cinema).Error; err != nil {
-				// return any error will rollback
-				return err
-			}
+		if err := tx.CreateInBatches(&cinemaEntities, 50).Error; err != nil {
+			// return any error will rollback
+			return err
 		}
 
-		for _, cinemaHall := range cinemaHallEntities {
-			if err := tx.Create(&cinemaHall).Error; err != nil {
-				// return any error will rollback
-				return err
-			}
+		if err := tx.CreateInBatches(&cinemaHallEntities, 50).Error; err != nil {
+			// return any error will rollback
+			return err
 		}
 
-		for _, cinemaSeat := range cinemaSeatsEntities {
-			if err := tx.Create(&cinemaSeat).Error; err != nil {
-				// return any error will rollback
-				return err
-			}
+		if err := tx.CreateInBatches(&cinemaSeatsEntities, 50).Error; err != nil {
+			// return any error will rollback
+			return err
+		}
+
+		if err := tx.CreateInBatches(&cinemaAddressEntities, 50).Error; err != nil {
+			// return any error will rollback
+			return err
 		}
 
 		// return nil will commit the whole transaction
@@ -303,8 +324,6 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	fmt.Println("All Data sucessfully saved into the newly created tables")
 }
 
 type ApiData struct {
@@ -328,14 +347,18 @@ func (apiData *ApiData) GetData(config models.MovieApiConfig, db *gorm.DB) {
 	go apiData.allocateJobs(MaxPage)
 	apiData.createWorkerThread(config, apiData.WorkerPoolSize)
 
+	movies = lo.UniqBy(movies, func(movie entities.Movie) string {
+		return movie.Id
+	})
+
 	//sort the data
 	sort.Sort(entities.ByID[entities.Movie](movies))
-	for _, movie := range movies {
-		tx := db.Create(&movie)
-		if tx.Error != nil {
-			continue
-		}
+	tx := db.CreateInBatches(&movies, 50)
+	if tx.Error != nil {
+		return
 	}
+
+	fmt.Println("All Data sucessfully saved into the tables")
 }
 
 // AllocateJobs - create jobs to be done - sender

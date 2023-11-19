@@ -95,7 +95,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 						seat := entities.CinemaSeat{
 							Id:           sequentialguid.New().String(),
 							SeatNumber:   seat.SeatNumber,
-							Type:         int(seat.Type),
+							Type:         seat.Type,
 							CinemaHallId: cinemaHall.Id,
 							IsDeprecated: false,
 						}

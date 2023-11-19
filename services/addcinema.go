@@ -42,6 +42,15 @@ func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) (Cr
 	fieldErrors := validateCinema(request)
 	if len(fieldErrors) != 0 {
 		return CreateCinemaResponse{}, models.ErrrorResponse{StatusCode: http.StatusBadRequest, Errors: fieldErrors}
+	CinemaId   string `json:"CinemaId"`
+	StatusCode int
+}
+
+func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) (CreateCinemaResponse, []error) {
+	var err error
+	fieldErrors := validateCinema(request)
+	if len(fieldErrors) != 0 {
+		return CreateCinemaResponse{StatusCode: http.StatusBadRequest}, fieldErrors
 	}
 
 	cinema := entities.Cinema{
@@ -96,7 +105,7 @@ func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) (Cr
 						seat := entities.CinemaSeat{
 							Id:           sequentialguid.New().String(),
 							SeatNumber:   seat.SeatNumber,
-							Type:         int(seat.Type),
+							Type:         seat.Type,
 							CinemaHallId: cinemaHall.Id,
 							IsDeprecated: false,
 						}
@@ -119,6 +128,10 @@ func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) (Cr
 	}
 
 	return CreateCinemaResponse{CinemaId: cinema.Id}, models.ErrrorResponse{}
+		return CreateCinemaResponse{StatusCode: http.StatusBadRequest}, []error{err}
+	}
+
+	return CreateCinemaResponse{CinemaId: cinema.Id, StatusCode: http.StatusOK}, nil
 }
 
 func validateCinema(request CreateCinemaRequest) []error {
