@@ -1,6 +1,6 @@
 package models
 
-type ErrrorResponse struct {
+type ErrorResponse struct {
 	Errors     []error
 	StatusCode int
 }

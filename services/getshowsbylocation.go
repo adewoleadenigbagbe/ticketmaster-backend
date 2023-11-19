@@ -8,6 +8,7 @@ import (
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	"github.com/Wolechacho/ticketmaster-backend/enums"
+	"github.com/Wolechacho/ticketmaster-backend/models"
 )
 
 type GetShowsByLocationRequest struct {
@@ -15,8 +16,7 @@ type GetShowsByLocationRequest struct {
 }
 
 type GetShowsByLocationResponse struct {
-	Results    []ShowsDTO
-	StatusCode int
+	Results []ShowsDTO
 }
 
 type ShowsDTO struct {
@@ -71,7 +71,7 @@ func distance(coordinate1, coordinate2 entities.Coordinate, unit ...string) floa
 	return dist
 }
 
-func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocationRequest) (GetShowsByLocationResponse, error) {
+func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocationRequest) (GetShowsByLocationResponse, models.ErrorResponse) {
 
 	//get show that are not deprecated nor cancelled
 	//sort them by the earliest show date and time
@@ -86,7 +86,7 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		Rows()
 
 	if err != nil {
-		return GetShowsByLocationResponse{StatusCode: http.StatusInternalServerError}, err
+		return GetShowsByLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
 	}
 
 	defer userQuery.Close()
@@ -99,7 +99,7 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		}
 		err = userQuery.Scan(&user.UserId, &user.IsDeprecated, &user.CityId, &user.Coordinates)
 		if err != nil {
-			return GetShowsByLocationResponse{StatusCode: http.StatusInternalServerError}, err
+			return GetShowsByLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
 		}
 		i++
 	}
@@ -124,7 +124,7 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		Rows()
 
 	if err != nil {
-		return GetShowsByLocationResponse{StatusCode: http.StatusInternalServerError}, err
+		return GetShowsByLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
 	}
 
 	defer showQuery.Close()
@@ -136,12 +136,12 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 			&show.Description, &show.Language, &show.Genre, &show.AddressLine, &show.Distance)
 
 		if err != nil {
-			return GetShowsByLocationResponse{StatusCode: http.StatusInternalServerError}, err
+			return GetShowsByLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
 		}
 		show.StartTime = time.Unix(show.startTime, 0)
 		show.EndTime = time.Unix(show.endTime, 0)
 		shows = append(shows, *show)
 	}
 
-	return GetShowsByLocationResponse{Results: shows, StatusCode: http.StatusOK}, nil
+	return GetShowsByLocationResponse{Results: shows}, models.ErrorResponse{}
 }

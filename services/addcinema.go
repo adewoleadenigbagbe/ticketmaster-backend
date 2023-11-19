@@ -8,6 +8,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
+	"github.com/Wolechacho/ticketmaster-backend/models"
 	"gorm.io/gorm"
 )
 
@@ -33,15 +34,14 @@ type CreateCinemaRequest struct {
 }
 
 type CreateCinemaResponse struct {
-	CinemaId   string `json:"CinemaId"`
-	StatusCode int
+	CinemaId string `json:"CinemaId"`
 }
 
-func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) (CreateCinemaResponse, []error) {
+func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) (CreateCinemaResponse, models.ErrorResponse) {
 	var err error
 	fieldErrors := validateCinema(request)
 	if len(fieldErrors) != 0 {
-		return CreateCinemaResponse{StatusCode: http.StatusBadRequest}, fieldErrors
+		return CreateCinemaResponse{}, models.ErrorResponse{Errors: fieldErrors, StatusCode: http.StatusBadRequest}
 	}
 
 	cinema := entities.Cinema{
@@ -115,10 +115,10 @@ func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) (Cr
 	})
 
 	if err != nil {
-		return CreateCinemaResponse{StatusCode: http.StatusBadRequest}, []error{err}
+		return CreateCinemaResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
 
-	return CreateCinemaResponse{CinemaId: cinema.Id, StatusCode: http.StatusOK}, nil
+	return CreateCinemaResponse{CinemaId: cinema.Id}, models.ErrorResponse{}
 }
 
 func validateCinema(request CreateCinemaRequest) []error {
