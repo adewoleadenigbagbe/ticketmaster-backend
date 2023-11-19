@@ -34,11 +34,11 @@ type CinemaSeatDTO struct {
 	SeatNumber   int
 }
 
-func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest) (CreateCinemaSeatResponse, models.ErrrorResponse) {
+func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest) (CreateCinemaSeatResponse, models.ErrorResponse) {
 
 	validationErrors := validateCinemSeatRequiredFields(request)
 	if len(validationErrors) > 0 {
-		return CreateCinemaSeatResponse{}, models.ErrrorResponse{Errors: validationErrors, StatusCode: http.StatusBadRequest}
+		return CreateCinemaSeatResponse{}, models.ErrorResponse{Errors: validationErrors, StatusCode: http.StatusBadRequest}
 	}
 
 	seatNumbers := []int{}
@@ -50,7 +50,7 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 		duplicateSeatNumbers := lo.FindDuplicates(seatNumbers)
 		if len(duplicateSeatNumbers) > 0 {
 			return CreateCinemaSeatResponse{},
-				models.ErrrorResponse{Errors: []error{errors.New("seat number in the request contains duplicates")}, StatusCode: http.StatusBadRequest}
+				models.ErrorResponse{Errors: []error{errors.New("seat number in the request contains duplicates")}, StatusCode: http.StatusBadRequest}
 		}
 	}
 
@@ -66,7 +66,7 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 
 	if err != nil {
 		return CreateCinemaSeatResponse{},
-			models.ErrrorResponse{Errors: []error{err}, StatusCode: http.StatusInternalServerError}
+			models.ErrorResponse{Errors: []error{err}, StatusCode: http.StatusInternalServerError}
 	}
 
 	defer cinemaQuery.Close()
@@ -80,19 +80,19 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 		err = cinemaQuery.Scan(&existingHalls.CinemaId, &existingHalls.CinemaHallId, &existingHalls.TotalSeat)
 		if err != nil {
 			return CreateCinemaSeatResponse{},
-				models.ErrrorResponse{Errors: []error{err}, StatusCode: http.StatusInternalServerError}
+				models.ErrorResponse{Errors: []error{err}, StatusCode: http.StatusInternalServerError}
 		}
 		i++
 	}
 
 	if reflect.ValueOf(existingHalls).IsZero() {
 		return CreateCinemaSeatResponse{},
-			models.ErrrorResponse{Errors: []error{errors.New("cinema info not found")}, StatusCode: http.StatusBadRequest}
+			models.ErrorResponse{Errors: []error{errors.New("cinema info not found")}, StatusCode: http.StatusBadRequest}
 	}
 
 	if existingHalls.TotalSeat < len(request.Seats) {
 		return CreateCinemaSeatResponse{},
-			models.ErrrorResponse{Errors: []error{fmt.Errorf(("total number of cinema seats in the system is less that the new seats to add"))},
+			models.ErrorResponse{Errors: []error{fmt.Errorf(("total number of cinema seats in the system is less that the new seats to add"))},
 				StatusCode: http.StatusBadRequest}
 	}
 
@@ -105,7 +105,7 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 		Rows()
 
 	if err != nil {
-		return CreateCinemaSeatResponse{}, models.ErrrorResponse{Errors: []error{err}, StatusCode: http.StatusInternalServerError}
+		return CreateCinemaSeatResponse{}, models.ErrorResponse{Errors: []error{err}, StatusCode: http.StatusInternalServerError}
 	}
 
 	defer cinemaHallQuery.Close()
@@ -115,14 +115,14 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 		var cinemaSeatDTO CinemaSeatDTO
 		err = cinemaHallQuery.Scan(&cinemaSeatDTO.CinemaHallId, &cinemaSeatDTO.SeatNumber)
 		if err != nil {
-			return CreateCinemaSeatResponse{}, models.ErrrorResponse{Errors: []error{err}, StatusCode: http.StatusInternalServerError}
+			return CreateCinemaSeatResponse{}, models.ErrorResponse{Errors: []error{err}, StatusCode: http.StatusInternalServerError}
 		}
 		existingSeats = append(existingSeats, cinemaSeatDTO)
 	}
 
 	if len(existingSeats)+len(request.Seats) > existingHalls.TotalSeat {
 		return CreateCinemaSeatResponse{},
-			models.ErrrorResponse{Errors: []error{fmt.Errorf("total number of cinema seats in the system is less that the new seats to add")},
+			models.ErrorResponse{Errors: []error{fmt.Errorf("total number of cinema seats in the system is less that the new seats to add")},
 				StatusCode: http.StatusBadRequest}
 	}
 
@@ -131,7 +131,7 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 		for _, seat := range request.Seats {
 			if exSeat.SeatNumber == seat.SeatNumber {
 				return CreateCinemaSeatResponse{},
-					models.ErrrorResponse{Errors: []error{errors.New("seat number already exist in the system")},
+					models.ErrorResponse{Errors: []error{errors.New("seat number already exist in the system")},
 						StatusCode: http.StatusBadRequest}
 			}
 		}
@@ -160,10 +160,10 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 	})
 
 	if err != nil {
-		return CreateCinemaSeatResponse{}, models.ErrrorResponse{Errors: []error{err}, StatusCode: http.StatusInternalServerError}
+		return CreateCinemaSeatResponse{}, models.ErrorResponse{Errors: []error{err}, StatusCode: http.StatusInternalServerError}
 	}
 
-	return CreateCinemaSeatResponse{}, models.ErrrorResponse{}
+	return CreateCinemaSeatResponse{}, models.ErrorResponse{}
 }
 
 func validateCinemSeatRequiredFields(request CreateCinemaSeatRequest) []error {

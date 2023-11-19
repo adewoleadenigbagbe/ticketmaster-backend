@@ -52,7 +52,7 @@ func (authController AuthController) RegisterHandler(authContext echo.Context) e
 // @Produce      json
 // @Param        SignInRequest  body  services.SignInRequest  true  "SignInRequest"
 // @Success      200  {object}  services.SignInResponse
-// @Failure      400  {object}  []string
+// @Failure      400  {object}  string
 // @Failure      404  {object}  []string
 // @Router       /api/v1/auth/signin [post]
 func (authController AuthController) SignInHandler(authContext echo.Context) error {

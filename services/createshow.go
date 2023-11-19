@@ -33,16 +33,16 @@ type ShowDateTime struct {
 	EndDateTime   time.Time `json:"endDate"`
 }
 
-func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShowResponse, models.ErrrorResponse) {
+func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShowResponse, models.ErrorResponse) {
 	var err error
 	fieldErrors := validateRequiredFields(request)
 	if len(fieldErrors) != 0 {
-		return CreateShowResponse{}, models.ErrrorResponse{StatusCode: http.StatusBadRequest, Errors: fieldErrors}
+		return CreateShowResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: fieldErrors}
 	}
 
 	showTimeErrors := validateShowTime(request)
 	if len(showTimeErrors) != 0 {
-		return CreateShowResponse{}, models.ErrrorResponse{StatusCode: http.StatusBadRequest, Errors: showTimeErrors}
+		return CreateShowResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: showTimeErrors}
 	}
 
 	showIds := []string{}
@@ -72,9 +72,9 @@ func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShow
 	})
 
 	if err != nil {
-		return CreateShowResponse{}, models.ErrrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
+		return CreateShowResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
-	return CreateShowResponse{ShowIds: showIds}, models.ErrrorResponse{}
+	return CreateShowResponse{ShowIds: showIds}, models.ErrorResponse{}
 }
 
 func validateRequiredFields(request CreateShowRequest) []error {

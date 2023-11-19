@@ -22,11 +22,11 @@ type CinemaRateResponse struct {
 	Id string `json:"Id"`
 }
 
-func (cinemaService CinemaService) AddCinemaRate(request CinemaRateRequest) (CinemaRateResponse, models.ErrrorResponse) {
+func (cinemaService CinemaService) AddCinemaRate(request CinemaRateRequest) (CinemaRateResponse, models.ErrorResponse) {
 	var err error
 	requireFieldErrors := validateCinemaRate(request)
 	if len(requireFieldErrors) > 0 {
-		return CinemaRateResponse{}, models.ErrrorResponse{StatusCode: http.StatusBadRequest, Errors: requireFieldErrors}
+		return CinemaRateResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: requireFieldErrors}
 	}
 
 	cinemaRate := entities.CinemaRate{
@@ -51,9 +51,9 @@ func (cinemaService CinemaService) AddCinemaRate(request CinemaRateRequest) (Cin
 	})
 
 	if err != nil {
-		return CinemaRateResponse{}, models.ErrrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
+		return CinemaRateResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
-	return CinemaRateResponse{Id: cinemaRate.Id}, models.ErrrorResponse{}
+	return CinemaRateResponse{Id: cinemaRate.Id}, models.ErrorResponse{}
 }
 
 func validateCinemaRate(request CinemaRateRequest) []error {

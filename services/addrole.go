@@ -20,10 +20,10 @@ type CreateRoleResponse struct {
 	UserRoleId string `json:"userRoleId"`
 }
 
-func (userService UserService) AddRole(request CreateRoleRequest) (CreateRoleResponse, models.ErrrorResponse) {
+func (userService UserService) AddRole(request CreateRoleRequest) (CreateRoleResponse, models.ErrorResponse) {
 	requiredFieldErrors := validateRole(request)
 	if len(requiredFieldErrors) > 0 {
-		return CreateRoleResponse{}, models.ErrrorResponse{StatusCode: http.StatusBadRequest, Errors: requiredFieldErrors}
+		return CreateRoleResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: requiredFieldErrors}
 	}
 
 	userRole := entities.UserRole{
@@ -37,10 +37,10 @@ func (userService UserService) AddRole(request CreateRoleRequest) (CreateRoleRes
 
 	if rowsAffected < 1 {
 		err := fmt.Errorf("role already exist")
-		return CreateRoleResponse{}, models.ErrrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
+		return CreateRoleResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
 
-	return CreateRoleResponse{UserRoleId: userRole.Id}, models.ErrrorResponse{}
+	return CreateRoleResponse{UserRoleId: userRole.Id}, models.ErrorResponse{}
 }
 
 func validateRole(request CreateRoleRequest) []error {

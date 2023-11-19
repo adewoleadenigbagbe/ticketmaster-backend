@@ -16,9 +16,9 @@ type GetSearchResponse struct {
 	Result []MovieDataResponse `json:"results"`
 }
 
-func (movieService MovieService) SearchMovie(request GetSearchRequest) (GetSearchResponse, models.ErrrorResponse) {
+func (movieService MovieService) SearchMovie(request GetSearchRequest) (GetSearchResponse, models.ErrorResponse) {
 	if len(request.Term) == 0 {
-		return GetSearchResponse{}, models.ErrrorResponse{Errors: []error{errors.New("enter a search term")}, StatusCode: http.StatusBadRequest}
+		return GetSearchResponse{}, models.ErrorResponse{Errors: []error{errors.New("enter a search term")}, StatusCode: http.StatusBadRequest}
 	}
 
 	var movieResult []MovieDataResponse
@@ -26,7 +26,7 @@ func (movieService MovieService) SearchMovie(request GetSearchRequest) (GetSearc
 	dbResult := movieService.DB.Raw(sqlQuery).Scan(&movieResult)
 
 	if dbResult.Error != nil {
-		return GetSearchResponse{}, models.ErrrorResponse{Errors: []error{dbResult.Error}, StatusCode: http.StatusInternalServerError}
+		return GetSearchResponse{}, models.ErrorResponse{Errors: []error{dbResult.Error}, StatusCode: http.StatusInternalServerError}
 	}
-	return GetSearchResponse{Result: movieResult}, models.ErrrorResponse{}
+	return GetSearchResponse{Result: movieResult}, models.ErrorResponse{}
 }

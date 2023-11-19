@@ -22,7 +22,7 @@ type UserController struct {
 // @Produce      json
 // @Param        CreateRoleRequest  body  services.CreateRoleRequest  true  "CreateRoleRequest"
 // @Success      200  {object}  services.CreateRoleResponse
-// @Failure      400  {object}  []string
+// @Failure      400  {object}  string
 // @Failure      404  {object}  []string
 // @Router       /api/v1/user/add-role [post]
 func (userController UserController) AddRoleHandler(userContext echo.Context) error {

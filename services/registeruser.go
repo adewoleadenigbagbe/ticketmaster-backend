@@ -36,11 +36,11 @@ type CreateUserResponse struct {
 	UserId string `json:"userId"`
 }
 
-func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUserResponse, models.ErrrorResponse) {
+func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUserResponse, models.ErrorResponse) {
 	var err error
 	fieldsErrors := validateUser(request)
 	if len(fieldsErrors) != 0 {
-		return CreateUserResponse{}, models.ErrrorResponse{Errors: fieldsErrors, StatusCode: http.StatusBadRequest}
+		return CreateUserResponse{}, models.ErrorResponse{Errors: fieldsErrors, StatusCode: http.StatusBadRequest}
 	}
 
 	user := entities.User{
@@ -82,10 +82,10 @@ func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUs
 	})
 
 	if err != nil {
-		return CreateUserResponse{}, models.ErrrorResponse{Errors: []error{err}, StatusCode: http.StatusBadRequest}
+		return CreateUserResponse{}, models.ErrorResponse{Errors: []error{err}, StatusCode: http.StatusBadRequest}
 	}
 
-	return CreateUserResponse{UserId: user.Id}, models.ErrrorResponse{}
+	return CreateUserResponse{UserId: user.Id}, models.ErrorResponse{}
 }
 
 func validateUser(request CreateUserRequest) []error {

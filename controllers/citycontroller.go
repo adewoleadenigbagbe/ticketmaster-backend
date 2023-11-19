@@ -23,7 +23,7 @@ type CityController struct {
 // @Param        id  path  string  true  "Id"
 // @Success      200  {object}  services.CityModelResponse
 // @Failure      400  {object}  string
-// @Failure      404  {object}  string
+// @Failure      404  {object}  []string
 // @Router       /api/v1/city/{id} [get]
 func (cityController *CityController) GetCityByIdHandler(cityContext echo.Context) error {
 	var err error

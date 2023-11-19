@@ -34,7 +34,7 @@ func (movieController MovieController) GetMoviesHandler(movieContext echo.Contex
 // @Param        id  path  string  true  "Id"
 // @Success      200  {object}  services.MovieDataResponse
 // @Failure      400  {object}  string
-// @Failure      404  {object}  string
+// @Failure      404  {object}  []string
 // @Router       /api/v1/movies/{id} [get]
 func (movieController MovieController) GetMovieByIdHandler(movieContext echo.Context) error {
 	req := new(services.GetMovieByIdRequest)
