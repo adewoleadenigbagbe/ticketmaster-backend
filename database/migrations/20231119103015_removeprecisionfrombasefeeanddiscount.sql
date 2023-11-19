@@ -6,7 +6,7 @@ MODIFY COLUMN BaseFee FLOAT NOT NULL
 
 -- +goose StatementBegin
 ALTER TABLE CinemaRates
-MODIFY COLUMN Discount FLOAT
+MODIFY COLUMN Discount FLOAT NULL
 -- +goose StatementEnd
 
 
@@ -18,6 +18,6 @@ MODIFY COLUMN BaseFee FLOAT(5,4) NOT NULL
 
 -- +goose StatementBegin
 ALTER TABLE CinemaRates
-MODIFY COLUMN Discount FLOAT(4,3)
+MODIFY COLUMN Discount FLOAT(4,3) NULL
 -- +goose StatementEnd
 
