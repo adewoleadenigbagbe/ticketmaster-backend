@@ -84,21 +84,8 @@ func main() {
 	fmt.Println("SucessFully Connected to the Database")
 
 	//create database entities
-	createCommand := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s;", dbConfig.DatabaseName)
 	useDBCommand := fmt.Sprintf("USE %s;", dbConfig.DatabaseName)
-
-	db.Exec(createCommand)
 	db.Exec(useDBCommand)
-
-	err = createDataBaseEntities(db, &entities.City{},
-		&entities.Show{}, &entities.Cinema{}, &entities.CinemaHall{},
-		&entities.CinemaSeat{}, &entities.Show{}, &entities.Movie{})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("All Tables are sucessfully created in the DB")
 
 	filedata := NewFileData(rootPath)
 	filedata.GetData(db)
@@ -130,8 +117,10 @@ type FileData struct {
 		Longitude float32 `json:"longitude"`
 	}
 	Cinemas []struct {
+		Id          int    `json:"id"`
 		Name        string `json:"name"`
 		CinemaHalls int    `json:"cinemahalls"`
+		Address     string `json:"address"`
 	}
 
 	Cinemahalls []struct {
@@ -157,8 +146,10 @@ func NewFileData(folderPath string) *FileData {
 		}{},
 
 		Cinemas: []struct {
+			Id          int    `json:"id"`
 			Name        string `json:"name"`
 			CinemaHalls int    `json:"cinemahalls"`
+			Address     string `json:"address"`
 		}{},
 
 		Cinemahalls: []struct {
@@ -222,24 +213,44 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	sort.Sort(entities.ByID[entities.City](cityEntities))
 
 	cinemaEntities := []entities.Cinema{}
+	cinemaAddressEntities := []entities.Address{}
 	for _, cinema := range fileData.Cinemas {
+		city := cityEntities[rand.Intn(len(cityEntities))]
 		cinemaentity := entities.Cinema{
 			Id:                sequentialguid.New().String(),
 			Name:              cinema.Name,
 			TotalCinemalHalls: cinema.CinemaHalls,
-			CityId:            cityEntities[rand.Intn(len(cityEntities))].Id,
+			CityId:            city.Id,
 			IsDeprecated:      false,
 		}
-		cinemaEntities = append(cinemaEntities, cinemaentity)
-	}
 
-	// add the address of cinema
+		addressEntity := entities.Address{
+			Id:           sequentialguid.New().String(),
+			AddressLine:  cinema.Address,
+			EntityId:     cinemaentity.Id,
+			CityId:       cinemaentity.CityId,
+			Coordinates:  city.Coordinates,
+			AddressType:  enums.Cinema,
+			IsDeprecated: false,
+		}
+
+		cinemaEntities = append(cinemaEntities, cinemaentity)
+		cinemaAddressEntities = append(cinemaAddressEntities, addressEntity)
+	}
 
 	cinemaEntities = lo.UniqBy(cinemaEntities, func(cinema entities.Cinema) string {
 		return cinema.Id
 	})
+
 	//sort the cinemas
 	sort.Sort(entities.ByID[entities.Cinema](cinemaEntities))
+
+	cinemaAddressEntities = lo.UniqBy(cinemaAddressEntities, func(address entities.Address) string {
+		return address.Id
+	})
+
+	//sort the address
+	sort.Sort(entities.ByID[entities.Address](cinemaAddressEntities))
 
 	cinemaHallEntities := []entities.CinemaHall{}
 	for _, cinemaHall := range fileData.Cinemahalls {
@@ -301,6 +312,11 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 			return err
 		}
 
+		if err := tx.CreateInBatches(&cinemaAddressEntities, 50).Error; err != nil {
+			// return any error will rollback
+			return err
+		}
+
 		// return nil will commit the whole transaction
 		return nil
 	})
@@ -308,8 +324,6 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	fmt.Println("All Data sucessfully saved into the newly created tables")
 }
 
 type ApiData struct {
@@ -343,6 +357,8 @@ func (apiData *ApiData) GetData(config models.MovieApiConfig, db *gorm.DB) {
 	if tx.Error != nil {
 		return
 	}
+
+	fmt.Println("All Data sucessfully saved into the tables")
 }
 
 // AllocateJobs - create jobs to be done - sender

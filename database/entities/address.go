@@ -21,6 +21,10 @@ type Address struct {
 	ModifiedOn   time.Time               `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
+func (Address) TableName() string {
+	return "Addresses"
+}
+
 func (address *Address) BeforeCreate(tx *gorm.DB) (err error) {
 	if len(address.Id) == 0 || address.Id == utilities.DEFAULT_UUID {
 		address.Id = sequentialguid.New().String()
@@ -28,4 +32,8 @@ func (address *Address) BeforeCreate(tx *gorm.DB) (err error) {
 
 	address.IsDeprecated = false
 	return
+}
+
+func (address Address) GetId() string {
+	return address.Id
 }
