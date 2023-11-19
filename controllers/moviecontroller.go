@@ -54,6 +54,17 @@ func (movieController MovieController) GetMovieByIdHandler(movieContext echo.Con
 	return movieContext.JSON(http.StatusOK, dataResp)
 }
 
+// SearchMovie godoc
+// @Summary     Search for movie
+// @Description  Search for movie
+// @Tags         movies
+// @Accept       json
+// @Produce      json
+// @Param        GetSearchRequest  body  services.GetSearchRequest  true  "GetSearchRequest"
+// @Success      200  {object}  services.GetSearchResponse
+// @Failure      400  {object}  string
+// @Failure      404  {object}  []string
+// @Router       /api/v1/movies/search [get]
 func (movieController MovieController) SearchMovieHandler(movieContext echo.Context) error {
 	var err error
 	req := new(services.GetSearchRequest)
