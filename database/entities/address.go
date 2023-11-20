@@ -16,6 +16,7 @@ type Address struct {
 	CityId       string                  `gorm:"column:CityId"`
 	AddressType  enums.EntityAddressType `gorm:"column:AddressType"`
 	Coordinates  Coordinate              `gorm:"column:Coordinates"`
+	IsCurrent    bool                    `gorm:"column:IsCurrent"`
 	IsDeprecated bool                    `gorm:"column:IsDeprecated"`
 	CreatedOn    time.Time               `gorm:"index;column:CreatedOn;autoCreateTime"`
 	ModifiedOn   time.Time               `gorm:"column:ModifiedOn;autoUpdateTime"`
