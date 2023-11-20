@@ -232,6 +232,7 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 			Coordinates:  city.Coordinates,
 			AddressType:  enums.Cinema,
 			IsDeprecated: false,
+			IsCurrent:    true,
 		}
 
 		cinemaEntities = append(cinemaEntities, cinemaentity)

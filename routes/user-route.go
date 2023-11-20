@@ -10,4 +10,5 @@ import (
 func userRoutes(app *core.BaseApp, group *echo.Group) {
 	userController := controllers.UserController{App: app}
 	group.POST("user/add-role", userController.AddRoleHandler, middlewares.AuthorizeAdmin)
+	group.POST("user/:id/add-location", userController.UpdateUserLocationHandler, middlewares.AuthorizeUser)
 }
