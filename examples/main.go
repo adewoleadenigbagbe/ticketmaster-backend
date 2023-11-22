@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Wolechacho/ticketmaster-backend/core"
@@ -16,6 +17,11 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"golang.org/x/crypto/acme/autocert"
+)
+
+var (
+	ApplicationPath = "ticketmaster-backend"
 )
 
 // @title TicketMaster Endpoints
@@ -38,12 +44,25 @@ import (
 //   - application/json
 // @schemes http
 func main() {
+	var err error
+
 	//load env variables
-	err := godotenv.Load("..//.env")
+	err = godotenv.Load("..//.env")
 	if err != nil {
-		fmt.Println(err)
 		log.Fatal("Error loading .env file")
 	}
+
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	index := strings.Index(currentWorkingDirectory, ApplicationPath)
+	if index == -1 {
+		log.Fatal("App Root Folder Path not found")
+	}
+
+	rootPath := filepath.Join(currentWorkingDirectory[:index], ApplicationPath)
 
 	//configure application
 	app := core.ConfigureApp()
@@ -53,8 +72,9 @@ func main() {
 	app.Echo.Use(mc.CheckMigrationCompatibility)
 
 	app.Echo.Logger.SetLevel(log.INFO)
+	app.Echo.AutoTLSManager.Cache = autocert.DirCache(filepath.Join(rootPath, ".autocert_cache"))
 
-	// Define a route
+	// Define a routes
 	app.Echo.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
@@ -64,10 +84,17 @@ func main() {
 	//Register All Routes
 	routes.RegisterAllRoutes(app)
 
-	// Start server
+	// Start on http server
 	go func() {
-		if err := app.Echo.Start(":8185"); err != nil && err != http.ErrServerClosed {
-			app.Echo.Logger.Fatal("shutting down the server")
+		if err = app.Echo.Start(":8185"); err != nil && err != http.ErrServerClosed {
+			app.Echo.Logger.Fatal("shutting down the server on http")
+		}
+	}()
+
+	// Start on https server
+	go func() {
+		if err = app.Echo.StartAutoTLS(":8443"); err != http.ErrServerClosed {
+			app.Echo.Logger.Fatal("shutting down the server on https")
 		}
 	}()
 
@@ -77,7 +104,7 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := app.Echo.Shutdown(ctx); err != nil {
+	if err = app.Echo.Shutdown(ctx); err != nil {
 		app.Echo.Logger.Fatal(err)
 	}
 }
