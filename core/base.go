@@ -3,6 +3,7 @@ package core
 import (
 	db "github.com/Wolechacho/ticketmaster-backend/database"
 	"github.com/Wolechacho/ticketmaster-backend/services"
+	"github.com/Wolechacho/ticketmaster-backend/tools"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -18,6 +19,7 @@ type BaseApp struct {
 	ShowService        services.ShowService
 	UserService        services.UserService
 	AuthService        services.AuthService
+	BookingService     services.BookingService
 }
 
 func ConfigureApp() *BaseApp {
@@ -34,6 +36,7 @@ func ConfigureApp() *BaseApp {
 		ShowService:        services.ShowService{DB: db},
 		UserService:        services.UserService{DB: db},
 		AuthService:        services.AuthService{DB: db},
+		BookingService:     services.BookingService{DB: db, PDFService: tools.PDFService{}},
 	}
 
 	return app

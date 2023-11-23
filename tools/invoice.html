@@ -12,22 +12,21 @@
 </head>
 <body>
 <p>-------------------------------------------------</p>
-<p>[Cinema Name and Logo]</p>
+<p>{{.CinemaName}}</p>
 <p>CINEMA INVOICE TICKET</p>
 <p>-------------------------------------------------</p>
-
 <p>
     <span>Movie Title:</span>
-    <span>[Movie Title]</span>
+    <span>{{.MovieTitle}}</span>
 </p>
 <p>
     <span>Showtime:</span>
-    <span>[Date] [Time]</span>
+    <span>{{.ShowTime}}</span>
 </p>
 
 <p>
     <span>Ticket Number:</span>
-    <span>[Ticket Number]</span>
+    <span>{{.TicketNumber}}</span>
 </p>
 <p>-------------------------------------------------</p>
 
@@ -50,49 +49,33 @@
         <span>---------</span>
         <span>|</span>
     </p>
+    {{range  .SeatInfos}}
     <p>
         <span>|</span>
-        <span>&nbsp;&nbsp;&nbsp;A1&nbsp;&nbsp;&nbsp;</span>
+        <span>&nbsp;&nbsp;&nbsp;{{.SeatNumber}}&nbsp;&nbsp;&nbsp;</span>
         <span>|</span>
-        <span>&nbsp;&nbsp;Adult&nbsp;</span>
+        <span>&nbsp;&nbsp;{{.SeatType}}&nbsp;</span>
         <span>|</span>
-        <span>&nbsp;&nbsp;$X.XX&nbsp;&nbsp;</span>
-        <span>|</span>
-    </p>
-    <p>
-        <span>|</span>
-        <span>&nbsp;&nbsp;&nbsp;B1&nbsp;&nbsp;&nbsp;</span>
-        <span>|</span>
-        <span>&nbsp;&nbsp;Child&nbsp;</span>
-        <span>|</span>
-        <span>&nbsp;&nbsp;$X.XX&nbsp;&nbsp;</span>
+        <span>&nbsp;&nbsp;{{.Price}}&nbsp;&nbsp;</span>
         <span>|</span>
     </p>
-    <p>
-        <span>|</span>
-        <span>&nbsp;&nbsp;&nbsp;B2&nbsp;&nbsp;&nbsp;</span>
-        <span>|</span>
-        <span>&nbsp;&nbsp;Adult&nbsp;</span>
-        <span>|</span>
-        <span>&nbsp;&nbsp;$X.XX&nbsp;&nbsp;</span>
-        <span>|</span>
-    </p>
+    {{end}}
 </div>
 <p>-------------------------------------------------</p>
 <p>
     <span>Subtotal:</span>
-    <span>[Subtotal]</span>
+    <span>{{.SubTotal}}</span>
 </p>
 <p>
     <span>Tax (X%):</span>
-    <span>[Tax Amount]</span>
+    <span>{{.Tax}}</span>
 </p>
 <p>
     <span>Total:</span>
-    <span> [Total Amount]</span>
+    <span>{{.Total}}</span>
 </p>
 <p>-------------------------------------------------</p>
-<p>Thank you for choosing [Cinema Name]!</p>
+<p>Thank you for choosing {{.CinemaName}}!</p>
 <p>Visit us online at [Cinema Website]</p>
 </body>
 </html>

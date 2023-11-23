@@ -1,6 +1,9 @@
 package services
 
-import "gorm.io/gorm"
+import (
+	"github.com/Wolechacho/ticketmaster-backend/tools"
+	"gorm.io/gorm"
+)
 
 type CinemaService struct {
 	DB *gorm.DB
@@ -24,4 +27,9 @@ type UserService struct {
 
 type AuthService struct {
 	DB *gorm.DB
+}
+
+type BookingService struct {
+	DB         *gorm.DB
+	PDFService tools.PDFService
 }
