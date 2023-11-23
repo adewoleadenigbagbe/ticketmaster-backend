@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"database/sql"
 	"time"
 
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
@@ -10,14 +9,14 @@ import (
 )
 
 type CinemaRate struct {
-	Id         string          `gorm:"column:Id"`
-	CinemaId   string          `gorm:"column:CinemaId"`
-	BaseFee    float32         `gorm:"column:BaseFee"`
-	IsActive   bool            `gorm:"column:IsActive"`
-	Discount   sql.NullFloat64 `gorm:"column:Discount"`
-	IsSpecials sql.NullBool    `gorm:"column:IsSpecials"`
-	CreatedOn  time.Time       `gorm:"column:CreatedOn;autoCreateTime"`
-	ModifiedOn time.Time       `gorm:"column:ModifiedOn;autoUpdateTime"`
+	Id         string                      `gorm:"column:Id"`
+	CinemaId   string                      `gorm:"column:CinemaId"`
+	BaseFee    float32                     `gorm:"column:BaseFee"`
+	IsActive   bool                        `gorm:"column:IsActive"`
+	Discount   utilities.Nullable[float64] `gorm:"column:Discount"`
+	IsSpecials utilities.Nullable[bool]    `gorm:"column:IsSpecials"`
+	CreatedOn  time.Time                   `gorm:"column:CreatedOn;autoCreateTime"`
+	ModifiedOn time.Time                   `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
 func (CinemaRate) TableName() string {
