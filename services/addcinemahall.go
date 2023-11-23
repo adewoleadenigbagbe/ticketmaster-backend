@@ -127,11 +127,11 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 func validateCinemaHallRequiredFields(request CinemaHallRequest) []error {
 	validationErrors := []error{}
 	if len(request.Id) == 0 || len(request.Id) < 36 {
-		validationErrors = append(validationErrors, errors.New("cinemaId is a required field  with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cinemaId"))
 	}
 
 	if request.Id == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, errors.New("cinemaId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cinemaId"))
 	}
 
 	for i, hall := range request.Halls {

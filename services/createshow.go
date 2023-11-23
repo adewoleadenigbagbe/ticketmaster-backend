@@ -13,11 +13,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	TIME_OVERLAP_ERROR = "time overlap between the show Start and End Time"
-	INVALID_UUID_ERROR = "%s should have a valid UUID"
-)
-
 type CreateShowRequest struct {
 	ShowTimes    []ShowDateTime `json:"showTimes"`
 	CinemaHallId string         `json:"cinemaHallId"`
@@ -83,19 +78,19 @@ func validateRequiredFields(request CreateShowRequest) []error {
 
 	//validate the cinemaHallId and movieId
 	if len(request.CinemaHallId) == 0 || len(request.CinemaHallId) < 36 {
-		validationErrors = append(validationErrors, fmt.Errorf("cinemaHallId is a required field  with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cinemaHallId"))
 	}
 
 	if request.CinemaHallId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, fmt.Errorf("cinemaHallId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cinemaHallId"))
 	}
 
 	if len(request.MovieId) == 0 || len(request.MovieId) < 36 {
-		validationErrors = append(validationErrors, fmt.Errorf("movieId is a required field with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "movieId"))
 	}
 
 	if request.MovieId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, fmt.Errorf("movieId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "movieId"))
 	}
 
 	if len(request.ShowTimes) == 0 {

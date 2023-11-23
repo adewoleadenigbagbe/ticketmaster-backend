@@ -60,11 +60,11 @@ func validateCinemaRate(request CinemaRateRequest) []error {
 	validationErrors := []error{}
 
 	if request.CinemaId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, fmt.Errorf("cinemaId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cinemaId"))
 	}
 
 	if len(request.CinemaId) == 0 || len(request.CinemaId) < 36 {
-		validationErrors = append(validationErrors, fmt.Errorf("cinemaId is a required field with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cinemaId"))
 	}
 
 	if request.BaseFee <= 0 {
