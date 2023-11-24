@@ -1,7 +1,6 @@
 package services
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -50,7 +49,7 @@ func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUs
 		Email:        request.Email,
 		RoleId:       request.RoleId,
 		Password:     request.Password,
-		PhoneNumber:  sql.NullString{String: request.PhoneNumber, Valid: true},
+		PhoneNumber:  utilities.NewNullable[string](request.PhoneNumber, true),
 		IsDeprecated: false,
 	}
 

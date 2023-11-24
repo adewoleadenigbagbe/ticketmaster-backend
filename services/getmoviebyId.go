@@ -22,18 +22,19 @@ func (movieService MovieService) GetMovieById(request GetMovieByIdRequest) (GetM
 	result := movieService.DB.Where("Id = ? AND IsDeprecated = ?", request.Id, false).First(&movie)
 
 	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return GetMovieByIdResponse{}, models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{errors.New("movie Record  not found")}}
+		return GetMovieByIdResponse{}, models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{errors.New("movie Record not found")}}
 	}
 
 	movieDataResp := MovieDataResponse{
 		Id:          movie.Id,
 		Title:       movie.Title,
 		Language:    movie.Language,
-		Description: movie.Description.String,
+		Description: movie.Description,
 		ReleaseDate: movie.ReleaseDate,
 		Genre:       movie.Genre,
 		Popularity:  movie.Popularity,
 		VoteCount:   movie.VoteCount,
+		Duration:    movie.Duration,
 	}
 
 	return GetMovieByIdResponse{Movie: movieDataResp}, models.ErrorResponse{}

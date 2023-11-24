@@ -16,6 +16,15 @@ type Nullable[T any] struct {
 	Valid bool
 }
 
+func zeroTypeValue[T any]() T {
+	var zero T
+	return zero
+}
+
+func NewNullable[T any](value T, isValid bool) Nullable[T] {
+	return Nullable[T]{Val: value, Valid: isValid}
+}
+
 func (n *Nullable[T]) Scan(value interface{}) error {
 	if value == nil {
 		n.Val = zeroTypeValue[T]()
@@ -62,24 +71,14 @@ func (n Nullable[T]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(n.Val)
 }
 
-func zeroTypeValue[T any]() T {
-	var zero T
-	return zero
-}
-
 func convertToGenericType[T any](value interface{}) (T, error) {
 	switch v := value.(type) {
-	case T:
-		return v, nil
-	case int64:
-		// Convert to correspondint int type
-		switch t := reflect.Zero(reflect.TypeOf((*T)(nil)).Elem()).Interface().(type) {
-		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-			if reflect.TypeOf(t).ConvertibleTo(reflect.TypeOf((*T)(nil)).Elem()) {
-				return reflect.ValueOf(value).Convert(reflect.TypeOf((*T)(nil)).Elem()).Interface().(T), nil
-			}
+	case []uint8, []uint16, []uint32, []uint64:
+		if reflect.TypeOf(v).ConvertibleTo(reflect.TypeOf((*T)(nil)).Elem()) {
+			return reflect.ValueOf(value).Convert(reflect.TypeOf((*T)(nil)).Elem()).Interface().(T), nil
 		}
 	}
+
 	var zero T
 	return zero, ErrUnsupportedConversion
 }

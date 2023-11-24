@@ -6,6 +6,7 @@ import (
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	paginate "github.com/Wolechacho/ticketmaster-backend/helpers/pagination"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 )
 
 type GetMoviesRequest struct {
@@ -24,14 +25,15 @@ type GetMoviesResponse struct {
 }
 
 type MovieDataResponse struct {
-	Id          string    `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Language    string    `json:"language"`
-	ReleaseDate time.Time `json:"releaseDate"`
-	Genre       int       `json:"genre"`
-	Popularity  float32   `json:"popularity"`
-	VoteCount   int       `json:"voteCount"`
+	Id          string                     `json:"id"`
+	Title       string                     `json:"title"`
+	Description utilities.Nullable[string] `json:"description"`
+	Language    string                     `json:"language"`
+	ReleaseDate time.Time                  `json:"releaseDate"`
+	Genre       int                        `json:"genre"`
+	Popularity  float32                    `json:"popularity"`
+	VoteCount   int                        `json:"voteCount"`
+	Duration    utilities.Nullable[int]    `json:"duration"`
 }
 
 func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesResponse, error) {
@@ -75,7 +77,7 @@ func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesR
 			Id:          movie.Id,
 			Title:       movie.Title,
 			Language:    movie.Language,
-			Description: movie.Description.String,
+			Description: movie.Description,
 			ReleaseDate: movie.ReleaseDate,
 			Genre:       movie.Genre,
 			Popularity:  movie.Popularity,
