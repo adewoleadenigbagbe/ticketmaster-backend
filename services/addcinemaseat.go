@@ -169,19 +169,19 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 func validateCinemSeatRequiredFields(request CreateCinemaSeatRequest) []error {
 	validationErrors := []error{}
 	if len(request.Id) == 0 || len(request.Id) < 36 {
-		validationErrors = append(validationErrors, errors.New("cinemaId is a required field  with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cinemaId"))
 	}
 
 	if request.Id == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, errors.New("cinemaId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cinemaId"))
 	}
 
 	if len(request.CinemaHallId) == 0 || len(request.CinemaHallId) < 36 {
-		validationErrors = append(validationErrors, errors.New("cinemahallId is a required field  with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cinemahallId"))
 	}
 
 	if request.CinemaHallId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, errors.New("cinemahallId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cinemahallId"))
 	}
 
 	for i, seat := range request.Seats {

@@ -56,12 +56,12 @@ func (authService AuthService) SignIn(request SignInRequest) (SignInResponse, mo
 func validateSignInCredentials(request SignInRequest) []error {
 	var validationErrors []error
 	if request.Password == "" {
-		validationErrors = append(validationErrors, fmt.Errorf("password is a required field"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "password"))
 	}
 
 	isEmailValid, _ := regexp.MatchString(EmailRegex, request.Email)
 	if !isEmailValid {
-		validationErrors = append(validationErrors, fmt.Errorf("email supplied is invalid"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInValidField, "email"))
 	}
 
 	return validationErrors

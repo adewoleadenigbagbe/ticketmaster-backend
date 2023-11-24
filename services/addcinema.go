@@ -12,6 +12,14 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	TIME_OVERLAP_ERROR   = "time overlap between the show Start and End Time"
+	ErrInvalidUUID       = "%s should have a valid UUID"
+	ErrRequiredUUIDField = "%s is a required field with 36 characters"
+	ErrRequiredField     = "%s is a required field"
+	ErrInValidField      = "%s supplied is invalid"
+)
+
 type CinemaHallModel struct {
 	Name        string            `json:"name"`
 	TotalSeat   int               `json:"totalSeat"`
@@ -125,15 +133,15 @@ func validateCinema(request CreateCinemaRequest) []error {
 	var validationErrors []error
 
 	if len(request.Name) == 0 {
-		validationErrors = append(validationErrors, fmt.Errorf("name is a required field"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "name"))
 	}
 
 	if request.CityId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, fmt.Errorf("cityId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cityId"))
 	}
 
 	if len(request.CityId) == 0 || len(request.CityId) < 36 {
-		validationErrors = append(validationErrors, fmt.Errorf("cityId is a required field with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cityId"))
 	}
 
 	if request.TotalCinemalHalls <= 0 {
