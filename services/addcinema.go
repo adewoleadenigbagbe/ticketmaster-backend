@@ -77,6 +77,7 @@ func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) (Cr
 				Latitude:  request.Latitude,
 			},
 			IsDeprecated: false,
+			IsCurrent:    true,
 		}
 
 		if err := tx.Create(&address).Error; err != nil {

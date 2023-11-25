@@ -71,6 +71,7 @@ func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUs
 				Latitude:  request.Latitude,
 			},
 			IsDeprecated: false,
+			IsCurrent:    true,
 		}
 
 		if err := tx.Create(&address).Error; err != nil {
