@@ -23,6 +23,7 @@ type BaseApp struct {
 	ShowService        services.ShowService
 	UserService        services.UserService
 	BookService        services.BookService
+	AuthService        services.AuthService
 }
 
 func ConfigureApp() *BaseApp {
@@ -41,6 +42,7 @@ func ConfigureApp() *BaseApp {
 		ShowService:        services.ShowService{DB: db},
 		UserService:        services.UserService{DB: db},
 		BookService:        services.BookService{DB: db, Nc: nc},
+		AuthService:        services.AuthService{DB: db},
 	}
 
 	return app

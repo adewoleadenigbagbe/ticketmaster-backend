@@ -18,3 +18,11 @@ tmp
 .env
 
 launch.json
+
+# Environmental variables
+.env
+
+*.vscode
+
+
+launch.json

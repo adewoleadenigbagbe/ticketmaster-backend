@@ -29,3 +29,7 @@ type BookService struct {
 	DB *gorm.DB
 	Nc *nats.Conn
 }
+
+type AuthService struct {
+	DB *gorm.DB
+}

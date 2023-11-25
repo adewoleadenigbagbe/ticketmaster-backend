@@ -14,3 +14,8 @@ type BookingMessage struct {
 	BookingDateTime time.Time
 	ExpiryDateTime  time.Time
 }
+
+type SeatAvailableMessage struct {
+	ShowId        string
+	CinemaSeatIds []string
+}
