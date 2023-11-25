@@ -103,10 +103,7 @@ func (bookingService BookingService) GenerateInvoicePDF(request GeneratePdfReque
 	pdfModel := PdfModel{}
 
 	for _, booking := range bookings {
-		if ticketNumber == booking.TicketNumber {
-			return GeneratePdfResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{errors.New("duplicate booking Id")}}
-		}
-		if pdfModel.TicketNumber == "" {
+		if ticketNumber == "" {
 			pdfModel.TicketNumber = booking.TicketNumber
 			pdfModel.CinemaName = booking.CinemaName
 			pdfModel.MovieTitle = booking.MovieTitle
