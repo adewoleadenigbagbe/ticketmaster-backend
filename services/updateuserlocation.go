@@ -36,7 +36,7 @@ func (userService UserService) UpdateUserLocation(request UserLocationRequest) (
 
 	err = userService.DB.First(&user).Error
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		return UserLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
+		return UserLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{errors.New("user not found")}}
 	}
 
 	address := entities.Address{
@@ -58,7 +58,7 @@ func (userService UserService) UpdateUserLocation(request UserLocationRequest) (
 			return err
 		}
 
-		//add the new rate
+		//add the new address
 		if err = tx.Create(&address).Error; err != nil {
 			return err
 		}
