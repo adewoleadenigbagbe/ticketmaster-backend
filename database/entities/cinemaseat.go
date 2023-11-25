@@ -3,20 +3,20 @@ package entities
 import (
 	"time"
 
+	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"gorm.io/gorm"
 )
 
 type CinemaSeat struct {
-	Id         string `gorm:"column:Id"`
-	SeatNumber int    `gorm:"column:SeatNumber"`
-	//Type is an enum
-	Type         int       `gorm:"column:Type"`
-	CinemaHallId string    `gorm:"column:CinemaHallId"`
-	IsDeprecated bool      `gorm:"column:IsDeprecated"`
-	CreatedOn    time.Time `gorm:"column:CreatedOn;autoCreateTime"`
-	ModifiedOn   time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
+	Id           string         `gorm:"column:Id"`
+	SeatNumber   int            `gorm:"column:SeatNumber"`
+	Type         enums.SeatType `gorm:"column:Type"`
+	CinemaHallId string         `gorm:"column:CinemaHallId"`
+	IsDeprecated bool           `gorm:"column:IsDeprecated"`
+	CreatedOn    time.Time      `gorm:"column:CreatedOn;autoCreateTime"`
+	ModifiedOn   time.Time      `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
 func (CinemaSeat) TableName() string {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	jwtauth "github.com/Wolechacho/ticketmaster-backend/helpers/utilities/auth"
+	"github.com/Wolechacho/ticketmaster-backend/models"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -18,16 +19,15 @@ type SignInRequest struct {
 }
 
 type SignInResponse struct {
-	StatusCode int
-	Token      string `json:"access_token"`
+	Token string `json:"access_token"`
 }
 
-func (authService AuthService) SignIn(request SignInRequest) (SignInResponse, []error) {
+func (authService AuthService) SignIn(request SignInRequest) (SignInResponse, models.ErrorResponse) {
 	var err error
 
 	validationErrors := validateSignInCredentials(request)
 	if len(validationErrors) > 0 {
-		return SignInResponse{StatusCode: http.StatusBadRequest}, validationErrors
+		return SignInResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: validationErrors}
 	}
 
 	var user *entities.User
@@ -37,20 +37,20 @@ func (authService AuthService) SignIn(request SignInRequest) (SignInResponse, []
 		First(&user).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return SignInResponse{StatusCode: http.StatusBadRequest}, []error{fmt.Errorf("email or password not found")}
+		return SignInResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{fmt.Errorf("email or password not found")}}
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
 	if err != nil {
-		return SignInResponse{StatusCode: http.StatusBadRequest}, []error{fmt.Errorf("email or password not found")}
+		return SignInResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{fmt.Errorf("email or password not found")}}
 	}
 
 	token, err := jwtauth.GenerateJWT(*user)
 	if err != nil {
-		return SignInResponse{StatusCode: http.StatusBadRequest}, []error{err}
+		return SignInResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
 
-	return SignInResponse{StatusCode: http.StatusOK, Token: token}, nil
+	return SignInResponse{Token: token}, models.ErrorResponse{}
 }
 
 func validateSignInCredentials(request SignInRequest) []error {

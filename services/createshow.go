@@ -9,6 +9,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
+	"github.com/Wolechacho/ticketmaster-backend/models"
 	"gorm.io/gorm"
 )
 
@@ -24,8 +25,7 @@ type CreateShowRequest struct {
 }
 
 type CreateShowResponse struct {
-	ShowIds    []string `json:"showIds"`
-	StatusCode int
+	ShowIds []string `json:"showIds"`
 }
 
 type ShowDateTime struct {
@@ -33,16 +33,16 @@ type ShowDateTime struct {
 	EndDateTime   time.Time `json:"endDate"`
 }
 
-func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShowResponse, []error) {
+func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShowResponse, models.ErrorResponse) {
 	var err error
 	fieldErrors := validateRequiredFields(request)
 	if len(fieldErrors) != 0 {
-		return CreateShowResponse{StatusCode: http.StatusBadRequest}, fieldErrors
+		return CreateShowResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: fieldErrors}
 	}
 
 	showTimeErrors := validateShowTime(request)
 	if len(showTimeErrors) != 0 {
-		return CreateShowResponse{StatusCode: http.StatusBadRequest}, showTimeErrors
+		return CreateShowResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: showTimeErrors}
 	}
 
 	showIds := []string{}
@@ -72,9 +72,9 @@ func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShow
 	})
 
 	if err != nil {
-		return CreateShowResponse{StatusCode: http.StatusBadRequest}, []error{err}
+		return CreateShowResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
-	return CreateShowResponse{ShowIds: showIds, StatusCode: http.StatusOK}, nil
+	return CreateShowResponse{ShowIds: showIds}, models.ErrorResponse{}
 }
 
 func validateRequiredFields(request CreateShowRequest) []error {

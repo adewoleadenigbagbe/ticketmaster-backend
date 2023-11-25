@@ -53,11 +53,18 @@ func (d Datetime) AfterOrEqualTo(u time.Time) bool {
 }
 
 func (d *Datetime) UnmarshalJSON(b []byte) error {
+	var t time.Time
+	var err error
 	s := strings.Trim(string(b), "\"")
-	t, err := time.Parse(time.DateOnly, s)
-	if err != nil {
-		return err
+	if s == "" {
+		t = time.Now()
+	} else {
+		t, err = time.Parse(time.DateOnly, s)
+		if err != nil {
+			return err
+		}
 	}
+
 	*d = Datetime(t)
 	return nil
 }

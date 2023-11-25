@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+       body{
+           font-weight: bold;
+           font-family: monospace;
+           text-align: center;
+        }
+      </style>
+<title>Ticket Invoice</title>
+</head>
+<body>
+<p>-------------------------------------------------</p>
+<p>{{.CinemaName}}</p>
+<p>CINEMA INVOICE TICKET</p>
+<p>-------------------------------------------------</p>
+<p>
+    <span>Movie Title:</span>
+    <span>{{.MovieTitle}}</span>
+</p>
+<p>
+    <span>Showtime:</span>
+    <span>{{.ShowTime}}</span>
+</p>
+
+<p>
+    <span>Ticket Number:</span>
+    <span>{{.TicketNumber}}</span>
+</p>
+<p>-------------------------------------------------</p>
+
+<div>
+    <p>
+        <span>|</span>
+        <span>&nbsp;&nbsp;Seat&nbsp;&nbsp;</span>
+        <span>|</span>
+        <span>&nbsp;&nbsp;Type&nbsp;&nbsp;</span>
+        <span>|</span>
+        <span>&nbsp;&nbsp;Price&nbsp;&nbsp;</span>
+        <span>|</span>
+    </p>
+    <p>
+        <span>|</span>
+        <span>--------</span>
+        <span>|</span>
+        <span>--------</span>
+        <span>|</span>
+        <span>---------</span>
+        <span>|</span>
+    </p>
+    {{range  .SeatInfos}}
+    <p>
+        <span>|</span>
+        <span>&nbsp;&nbsp;&nbsp;{{.SeatNumber}}&nbsp;&nbsp;&nbsp;</span>
+        <span>|</span>
+        <span>&nbsp;&nbsp;{{.SeatType}}&nbsp;</span>
+        <span>|</span>
+        <span>&nbsp;&nbsp;{{.Price}}&nbsp;&nbsp;</span>
+        <span>|</span>
+    </p>
+    {{end}}
+</div>
+<p>-------------------------------------------------</p>
+<p>
+    <span>Subtotal:</span>
+    <span>{{.SubTotal}}</span>
+</p>
+<p>
+    <span>Tax (X%):</span>
+    <span>{{.Tax}}</span>
+</p>
+<p>
+    <span>Total:</span>
+    <span>{{.Total}}</span>
+</p>
+<p>-------------------------------------------------</p>
+<p>Thank you for choosing {{.CinemaName}}!</p>
+<p>Visit us online at [Cinema Website]</p>
+</body>
+</html>
