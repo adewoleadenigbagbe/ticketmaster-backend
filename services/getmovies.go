@@ -48,6 +48,14 @@ func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesR
 		request.PageLength = 10
 	}
 
+	if request.SortBy == "" {
+		request.SortBy = "Title"
+	}
+
+	if request.Order == "" {
+		request.Order = "asc"
+	}
+
 	//Filter
 	filterClause := paginate.FilterFields(&entities.Movie{IsDeprecated: false})
 
@@ -57,7 +65,6 @@ func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesR
 
 	//order by
 	sortandorder := fmt.Sprintf("%s %s", request.SortBy, request.Order)
-	fmt.Println(sortandorder)
 	orderByClause := paginate.OrderBy(sortandorder)
 
 	//this uses functional scope pattern in golang
