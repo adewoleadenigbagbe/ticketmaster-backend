@@ -32,3 +32,14 @@ func (bookingController BookingController) BookShowHandler(bookingContext echo.C
 
 	return bookingContext.JSON(http.StatusOK, resp)
 }
+
+func (bookingController BookingController) ChargeBookingHandler(bookingContext echo.Context) error {
+	var err error
+	request := new(services.CreatePaymentRequest)
+
+	err = bookingContext.Bind(request)
+	if err != nil {
+		return bookingContext.JSON(http.StatusBadRequest, err.Error())
+	}
+	return nil
+}

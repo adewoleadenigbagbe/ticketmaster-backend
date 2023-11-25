@@ -11,6 +11,7 @@ require (
 	github.com/muesli/cache2go v0.0.0-20221011235721-518229cd8021
 	github.com/nats-io/nats.go v1.31.0
 	github.com/samber/lo v1.38.1
+	github.com/stripe/stripe-go v70.15.0+incompatible
 	github.com/swaggo/echo-swagger v1.4.0
 	github.com/swaggo/swag v1.16.1
 	golang.org/x/crypto v0.12.0
