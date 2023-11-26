@@ -1,34 +1,44 @@
 package ticketmaster
 
-// import (
-// 	"github.com/Wolechacho/ticketmaster-backend/cmd"
-// 	"github.com/spf13/cobra"
-// )
+import (
+	"os"
 
-// type TicketMaster struct {
-// 	RootCmd *cobra.Command
-// }
+	"github.com/Wolechacho/ticketmaster-backend/cmd"
+	"github.com/spf13/cobra"
+)
 
-// func New() *TicketMaster {
-// 	tc := &TicketMaster{
-// 		RootCmd: &cobra.Command{
-// 			Use:   "ticketmaster",
-// 			Short: "Ticketmaster CLI",
-// 			// no need to provide the default cobra completion command
-// 			CompletionOptions: cobra.CompletionOptions{
-// 				DisableDefaultCmd: true,
-// 			},
-// 		},
-// 	}
+type TicketMaster struct {
+	RootCmd *cobra.Command
+}
 
-// 	return tc
-// }
+func New() *TicketMaster {
+	tc := &TicketMaster{
+		RootCmd: &cobra.Command{
+			Use:   "[command]",
+			Short: "Ticketmaster CLI",
+			// no need to provide the default cobra completion command
+			CompletionOptions: cobra.CompletionOptions{
+				DisableDefaultCmd: true,
+			},
+		},
+	}
 
-// func (ticketmaster *TicketMaster) Start() int {
-// 	ticketmaster.RootCmd.AddCommand(cmd.NewMigrateCommand())
-// 	return 1
-// }
+	return tc
+}
 
-// func (ticketmaster *TicketMaster) Execute() error {
-// 	return nil
-// }
+func (ticketmaster *TicketMaster) Start() error {
+	ticketmaster.RootCmd.AddCommand(cmd.ServeApiCommand())
+	ticketmaster.RootCmd.AddCommand(cmd.WaitingServiceCommand())
+	ticketmaster.RootCmd.AddCommand(cmd.ActivationReservationCommand())
+
+	return ticketmaster.execute()
+}
+
+func (ticketmaster *TicketMaster) execute() error {
+	err := ticketmaster.RootCmd.Execute()
+	if err != nil {
+		os.Exit(1)
+	}
+
+	return nil
+}
