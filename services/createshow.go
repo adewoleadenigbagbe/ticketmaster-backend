@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	TIME_OVERLAP_ERROR = "time overlap between the show Start and End Time"
 	INVALID_UUID_ERROR = "%s should have a valid UUID"
 )
 

@@ -20,8 +20,17 @@
     <span>{{.MovieTitle}}</span>
 </p>
 <p>
-    <span>Showtime:</span>
-    <span>{{.ShowTime}}</span>
+    <span>Hall:</span>
+    <span>{{.HallName}}</span>
+</p>
+<p>
+    <span>Show Start Time:</span>
+    <span>{{.ShowStartTime}}</span>
+</p>
+
+<p>
+    <span>Show End Time:</span>
+    <span>{{.ShowEndTime}}</span>
 </p>
 
 <p>
@@ -52,11 +61,11 @@
     {{range  .SeatInfos}}
     <p>
         <span>|</span>
-        <span>&nbsp;&nbsp;&nbsp;{{.SeatNumber}}&nbsp;&nbsp;&nbsp;</span>
+        <span>&nbsp;&nbsp;{{.SeatNumber}}</span>
         <span>|</span>
-        <span>&nbsp;&nbsp;{{.SeatType}}&nbsp;</span>
+        <span>&nbsp;&nbsp;{{.SeatType}}</span>
         <span>|</span>
-        <span>&nbsp;&nbsp;{{.Price}}&nbsp;&nbsp;</span>
+        <span>&nbsp;&nbsp;{{.Price}}</span>
         <span>|</span>
     </p>
     {{end}}

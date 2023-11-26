@@ -12,6 +12,14 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	TIME_OVERLAP_ERROR   = "time overlap between the show Start and End Time"
+	ErrInvalidUUID       = "%s should have a valid UUID"
+	ErrRequiredUUIDField = "%s is a required field with 36 characters"
+	ErrRequiredField     = "%s is a required field"
+	ErrInValidField      = "%s supplied is invalid"
+)
+
 type CinemaHallModel struct {
 	Name        string            `json:"name"`
 	TotalSeat   int               `json:"totalSeat"`

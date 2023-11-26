@@ -2,7 +2,9 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Wolechacho/ticketmaster-backend/enums"
@@ -26,19 +28,21 @@ type PdfModel struct {
 	TicketNumber  string
 	SeatInfos     []SeatInfo
 	SubTotal      float64
-	Tax           float32
+	Tax           float64
 	Total         float64
+	HallName      string
 }
 
 type BookingModel struct {
 	CinemaName    string
 	MovieTitle    string
-	ShowStartTime int
-	ShowEndTime   int
+	ShowStartTime int64
+	ShowEndTime   int64
 	TicketNumber  string
 	SeatNumber    int
 	SeatType      int
 	Price         float64
+	HallName      string
 }
 
 type SeatInfo struct {
@@ -78,8 +82,9 @@ func (bookingService BookingService) GenerateInvoicePDF(request GeneratePdfReque
 			"shows.StartTime AS ShowStartTime",
 			"shows.EndTime AS ShowEndTime",
 			"cinemaseats.SeatNumber AS SeatNumber",
-			"cinemaseats.SeatType AS SeatType",
-			"showseats.Price AS Price").
+			"cinemaseats.Type AS SeatType",
+			"showseats.Price AS Price",
+			"cinemahalls.Name AS HallName").
 		Rows()
 
 	if err != nil {
@@ -91,7 +96,7 @@ func (bookingService BookingService) GenerateInvoicePDF(request GeneratePdfReque
 	bookings := []BookingModel{}
 	for query.Next() {
 		var booking BookingModel
-		err = query.Scan(&booking.TicketNumber, &booking.CinemaName, &booking.MovieTitle, &booking.ShowStartTime, &booking.ShowEndTime, &booking.SeatNumber, &booking.SeatType, &booking.Price)
+		err = query.Scan(&booking.TicketNumber, &booking.CinemaName, &booking.MovieTitle, &booking.ShowStartTime, &booking.ShowEndTime, &booking.SeatNumber, &booking.SeatType, &booking.Price, &booking.HallName)
 		if err != nil {
 			return GeneratePdfResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
 		}
@@ -99,16 +104,21 @@ func (bookingService BookingService) GenerateInvoicePDF(request GeneratePdfReque
 		bookings = append(bookings, booking)
 	}
 
+	if len(bookings) == 0 {
+		return GeneratePdfResponse{}, models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{errors.New("booking not found")}}
+	}
+
 	var ticketNumber string
 	pdfModel := PdfModel{}
 
 	for _, booking := range bookings {
 		if ticketNumber == "" {
-			pdfModel.TicketNumber = booking.TicketNumber
+			pdfModel.TicketNumber = strings.Replace(booking.TicketNumber, "-", "", -1)
 			pdfModel.CinemaName = booking.CinemaName
+			pdfModel.HallName = booking.HallName
 			pdfModel.MovieTitle = booking.MovieTitle
-			pdfModel.ShowStartTime = time.Unix(int64(booking.ShowStartTime), 0).String()
-			pdfModel.ShowEndTime = time.Unix(int64(booking.ShowEndTime), 0).String()
+			pdfModel.ShowStartTime = time.Unix(booking.ShowStartTime, 0).Format(time.DateTime)
+			pdfModel.ShowEndTime = time.Unix(booking.ShowEndTime, 0).Format(time.DateTime)
 			pdfModel.Tax = 1.02
 		}
 
@@ -122,7 +132,7 @@ func (bookingService BookingService) GenerateInvoicePDF(request GeneratePdfReque
 		ticketNumber = booking.TicketNumber
 	}
 
-	pdfModel.Total = pdfModel.SubTotal + float64(pdfModel.Tax)
+	pdfModel.Total = pdfModel.SubTotal + pdfModel.Tax
 
 	pdfBytes, err := bookingService.PDFService.GeneratePDF(pdfModel)
 	if err != nil {
@@ -135,19 +145,19 @@ func (bookingService BookingService) GenerateInvoicePDF(request GeneratePdfReque
 func validateInvoice(request GeneratePdfRequest) []error {
 	validationErrors := []error{}
 	if len(request.BookingId) == 0 || len(request.BookingId) < 36 {
-		validationErrors = append(validationErrors, errors.New("bookingId is a required field  with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "bookingId"))
 	}
 
 	if request.BookingId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, errors.New("bookingId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "bookingId"))
 	}
 
 	if len(request.UserId) == 0 || len(request.UserId) < 36 {
-		validationErrors = append(validationErrors, errors.New("userId is a required field  with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "userId"))
 	}
 
 	if request.UserId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, errors.New("userId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "userId"))
 	}
 
 	return validationErrors
