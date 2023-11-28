@@ -46,6 +46,8 @@ func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesR
 		request.PageLength = 10
 	}
 
+	movieService.Logger.Info().Interface("request", request)
+
 	//Filter
 	filterClause := paginate.FilterFields(&entities.Movie{IsDeprecated: false})
 
@@ -84,5 +86,6 @@ func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesR
 		resp.Movies = append(resp.Movies, movieData)
 	}
 
+	movieService.Logger.Info().Interface("response", *resp)
 	return *resp, nil
 }

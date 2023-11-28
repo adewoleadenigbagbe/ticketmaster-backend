@@ -23,6 +23,7 @@ type CinemaRateResponse struct {
 }
 
 func (cinemaService CinemaService) AddCinemaRate(request CinemaRateRequest) (CinemaRateResponse, models.ErrorResponse) {
+	cinemaService.Logger.Info().Interface("request", request)
 	var err error
 	requireFieldErrors := validateCinemaRate(request)
 	if len(requireFieldErrors) > 0 {
@@ -51,9 +52,13 @@ func (cinemaService CinemaService) AddCinemaRate(request CinemaRateRequest) (Cin
 	})
 
 	if err != nil {
-		return CinemaRateResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
+		errResponse := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
+		cinemaService.Logger.Info().Interface("response", errResponse)
+		return CinemaRateResponse{}, errResponse
 	}
-	return CinemaRateResponse{Id: cinemaRate.Id}, models.ErrorResponse{}
+	resp := CinemaRateResponse{Id: cinemaRate.Id}
+	cinemaService.Logger.Info().Interface("response", resp)
+	return resp, models.ErrorResponse{}
 }
 
 func validateCinemaRate(request CinemaRateRequest) []error {

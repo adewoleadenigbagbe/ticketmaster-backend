@@ -26,6 +26,7 @@ type UserLocationResponse struct {
 }
 
 func (userService UserService) UpdateUserLocation(request UserLocationRequest) (UserLocationResponse, models.ErrorResponse) {
+	userService.Logger.Info().Interface("request", request)
 	requiredFieldErrors := validateUserLocation(request)
 	if len(requiredFieldErrors) > 0 {
 		return UserLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: requiredFieldErrors}
@@ -36,7 +37,9 @@ func (userService UserService) UpdateUserLocation(request UserLocationRequest) (
 
 	err = userService.DB.First(&user).Error
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		return UserLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{errors.New("user not found")}}
+		errResp := models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{errors.New("user not found")}}
+		userService.Logger.Info().Interface("response", errResp)
+		return UserLocationResponse{}, errResp
 	}
 
 	address := entities.Address{
@@ -66,10 +69,14 @@ func (userService UserService) UpdateUserLocation(request UserLocationRequest) (
 	})
 
 	if err != nil {
-		return UserLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
+		errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
+		userService.Logger.Info().Interface("response", errResp)
+		return UserLocationResponse{}, errResp
 	}
 
-	return UserLocationResponse{AddressId: address.Id}, models.ErrorResponse{}
+	resp := UserLocationResponse{AddressId: address.Id}
+	userService.Logger.Info().Interface("response", resp)
+	return resp, models.ErrorResponse{}
 }
 
 func validateUserLocation(request UserLocationRequest) []error {

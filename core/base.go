@@ -1,9 +1,12 @@
 package core
 
 import (
+	"os"
+
 	db "github.com/Wolechacho/ticketmaster-backend/database"
 	"github.com/Wolechacho/ticketmaster-backend/services"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 )
 
@@ -18,6 +21,7 @@ type BaseApp struct {
 	ShowService        services.ShowService
 	UserService        services.UserService
 	AuthService        services.AuthService
+	Logger             zerolog.Logger
 }
 
 func ConfigureApp() *BaseApp {
@@ -28,12 +32,12 @@ func ConfigureApp() *BaseApp {
 		IsMigrationChecked: false,
 		Echo:               echo.New(),
 		DB:                 db,
-		CinemaService:      services.CinemaService{DB: db},
-		CityService:        services.CityService{DB: db},
-		MovieService:       services.MovieService{DB: db},
-		ShowService:        services.ShowService{DB: db},
-		UserService:        services.UserService{DB: db},
-		AuthService:        services.AuthService{DB: db},
+		CinemaService:      services.CinemaService{DB: db, Logger: zerolog.New(os.Stdout).With().Timestamp().Logger()},
+		CityService:        services.CityService{DB: db, Logger: zerolog.New(os.Stdout).With().Timestamp().Logger()},
+		MovieService:       services.MovieService{DB: db, Logger: zerolog.New(os.Stdout).With().Timestamp().Logger()},
+		ShowService:        services.ShowService{DB: db, Logger: zerolog.New(os.Stdout).With().Timestamp().Logger()},
+		UserService:        services.UserService{DB: db, Logger: zerolog.New(os.Stdout).With().Timestamp().Logger()},
+		AuthService:        services.AuthService{DB: db, Logger: zerolog.New(os.Stdout).With().Timestamp().Logger()},
 	}
 
 	return app

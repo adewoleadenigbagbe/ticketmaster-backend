@@ -18,11 +18,14 @@ type GetMovieByIdResponse struct {
 }
 
 func (movieService MovieService) GetMovieById(request GetMovieByIdRequest) (GetMovieByIdResponse, models.ErrorResponse) {
+	movieService.Logger.Info().Interface("request", request)
 	movie := &entities.Movie{}
 	result := movieService.DB.Where("Id = ? AND IsDeprecated = ?", request.Id, false).First(&movie)
 
 	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return GetMovieByIdResponse{}, models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{errors.New("movie Record  not found")}}
+		errResp := models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{errors.New("movie Record  not found")}}
+		movieService.Logger.Info().Interface("response", errResp)
+		return GetMovieByIdResponse{}, errResp
 	}
 
 	movieDataResp := MovieDataResponse{
@@ -36,5 +39,6 @@ func (movieService MovieService) GetMovieById(request GetMovieByIdRequest) (GetM
 		VoteCount:   movie.VoteCount,
 	}
 
+	movieService.Logger.Info().Interface("response", movieDataResp)
 	return GetMovieByIdResponse{Movie: movieDataResp}, models.ErrorResponse{}
 }

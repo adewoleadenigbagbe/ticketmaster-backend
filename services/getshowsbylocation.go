@@ -72,7 +72,7 @@ func distance(coordinate1, coordinate2 entities.Coordinate, unit ...string) floa
 }
 
 func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocationRequest) (GetShowsByLocationResponse, models.ErrorResponse) {
-
+	showService.Logger.Info().Interface("request", request)
 	//get show that are not deprecated nor cancelled
 	//sort them by the earliest show date and time
 	userQuery, err := showService.DB.Table("users").
@@ -86,7 +86,9 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		Rows()
 
 	if err != nil {
-		return GetShowsByLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
+		errResp := models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
+		showService.Logger.Info().Interface("response", errResp)
+		return GetShowsByLocationResponse{}, errResp
 	}
 
 	defer userQuery.Close()
@@ -99,7 +101,9 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		}
 		err = userQuery.Scan(&user.UserId, &user.IsDeprecated, &user.CityId, &user.Coordinates)
 		if err != nil {
-			return GetShowsByLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
+			errResp := models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
+			showService.Logger.Info().Interface("response", errResp)
+			return GetShowsByLocationResponse{}, errResp
 		}
 		i++
 	}
@@ -124,7 +128,9 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		Rows()
 
 	if err != nil {
-		return GetShowsByLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
+		errResp := models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
+		showService.Logger.Info().Interface("response", errResp)
+		return GetShowsByLocationResponse{}, errResp
 	}
 
 	defer showQuery.Close()
@@ -136,12 +142,15 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 			&show.Description, &show.Language, &show.Genre, &show.AddressLine, &show.Distance)
 
 		if err != nil {
-			return GetShowsByLocationResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
+			errResp := models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
+			showService.Logger.Info().Interface("response", errResp)
+			return GetShowsByLocationResponse{}, errResp
 		}
 		show.StartTime = time.Unix(show.startTime, 0)
 		show.EndTime = time.Unix(show.endTime, 0)
 		shows = append(shows, *show)
 	}
 
+	showService.Logger.Info().Interface("response", shows)
 	return GetShowsByLocationResponse{Results: shows}, models.ErrorResponse{}
 }

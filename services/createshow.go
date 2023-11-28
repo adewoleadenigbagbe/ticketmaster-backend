@@ -29,6 +29,7 @@ type ShowDateTime struct {
 }
 
 func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShowResponse, models.ErrorResponse) {
+	showService.Logger.Info().Interface("request", request)
 	var err error
 	fieldErrors := validateRequiredFields(request)
 	if len(fieldErrors) != 0 {
@@ -59,7 +60,6 @@ func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShow
 			if result.Error != nil || result.RowsAffected < 1 {
 				return result.Error
 			}
-
 			showIds = append(showIds, show.Id)
 		}
 
@@ -67,9 +67,13 @@ func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShow
 	})
 
 	if err != nil {
-		return CreateShowResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
+		errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
+		showService.Logger.Info().Interface("response", errResp)
+		return CreateShowResponse{}, errResp
 	}
-	return CreateShowResponse{ShowIds: showIds}, models.ErrorResponse{}
+	resp := CreateShowResponse{ShowIds: showIds}
+	showService.Logger.Info().Interface("response", resp)
+	return resp, models.ErrorResponse{}
 }
 
 func validateRequiredFields(request CreateShowRequest) []error {

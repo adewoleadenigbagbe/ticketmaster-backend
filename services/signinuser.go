@@ -23,8 +23,8 @@ type SignInResponse struct {
 }
 
 func (authService AuthService) SignIn(request SignInRequest) (SignInResponse, models.ErrorResponse) {
+	authService.Logger.Info().Interface("request", request)
 	var err error
-
 	validationErrors := validateSignInCredentials(request)
 	if len(validationErrors) > 0 {
 		return SignInResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: validationErrors}
@@ -37,20 +37,28 @@ func (authService AuthService) SignIn(request SignInRequest) (SignInResponse, mo
 		First(&user).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return SignInResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{fmt.Errorf("email or password not found")}}
+		errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{fmt.Errorf("email or password not found")}}
+		authService.Logger.Info().Interface("response", errResp)
+		return SignInResponse{}, errResp
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
 	if err != nil {
-		return SignInResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{fmt.Errorf("email or password not found")}}
+		errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{fmt.Errorf("email or password not found")}}
+		authService.Logger.Info().Interface("response", errResp)
+		return SignInResponse{}, errResp
 	}
 
 	token, err := jwtauth.GenerateJWT(*user)
 	if err != nil {
-		return SignInResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
+		errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
+		authService.Logger.Info().Interface("response", errResp)
+		return SignInResponse{}, errResp
 	}
 
-	return SignInResponse{Token: token}, models.ErrorResponse{}
+	resp := SignInResponse{Token: token}
+	authService.Logger.Info().Interface("response", resp)
+	return resp, models.ErrorResponse{}
 }
 
 func validateSignInCredentials(request SignInRequest) []error {

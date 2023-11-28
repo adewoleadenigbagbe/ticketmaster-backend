@@ -37,6 +37,7 @@ type CreateUserResponse struct {
 }
 
 func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUserResponse, models.ErrorResponse) {
+	authService.Logger.Info().Interface("request", request)
 	var err error
 	fieldsErrors := validateUser(request)
 	if len(fieldsErrors) != 0 {
@@ -83,10 +84,14 @@ func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUs
 	})
 
 	if err != nil {
-		return CreateUserResponse{}, models.ErrorResponse{Errors: []error{err}, StatusCode: http.StatusBadRequest}
+		errResp := models.ErrorResponse{Errors: []error{err}, StatusCode: http.StatusBadRequest}
+		authService.Logger.Info().Interface("response", errResp)
+		return CreateUserResponse{}, errResp
 	}
 
-	return CreateUserResponse{UserId: user.Id}, models.ErrorResponse{}
+	resp := CreateUserResponse{UserId: user.Id}
+	authService.Logger.Info().Interface("response", resp)
+	return resp, models.ErrorResponse{}
 }
 
 func validateUser(request CreateUserRequest) []error {
