@@ -14,6 +14,7 @@ import (
 
 	"github.com/Wolechacho/ticketmaster-backend/common"
 	db "github.com/Wolechacho/ticketmaster-backend/database"
+	"github.com/Wolechacho/ticketmaster-backend/enums"
 	"github.com/labstack/echo/v4"
 	"github.com/muesli/cache2go"
 	"github.com/nats-io/nats.go"
@@ -142,8 +143,7 @@ func getAvailableSeat(cache *cache2go.CacheTable, db *gorm.DB) []JsonSeatRespons
 				showSeatsQuery, err := db.Table("showseats").
 					Where("ShowId = ?", key).
 					Where("CinemaSeatId IN ?", message.CinemaSeatIds).
-					//TODO: change this to enum state when merge
-					Where("Status = ?", 1).
+					Where("Status = ?", enums.ExpiredSeat).
 					Where("IsDeprecated = ?", false).
 					Select("showseats.CinemaSeatId").
 					Rows()

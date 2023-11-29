@@ -21,7 +21,7 @@ type GetAvailableSeatResponse struct {
 	Id                 string             `json:"id"`
 	AvailableShowSeats []ShowSeatResponse `json:"availableShowSeats"`
 	ReservedShowSeats  []ShowSeatResponse `json:"reservedShowSeats"`
-	BookedShowSeats    []ShowSeatResponse `json:"bookedShowSeats"`
+	AssignedShowSeats  []ShowSeatResponse `json:"assignedShowSeats"`
 	StatusCode         int
 }
 
@@ -66,7 +66,7 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 		Where("cinemaseats.CinemaHallId = ?", request.CinemaHallId).
 		Where("cinemaseats.IsDeprecated = ?", false).
 		Joins("left join showseats on cinemaseats.Id = showseats.CinemaSeatId").
-		Where("showseats.ShowId = ? OR showseats.ShowId IS NULL", request.Id).
+		Where("(showseats.ShowId = ? AND showseats.Status != ?) OR showseats.ShowId IS NULL", request.Id, enums.ExpiredSeat).
 		Where("showseats.IsDeprecated = ? OR showseats.IsDeprecated IS NULL", false).
 		Select("cinemaseats.SeatNumber AS SeatNumber, cinemaseats.Type AS SeatType, showseats.Id AS SeatId, showseats.Status AS Status,showseats.Price AS SeatPrice, showseats.CinemaSeatId AS CinemaSeatId, showseats.BookingId AS BookingId").
 		Order(sortOrder).
@@ -91,7 +91,7 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 		Id:                 request.Id,
 		AvailableShowSeats: []ShowSeatResponse{},
 		ReservedShowSeats:  []ShowSeatResponse{},
-		BookedShowSeats:    []ShowSeatResponse{},
+		AssignedShowSeats:  []ShowSeatResponse{},
 	}
 
 	for _, seatDTO := range seatsDTO {
@@ -108,10 +108,10 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 			seat.Status = enums.Available
 			resp.AvailableShowSeats = append(resp.AvailableShowSeats, seat)
 		} else {
-			if int(seatDTO.Status.Int32) == int(enums.Booked) {
+			if int(seatDTO.Status.Int32) == int(enums.Assigned) {
 				seat.Status = enums.Assigned
-				resp.BookedShowSeats = append(resp.BookedShowSeats, seat)
-			} else if int(seatDTO.Status.Int32) == int(enums.Reserved) {
+				resp.AssignedShowSeats = append(resp.AssignedShowSeats, seat)
+			} else if int(seatDTO.Status.Int32) == int(enums.Reserved) || int(seatDTO.Status.Int32) == int(enums.PendingAssignment) {
 				seat.Status = enums.Reserved
 				resp.ReservedShowSeats = append(resp.ReservedShowSeats, seat)
 			} else {

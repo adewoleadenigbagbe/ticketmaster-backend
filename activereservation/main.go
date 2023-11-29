@@ -51,7 +51,7 @@ func main() {
 	db := db.ConnectToDatabase()
 
 	addMessagetoCache(cache, nc, db)
-	setSeatStatusAfterExpiration(cache, db)
+	setSeatStatusAfterExpiration(cache, db, nc)
 	wg.Wait()
 }
 
@@ -77,7 +77,7 @@ func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn, db *gorm.DB) {
 	})
 }
 
-func setSeatStatusAfterExpiration(cache *cache2go.CacheTable, db *gorm.DB) {
+func setSeatStatusAfterExpiration(cache *cache2go.CacheTable, db *gorm.DB, nc *nats.Conn) {
 	ticker := time.NewTicker(5 * time.Minute)
 	done := make(chan bool)
 	go func() {
@@ -92,7 +92,7 @@ func setSeatStatusAfterExpiration(cache *cache2go.CacheTable, db *gorm.DB) {
 				//expired reserve seat now available , while doing so
 				// check if the seat is already book while seating in cache
 				// do nothing if seat is already book
-				checkAndSetExpiredItems(cache, db)
+				checkAndSetExpiredItems(cache, db, nc)
 			}
 		}
 	}()
@@ -101,7 +101,7 @@ func setSeatStatusAfterExpiration(cache *cache2go.CacheTable, db *gorm.DB) {
 	fmt.Println("Ticker stopped")
 }
 
-func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, showId string, filter DbQuery) {
+func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn, showId string, filter DbQuery) {
 	showSeatsQuery, err := db.Table("showseats").
 		Where("CinemaSeatId IN ?", filter.CinemaSeatIds).
 		Where("showseats.ShowId = ?", showId).
@@ -143,7 +143,7 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, showId string
 					dbErr = db.Table("showseats").
 						Where("ShowId = ? AND CinemaSeatId = ?", showSeat.ShowId, showSeat.CinemaSeatId).
 						Where("IsDeprecated = ?", false).
-						Update("status", enums.Available).Error
+						Update("status", enums.ExpiredSeat).Error
 
 					if dbErr != nil {
 						return dbErr
@@ -165,9 +165,28 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, showId string
 		cache.Delete(filter.ItemKey)
 		return nil
 	})
+
+	//sample message
+	bk := common.SeatAvailableMessage{
+		CinemaSeatIds: filter.CinemaSeatIds,
+		ShowId:        showId,
+	}
+
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	err = encoder.Encode(bk)
+	if err != nil {
+		log.Fatal("encode error:", err)
+	}
+
+	if err := nc.Publish(common.SeatAvailableEvent, buf.Bytes()); err != nil {
+		log.Fatal(err)
+	}
+
+	nc.Flush()
 }
 
-func checkAndSetExpiredItems(cache *cache2go.CacheTable, db *gorm.DB) {
+func checkAndSetExpiredItems(cache *cache2go.CacheTable, db *gorm.DB, nc *nats.Conn) {
 	if cache.Count() > 0 {
 		filters := []DbQuery{}
 		now := time.Now()
@@ -195,10 +214,9 @@ func checkAndSetExpiredItems(cache *cache2go.CacheTable, db *gorm.DB) {
 		if len(mapQueries) > 0 {
 			for key, val := range mapQueries {
 				for _, v := range val {
-					setStatusToAvailable(db, cache, key, v)
+					setStatusToAvailable(db, cache, nc, key, v)
 				}
 			}
-
 		}
 	}
 }

@@ -7,4 +7,5 @@ const (
 	Reserved          ShowSeatStatus = 2
 	PendingAssignment ShowSeatStatus = 3
 	Assigned          ShowSeatStatus = 4
+	ExpiredSeat       ShowSeatStatus = 5
 )
