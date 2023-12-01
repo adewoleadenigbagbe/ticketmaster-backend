@@ -165,6 +165,9 @@ func getAvailableSeat(cache *cache2go.CacheTable, db *gorm.DB) []JsonSeatRespons
 					ids = append(ids, cinemaSeatId)
 				}
 
+				//get distinct ids
+				ids = lo.Uniq(ids)
+
 				//say if we have 3 available seat in the cache and 2 is available in the db
 				//since one has already been booked/cancelled it no longer needs to be sent to the client,
 				//remove from the cache and add the 2 availabe seats in the db

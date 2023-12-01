@@ -24,7 +24,6 @@ type BookRequest struct {
 	ShowId        string               `json:"showId"`
 	CinemaSeatIds []string             `json:"cinemaSeatIds"`
 	Status        enums.ShowSeatStatus `json:"status"`
-	Price         float64              `json:"price"`
 }
 
 type BookResponse struct {
@@ -87,24 +86,22 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, []er
 	})
 
 	// get the cinema rate
-	cinemaRateQuery := bookService.DB.Table("shows").
-		Where("shows.Id ? =", request.ShowId).
+	var rateModel RateModel
+	bookService.DB.Table("shows").
+		Where("shows.Id = ?", request.ShowId).
 		Where("shows.IsDeprecated = ?", false).
 		Joins("join cinemahalls on shows.CinemaHallId = cinemahalls.Id").
 		Where("cinemahalls.IsDeprecated = ?", false).
 		Joins("join cinemas on cinemahalls.CinemaId = cinemas.Id").
 		Where("cinemas.IsDeprecated = ?", false).
 		Joins("join cinemarates on cinemas.Id = cinemarates.CinemaId").
-		Where("cinemas.IsActive = ?", true).
+		Where("cinemarates.IsActive = ?", true).
 		Select("cinemarates.BaseFee", "cinemarates.Discount", "cinemarates.IsSpecials").
-		Row()
-
-	var rateModel RateModel
-	cinemaRateQuery.Scan(&rateModel.BaseFee, &rateModel.Discount, &rateModel.IsSpecials)
+		Scan(&rateModel)
 
 	var rate float64
 	if rateModel.IsSpecials.Valid && rateModel.Discount.Valid {
-		rate = rateModel.BaseFee * rateModel.BaseFee
+		rate = (rateModel.BaseFee - (rateModel.BaseFee * rateModel.Discount.Float64))
 	}
 
 	today := time.Now()
@@ -127,7 +124,7 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, []er
 		for _, cinemaSeatId := range request.CinemaSeatIds {
 			seatType := groupedSeatTypeById[cinemaSeatId]
 			var price float64
-			if seatType.Type == enums.Premium {
+			if seatType.Type == enums.Standard {
 				price = rate * 2
 			} else if seatType.Type == enums.Gold {
 				price = rate * 3
@@ -193,10 +190,6 @@ func validateShowBook(request BookRequest) []error {
 
 	if request.Status != enums.Reserved && request.Status != enums.PendingAssignment {
 		vErrors = append(vErrors, errors.New("seat can only be reserved or booked"))
-	}
-
-	if int(request.Price) <= 0 {
-		vErrors = append(vErrors, errors.New("price should not be less than or equal to zero"))
 	}
 
 	for i, cinemaSeatId := range request.CinemaSeatIds {
