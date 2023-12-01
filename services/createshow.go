@@ -1,7 +1,6 @@
 package services
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"time"
@@ -52,7 +51,7 @@ func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShow
 				CinemaHallId:       request.CinemaHallId,
 				IsDeprecated:       false,
 				IsCancelled:        false,
-				CancellationReason: sql.NullString{Valid: false},
+				CancellationReason: utilities.NewNullable[string]("", false),
 			}
 
 			result := tx.Create(&show)

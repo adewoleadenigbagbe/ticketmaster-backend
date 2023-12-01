@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"database/sql"
 	"time"
 
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
@@ -10,11 +9,11 @@ import (
 )
 
 type Payment struct {
-	Id                  string         `gorm:"column:Id"`
-	Amount              float64        `gorm:"column:Amount"`
-	PaymentDate         time.Time      `gorm:"column:PaymentDate"`
-	DiscountCouponId    sql.NullString `gorm:"column:DiscountCouponId"`
-	RemoteTransactionId sql.NullString `gorm:"column:RemoteTransactionId"`
+	Id                  string                     `gorm:"column:Id"`
+	Amount              float64                    `gorm:"column:Amount"`
+	PaymentDate         time.Time                  `gorm:"column:PaymentDate"`
+	DiscountCouponId    utilities.Nullable[string] `gorm:"column:DiscountCouponId"`
+	RemoteTransactionId utilities.Nullable[string] `gorm:"column:RemoteTransactionId"`
 	//PaymentMethod is enum
 	PaymentMethod int       `gorm:"column:PaymentMethod"`
 	BookingId     string    `gorm:"column:BookingId"`

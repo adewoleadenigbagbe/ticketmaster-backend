@@ -12,10 +12,10 @@ import (
 )
 
 type CinemaRateRequest struct {
-	CinemaId   string                  `param:"id"`
-	BaseFee    float32                 `json:"baseFee"`
-	Discount   utilities.JsonNullFloat `json:"discount"`
-	IsSpecials utilities.JsonNullBool  `json:"isSpecials"`
+	CinemaId   string                      `param:"id"`
+	BaseFee    float32                     `json:"baseFee"`
+	Discount   utilities.Nullable[float64] `json:"discount"`
+	IsSpecials utilities.Nullable[bool]    `json:"isSpecials"`
 }
 
 type CinemaRateResponse struct {
@@ -33,8 +33,8 @@ func (cinemaService CinemaService) AddCinemaRate(request CinemaRateRequest) (Cin
 		Id:         sequentialguid.New().String(),
 		CinemaId:   request.CinemaId,
 		BaseFee:    request.BaseFee,
-		Discount:   request.Discount.NullFloat64,
-		IsSpecials: request.IsSpecials.NullBool,
+		Discount:   request.Discount,
+		IsSpecials: request.IsSpecials,
 		IsActive:   true,
 	}
 	err = cinemaService.DB.Transaction(func(tx *gorm.DB) error {
