@@ -16,11 +16,12 @@ type Payment struct {
 	DiscountCouponId    sql.NullString `gorm:"column:DiscountCouponId"`
 	RemoteTransactionId sql.NullString `gorm:"column:RemoteTransactionId"`
 	//PaymentMethod is enum
-	PaymentMethod int       `gorm:"column:PaymentMethod"`
-	BookingId     string    `gorm:"column:BookingId"`
-	IsDeprecated  bool      `gorm:"column:IsDeprecated"`
-	CreatedOn     time.Time `gorm:"column:CreatedOn;autoCreateTime"`
-	ModifiedOn    time.Time `gorm:"column:ModifiedOn;autoUpdateTime"`
+	PaymentMethod            int            `gorm:"column:PaymentMethod"`
+	BookingId                string         `gorm:"column:BookingId"`
+	ProviderExtraInformation sql.NullString `gorm:"column:ProviderExtraInformation"`
+	IsDeprecated             bool           `gorm:"column:IsDeprecated"`
+	CreatedOn                time.Time      `gorm:"column:CreatedOn;autoCreateTime"`
+	ModifiedOn               time.Time      `gorm:"column:ModifiedOn;autoUpdateTime"`
 }
 
 func (payment *Payment) BeforeCreate(tx *gorm.DB) (err error) {
