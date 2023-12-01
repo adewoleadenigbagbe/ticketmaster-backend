@@ -48,7 +48,7 @@ func (bookService BookService) ChargeBooking(request CreatePaymentRequest) (Crea
 		Where("bookings.Status = ?", enums.PendingBook).
 		Where("bookings.IsDeprecated = ?", false).
 		Joins("join showseats on bookings.Id = showseats.BookingId").
-		Where("showseats.Status = ?", enums.PendingAssignment).
+		Where("showseats.Status = ? OR showseats.Status = ?", enums.PendingAssignment, enums.Reserved).
 		Where("showseats.IsDeprecated = ?", false).
 		Select("bookings.Id AS BookingId",
 			"bookings.Status AS BookingStatus",
@@ -64,7 +64,7 @@ func (bookService BookService) ChargeBooking(request CreatePaymentRequest) (Crea
 	bookings := []BookModel{}
 	for query.Next() {
 		var booking BookModel
-		err = query.Scan(&booking.BookingId, &booking.BookingStatus, &booking.Price, &booking.SeatStatus)
+		err = query.Scan(&booking.BookingId, &booking.BookingStatus, &booking.SeatStatus, &booking.Price)
 		if err != nil {
 			return CreatePaymentResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
 		}
@@ -77,10 +77,9 @@ func (bookService BookService) ChargeBooking(request CreatePaymentRequest) (Crea
 
 	paymentId := sequentialguid.New().String()
 
-	bookService.DB.Transaction(func(tx *gorm.DB) error {
+	err = bookService.DB.Transaction(func(tx *gorm.DB) error {
 		if err = tx.Table("bookings").
 			Where("Id = ? ", request.BookingId).
-			Where("BookingId = ?", request.BookingId).
 			Where("IsDeprecated = ?", false).
 			Update("Status", enums.Booked).Error; err != nil {
 			return err
@@ -116,7 +115,6 @@ func (bookService BookService) ChargeBooking(request CreatePaymentRequest) (Crea
 		//ignore the error as this just test
 		ch, _ := charge.New(params)
 		stripeInfoBytes, _ := json.Marshal(*ch)
-		fmt.Println(string(stripeInfoBytes))
 
 		payment := entities.Payment{
 			Id:                       paymentId,
@@ -134,6 +132,10 @@ func (bookService BookService) ChargeBooking(request CreatePaymentRequest) (Crea
 
 		return nil
 	})
+
+	if err != nil {
+		return CreatePaymentResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
+	}
 
 	return CreatePaymentResponse{PaymentId: paymentId}, models.ErrorResponse{}
 }

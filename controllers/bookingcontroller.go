@@ -23,15 +23,14 @@ func (bookingController BookingController) BookShowHandler(bookingContext echo.C
 		return bookingContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	resp, errors := bookingController.App.BookService.BookShow(*request)
-	if len(errors) > 0 {
-		errs := lo.Map(errors, func(e error, index int) string {
-			return e.Error()
+	dataResp, errResp := bookingController.App.BookService.BookShow(*request)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
 		})
-		return bookingContext.JSON(resp.StatusCode, errs)
+		return bookingContext.JSON(errResp.StatusCode, errs)
 	}
-
-	return bookingContext.JSON(http.StatusOK, resp)
+	return bookingContext.JSON(http.StatusOK, dataResp)
 }
 
 func (bookingController BookingController) ChargeBookingHandler(bookingContext echo.Context) error {
@@ -42,7 +41,15 @@ func (bookingController BookingController) ChargeBookingHandler(bookingContext e
 	if err != nil {
 		return bookingContext.JSON(http.StatusBadRequest, err.Error())
 	}
-	return nil
+
+	dataResp, errResp := bookingController.App.BookService.ChargeBooking(*request)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
+		})
+		return bookingContext.JSON(errResp.StatusCode, errs)
+	}
+	return bookingContext.JSON(http.StatusOK, dataResp)
 }
 
 func (bookingController BookingController) GenerateInvoiceHandler(bookingContext echo.Context) error {
@@ -53,7 +60,7 @@ func (bookingController BookingController) GenerateInvoiceHandler(bookingContext
 		return bookingContext.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	dataResp, errResp := bookingController.App.BookingService.GenerateInvoicePDF(*request)
+	dataResp, errResp := bookingController.App.BookService.GenerateInvoicePDF(*request)
 	if !reflect.ValueOf(errResp).IsZero() {
 		errs := lo.Map(errResp.Errors, func(er error, index int) string {
 			return er.Error()

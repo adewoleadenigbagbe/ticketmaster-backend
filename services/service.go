@@ -1,8 +1,8 @@
 package services
 
 import (
-	"github.com/nats-io/nats.go"
 	"github.com/Wolechacho/ticketmaster-backend/tools"
+	"github.com/nats-io/nats.go"
 	"gorm.io/gorm"
 )
 
@@ -27,15 +27,11 @@ type UserService struct {
 }
 
 type BookService struct {
-	DB *gorm.DB
-	Nc *nats.Conn
+	DB         *gorm.DB
+	Nc         *nats.Conn
+	PDFService tools.PDFService
 }
 
 type AuthService struct {
 	DB *gorm.DB
-}
-
-type BookingService struct {
-	DB         *gorm.DB
-	PDFService tools.PDFService
 }

@@ -51,14 +51,14 @@ type SeatInfo struct {
 	Price      float64
 }
 
-func (bookingService BookingService) GenerateInvoicePDF(request GeneratePdfRequest) (GeneratePdfResponse, models.ErrorResponse) {
+func (bookService BookService) GenerateInvoicePDF(request GeneratePdfRequest) (GeneratePdfResponse, models.ErrorResponse) {
 	var err error
 	requiredFieldErrors := validateInvoice(request)
 	if len(requiredFieldErrors) > 0 {
 		return GeneratePdfResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: requiredFieldErrors}
 	}
 
-	query, err := bookingService.DB.Table("bookings").
+	query, err := bookService.DB.Table("bookings").
 		Where("bookings.Id = ?", request.BookingId).
 		Where("bookings.UserId = ?", request.UserId).
 		Where("bookings.Status = ?", enums.Booked).
@@ -134,7 +134,7 @@ func (bookingService BookingService) GenerateInvoicePDF(request GeneratePdfReque
 
 	pdfModel.Total = pdfModel.SubTotal + pdfModel.Tax
 
-	pdfBytes, err := bookingService.PDFService.GeneratePDF(pdfModel)
+	pdfBytes, err := bookService.PDFService.GeneratePDF(pdfModel)
 	if err != nil {
 		return GeneratePdfResponse{}, models.ErrorResponse{Errors: []error{err}, StatusCode: http.StatusBadRequest}
 	}

@@ -15,6 +15,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
+	"github.com/Wolechacho/ticketmaster-backend/models"
 	"github.com/samber/lo"
 	"gorm.io/gorm"
 )
@@ -27,8 +28,7 @@ type BookRequest struct {
 }
 
 type BookResponse struct {
-	BookingId  string `json:"bookingId"`
-	StatusCode int
+	BookingId string `json:"bookingId"`
 }
 
 type RateModel struct {
@@ -42,11 +42,11 @@ type SeatTypeModel struct {
 	Type enums.SeatType
 }
 
-func (bookService BookService) BookShow(request BookRequest) (BookResponse, []error) {
+func (bookService BookService) BookShow(request BookRequest) (BookResponse, models.ErrorResponse) {
 	var err error
 	validationError := validateShowBook(request)
 	if len(validationError) != 0 {
-		return BookResponse{StatusCode: http.StatusBadRequest}, validationError
+		return BookResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: validationError}
 	}
 
 	//check if the seat already existed
@@ -57,7 +57,7 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, []er
 		Count(&count)
 
 	if count > 0 {
-		return BookResponse{StatusCode: http.StatusBadRequest}, []error{fmt.Errorf("show seat already reserved or booked")}
+		return BookResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{fmt.Errorf("show seat already reserved or booked")}}
 	}
 	//get seat type
 	seatQuery, err := bookService.DB.Table("cinemaseats").
@@ -67,7 +67,7 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, []er
 		Rows()
 
 	if err != nil {
-		return BookResponse{StatusCode: http.StatusInternalServerError}, []error{err}
+		return BookResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
 	}
 
 	defer seatQuery.Close()
@@ -76,7 +76,7 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, []er
 		seatType := SeatTypeModel{}
 		err = seatQuery.Scan(&seatType.Id, &seatType.Type)
 		if err != nil {
-			return BookResponse{StatusCode: http.StatusInternalServerError}, []error{err}
+			return BookResponse{}, models.ErrorResponse{StatusCode: http.StatusInternalServerError, Errors: []error{err}}
 		}
 		seatTypes = append(seatTypes, seatType)
 	}
@@ -150,7 +150,7 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, []er
 	})
 
 	if err != nil {
-		return BookResponse{StatusCode: http.StatusBadRequest}, []error{err}
+		return BookResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
 
 	//push the message to a queue and return immediately to user response
@@ -175,7 +175,7 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, []er
 	}
 
 	bookService.Nc.Flush()
-	return BookResponse{BookingId: booking.Id, StatusCode: http.StatusOK}, nil
+	return BookResponse{BookingId: booking.Id}, models.ErrorResponse{}
 }
 
 func validateShowBook(request BookRequest) []error {

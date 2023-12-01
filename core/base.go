@@ -25,7 +25,6 @@ type BaseApp struct {
 	UserService        services.UserService
 	BookService        services.BookService
 	AuthService        services.AuthService
-	BookingService     services.BookingService
 }
 
 func ConfigureApp() *BaseApp {
@@ -43,9 +42,8 @@ func ConfigureApp() *BaseApp {
 		MovieService:       services.MovieService{DB: db},
 		ShowService:        services.ShowService{DB: db},
 		UserService:        services.UserService{DB: db},
-		BookService:        services.BookService{DB: db, Nc: nc},
+		BookService:        services.BookService{DB: db, Nc: nc, PDFService: tools.PDFService{}},
 		AuthService:        services.AuthService{DB: db},
-		BookingService:     services.BookingService{DB: db, PDFService: tools.PDFService{}},
 	}
 
 	return app
