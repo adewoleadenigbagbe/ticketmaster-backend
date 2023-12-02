@@ -16,10 +16,10 @@ const (
 )
 
 type CinemaRateRequest struct {
-	CinemaId   string                  `param:"id"`
-	BaseFee    float32                 `json:"baseFee"`
-	Discount   utilities.JsonNullFloat `json:"discount"`
-	IsSpecials utilities.JsonNullBool  `json:"isSpecials"`
+	CinemaId   string                      `param:"id"`
+	BaseFee    float32                     `json:"baseFee"`
+	Discount   utilities.Nullable[float64] `json:"discount"`
+	IsSpecials utilities.Nullable[bool]    `json:"isSpecials"`
 }
 
 type CinemaRateResponse struct {
@@ -37,8 +37,8 @@ func (cinemaService CinemaService) AddCinemaRate(request CinemaRateRequest) (Cin
 		Id:         sequentialguid.New().String(),
 		CinemaId:   request.CinemaId,
 		BaseFee:    request.BaseFee,
-		Discount:   request.Discount.NullFloat64,
-		IsSpecials: request.IsSpecials.NullBool,
+		Discount:   request.Discount,
+		IsSpecials: request.IsSpecials,
 		IsActive:   true,
 	}
 	err = cinemaService.DB.Transaction(func(tx *gorm.DB) error {
@@ -64,18 +64,18 @@ func validateCinemaRate(request CinemaRateRequest) []error {
 	validationErrors := []error{}
 
 	if request.CinemaId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, fmt.Errorf("cinemaId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cinemaId"))
 	}
 
 	if len(request.CinemaId) == 0 || len(request.CinemaId) < 36 {
-		validationErrors = append(validationErrors, fmt.Errorf("cinemaId is a required field with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cinemaId"))
 	}
 
 	if request.BaseFee <= 0 {
 		validationErrors = append(validationErrors, fmt.Errorf("base fee is negative"))
 	}
 
-	if request.Discount.Valid && request.IsSpecials.Valid && request.Discount.Float64 > MaxDiscount {
+	if request.Discount.Valid && request.IsSpecials.Valid && request.Discount.Val > MaxDiscount {
 		validationErrors = append(validationErrors, fmt.Errorf("discount is invalid.should not be over 30 percent"))
 	}
 

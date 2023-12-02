@@ -1,7 +1,6 @@
 package services
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -50,7 +49,7 @@ func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUs
 		Email:        request.Email,
 		RoleId:       request.RoleId,
 		Password:     request.Password,
-		PhoneNumber:  sql.NullString{String: request.PhoneNumber, Valid: true},
+		PhoneNumber:  utilities.NewNullable[string](request.PhoneNumber, true),
 		IsDeprecated: false,
 	}
 
@@ -71,6 +70,7 @@ func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUs
 				Latitude:  request.Latitude,
 			},
 			IsDeprecated: false,
+			IsCurrent:    true,
 		}
 
 		if err := tx.Create(&address).Error; err != nil {
@@ -91,38 +91,38 @@ func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUs
 func validateUser(request CreateUserRequest) []error {
 	var validationErrors []error
 	if request.FirstName == "" {
-		validationErrors = append(validationErrors, fmt.Errorf("firstName is a required field"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "firstName"))
 	}
 
 	if request.LastName == "" {
-		validationErrors = append(validationErrors, fmt.Errorf("lastName is a required field"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "lastName"))
 	}
 
 	if request.Password == "" {
-		validationErrors = append(validationErrors, fmt.Errorf("password is a required field"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "password"))
 	}
 
 	if request.Address == "" {
-		validationErrors = append(validationErrors, fmt.Errorf("address is a required field"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "address"))
 	}
 
 	if len(request.CityId) == 0 || len(request.CityId) < 36 {
-		validationErrors = append(validationErrors, fmt.Errorf("cityId is a required field  with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cityId"))
 	}
 
 	if request.CityId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, fmt.Errorf("cityId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cityId"))
 	}
 
 	isEmailValid, _ := regexp.MatchString(EmailRegex, request.Email)
 	if !isEmailValid {
-		validationErrors = append(validationErrors, fmt.Errorf("email supplied is invalid"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInValidField, "email"))
 	}
 
 	isPhoneValid, _ := regexp.MatchString(PhoneNumberRegex, request.PhoneNumber)
 
 	if !isPhoneValid {
-		validationErrors = append(validationErrors, fmt.Errorf("phone number supplied is invalid"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInValidField, "phone number"))
 	}
 
 	return validationErrors

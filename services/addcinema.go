@@ -77,6 +77,7 @@ func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) (Cr
 				Latitude:  request.Latitude,
 			},
 			IsDeprecated: false,
+			IsCurrent:    true,
 		}
 
 		if err := tx.Create(&address).Error; err != nil {
@@ -133,15 +134,15 @@ func validateCinema(request CreateCinemaRequest) []error {
 	var validationErrors []error
 
 	if len(request.Name) == 0 {
-		validationErrors = append(validationErrors, fmt.Errorf("name is a required field"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "name"))
 	}
 
 	if request.CityId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, fmt.Errorf("cityId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cityId"))
 	}
 
 	if len(request.CityId) == 0 || len(request.CityId) < 36 {
-		validationErrors = append(validationErrors, fmt.Errorf("cityId is a required field with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cityId"))
 	}
 
 	if request.TotalCinemalHalls <= 0 {

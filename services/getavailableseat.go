@@ -1,7 +1,6 @@
 package services
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -26,23 +25,23 @@ type GetAvailableSeatResponse struct {
 }
 
 type ShowSeatResponse struct {
-	SeatId       utilities.JsonNullString `json:"seatId"`
-	CinemaSeatId utilities.JsonNullString `json:"cinemaSeatId"`
-	BookingId    utilities.JsonNullString `json:"bookingId"`
-	SeatNumber   int                      `json:"seatNumber"`
-	SeatType     enums.SeatType           `json:"seatType"`
-	Status       enums.ShowSeatStatus     `json:"status"`
-	Price        utilities.JsonNullFloat  `json:"price"`
+	SeatId       utilities.Nullable[string]  `json:"seatId"`
+	CinemaSeatId utilities.Nullable[string]  `json:"cinemaSeatId"`
+	BookingId    utilities.Nullable[string]  `json:"bookingId"`
+	SeatNumber   int                         `json:"seatNumber"`
+	SeatType     enums.SeatType              `json:"seatType"`
+	Status       enums.ShowSeatStatus        `json:"status"`
+	Price        utilities.Nullable[float64] `json:"price"`
 }
 
 type SeatDTO struct {
-	SeatId       sql.NullString
-	CinemaSeatId sql.NullString
-	BookingId    sql.NullString
+	SeatId       utilities.Nullable[string]
+	CinemaSeatId utilities.Nullable[string]
+	BookingId    utilities.Nullable[string]
 	SeatNumber   int
 	SeatType     int
-	Status       sql.NullInt32
-	Price        sql.NullFloat64
+	Status       utilities.Nullable[int]
+	Price        utilities.Nullable[float64]
 }
 
 func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequest) (GetAvailableSeatResponse, []error) {
@@ -93,25 +92,25 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 		ReservedShowSeats:  []ShowSeatResponse{},
 		AssignedShowSeats:  []ShowSeatResponse{},
 	}
-
+	utilities.NewNullable[string]("", true)
 	for _, seatDTO := range seatsDTO {
 		seat := ShowSeatResponse{
-			SeatId:       utilities.JsonNullString{NullString: seatDTO.SeatId},
-			CinemaSeatId: utilities.JsonNullString{NullString: seatDTO.CinemaSeatId},
+			SeatId:       seatDTO.SeatId,
+			CinemaSeatId: seatDTO.CinemaSeatId,
 			SeatNumber:   seatDTO.SeatNumber,
 			SeatType:     enums.SeatType(seatDTO.SeatType),
-			Price:        utilities.JsonNullFloat{NullFloat64: seatDTO.Price},
-			BookingId:    utilities.JsonNullString{NullString: seatDTO.BookingId},
+			Price:        seatDTO.Price,
+			BookingId:    seatDTO.BookingId,
 		}
 
-		if !seatDTO.SeatId.Valid && seat.SeatId.String == "" {
+		if !seatDTO.SeatId.Valid && seat.SeatId.Val == "" {
 			seat.Status = enums.Available
 			resp.AvailableShowSeats = append(resp.AvailableShowSeats, seat)
 		} else {
-			if int(seatDTO.Status.Int32) == int(enums.Assigned) {
+			if int(seatDTO.Status.Val) == int(enums.Assigned) {
 				seat.Status = enums.Assigned
 				resp.AssignedShowSeats = append(resp.AssignedShowSeats, seat)
-			} else if int(seatDTO.Status.Int32) == int(enums.Reserved) || int(seatDTO.Status.Int32) == int(enums.PendingAssignment) {
+			} else if int(seatDTO.Status.Val) == int(enums.Reserved) || int(seatDTO.Status.Val) == int(enums.PendingAssignment) {
 				seat.Status = enums.Reserved
 				resp.ReservedShowSeats = append(resp.ReservedShowSeats, seat)
 			} else {

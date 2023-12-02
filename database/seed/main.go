@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -232,6 +231,7 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 			Coordinates:  city.Coordinates,
 			AddressType:  enums.Cinema,
 			IsDeprecated: false,
+			IsCurrent:    true,
 		}
 
 		cinemaEntities = append(cinemaEntities, cinemaentity)
@@ -418,8 +418,8 @@ func addMovieToList(movieDatasResponse []MovieData) {
 		movie := entities.Movie{
 			Id:           sequentialguid.New().String(),
 			Title:        moviedata.OriginalTitle,
-			Description:  sql.NullString{String: moviedata.Overview, Valid: true},
-			Duration:     sql.NullInt32{Valid: false},
+			Description:  utilities.NewNullable[string](moviedata.Overview, true),
+			Duration:     utilities.NewNullable[int](0, false),
 			ReleaseDate:  time.Time(moviedata.ReleaseDate),
 			Genre:        rand.Intn(len(genres)),
 			Language:     moviedata.OriginalLanguage,

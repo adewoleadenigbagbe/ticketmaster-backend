@@ -1,7 +1,6 @@
 package services
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -121,9 +120,9 @@ func (bookService BookService) ChargeBooking(request CreatePaymentRequest) (Crea
 			Amount:                   amount,
 			PaymentDate:              time.Now(),
 			PaymentMethod:            enums.Stripe,
-			RemoteTransactionId:      sql.NullString{String: ch.ID, Valid: true},
+			RemoteTransactionId:      utilities.NewNullable[string](ch.ID, true),
 			BookingId:                request.BookingId,
-			ProviderExtraInformation: sql.NullString{String: string(stripeInfoBytes), Valid: true},
+			ProviderExtraInformation: utilities.NewNullable[string](string(stripeInfoBytes), true),
 		}
 
 		if err = tx.Create(&payment).Error; err != nil {

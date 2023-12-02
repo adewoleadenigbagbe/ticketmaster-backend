@@ -131,13 +131,14 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, mode
 			} else {
 				price = rate
 			}
+
 			showseat := entities.ShowSeat{
 				Id:           sequentialguid.New().String(),
 				Status:       request.Status,
 				Price:        price,
 				CinemaSeatId: cinemaSeatId,
 				ShowId:       request.ShowId,
-				BookingId:    sql.NullString{String: booking.Id, Valid: true},
+				BookingId:    utilities.NewNullable[string](booking.Id, true),
 				IsDeprecated: false,
 			}
 			showSeats = append(showSeats, &showseat)

@@ -46,15 +46,15 @@ func (userService UserService) AddRole(request CreateRoleRequest) (CreateRoleRes
 func validateRole(request CreateRoleRequest) []error {
 	vErrors := []error{}
 	if request.Name == "" {
-		vErrors = append(vErrors, fmt.Errorf("name field is required"))
+		vErrors = append(vErrors, fmt.Errorf(ErrRequiredField, "name"))
 	}
 
 	if request.Description == "" {
-		vErrors = append(vErrors, fmt.Errorf("description field is required"))
+		vErrors = append(vErrors, fmt.Errorf(ErrRequiredField, "description"))
 	}
 
 	if request.Role <= 0 {
-		vErrors = append(vErrors, fmt.Errorf("role field is required"))
+		vErrors = append(vErrors, fmt.Errorf(ErrRequiredField, "role"))
 	}
 
 	return vErrors
