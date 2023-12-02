@@ -128,7 +128,6 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn
 			&showSeatDTO.UserId)
 
 		if err != nil {
-			fmt.Println(err)
 			return
 		}
 		showSeats = append(showSeats, showSeatDTO)
