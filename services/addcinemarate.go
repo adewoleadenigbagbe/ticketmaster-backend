@@ -11,6 +11,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	MaxDiscount = 0.3
+)
+
 type CinemaRateRequest struct {
 	CinemaId   string                      `param:"id"`
 	BaseFee    float32                     `json:"baseFee"`
@@ -69,6 +73,10 @@ func validateCinemaRate(request CinemaRateRequest) []error {
 
 	if request.BaseFee <= 0 {
 		validationErrors = append(validationErrors, fmt.Errorf("base fee is negative"))
+	}
+
+	if request.Discount.Valid && request.IsSpecials.Valid && request.Discount.Val > MaxDiscount {
+		validationErrors = append(validationErrors, fmt.Errorf("discount is invalid.should not be over 30 percent"))
 	}
 
 	return validationErrors

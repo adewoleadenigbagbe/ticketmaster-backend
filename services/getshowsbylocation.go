@@ -80,6 +80,7 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 		Where("users.IsDeprecated = ?", false).
 		Joins("join addresses on users.Id = addresses.EntityId").
 		Where("addresses.EntityId = ?", request.UserId).
+		Where("addresses.IsActive = ?", true).
 		Where("addresses.IsDeprecated = ?", false).
 		Where("addresses.AddressType = ?", enums.User).
 		Select("users.Id AS UserId, users.IsDeprecated, addresses.CityId,addresses.Coordinates").
@@ -107,6 +108,7 @@ func (showService ShowService) GetShowsByUserLocation(request GetShowsByLocation
 	distanceSelect := fmt.Sprintf("ST_Distance_Sphere(addresses.Coordinates,point(%f,%f)) AS Distance", user.Coordinates.Longitude, user.Coordinates.Latitude)
 	showQuery, err := showService.DB.Table("addresses").
 		Where("addresses.CityId = ?", user.CityId).
+		Where("addresses.IsActive = ?", true).
 		Where("addresses.IsDeprecated = ?", false).
 		Where("addresses.AddressType = ?", enums.Cinema).
 		Joins("join cinemas on addresses.EntityId = cinemas.Id").

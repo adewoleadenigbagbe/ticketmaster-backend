@@ -3,6 +3,7 @@ package entities
 import (
 	"time"
 
+	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"gorm.io/gorm"
@@ -10,7 +11,7 @@ import (
 
 type ShowSeat struct {
 	Id           string                     `gorm:"column:Id"`
-	Status       int                        `gorm:"column:Status"`
+	Status       enums.ShowSeatStatus       `gorm:"column:Status"`
 	Price        float64                    `gorm:"column:Price"`
 	CinemaSeatId string                     `gorm:"column:CinemaSeatId"`
 	ShowId       string                     `gorm:"column:ShowId"`
@@ -18,6 +19,10 @@ type ShowSeat struct {
 	IsDeprecated bool                       `gorm:"column:IsDeprecated"`
 	CreatedOn    time.Time                  `gorm:"column:CreatedOn;autoCreateTime"`
 	ModifiedOn   time.Time                  `gorm:"column:ModifiedOn;autoUpdateTime"`
+}
+
+func (ShowSeat) TableName() string {
+	return "ShowSeats"
 }
 
 func (showSeat *ShowSeat) BeforeCreate(tx *gorm.DB) (err error) {

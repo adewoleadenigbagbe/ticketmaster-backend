@@ -15,6 +15,10 @@
 # vendor/
 tmp
 
+.env
+
+launch.json
+
 # Environmental variables
 .env
 

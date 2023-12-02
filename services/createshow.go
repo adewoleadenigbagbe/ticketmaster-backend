@@ -157,7 +157,6 @@ func validateShowTime(request CreateShowRequest) []error {
 	}
 
 	//if there is overlap, add error
-	fmt.Println("Overlap : ", timeOverlap)
 	if timeOverlap {
 		validationErrors = append(validationErrors, fmt.Errorf(TIME_OVERLAP_ERROR))
 	}

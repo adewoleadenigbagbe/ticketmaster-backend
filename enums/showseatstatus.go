@@ -3,9 +3,9 @@ package enums
 type ShowSeatStatus int
 
 const (
-	Available   ShowSeatStatus = 1
-	Reserved    ShowSeatStatus = 2
-	PendingBook ShowSeatStatus = 3
-	Booked      ShowSeatStatus = 4
-	Cancelled   ShowSeatStatus = 5
+	Available         ShowSeatStatus = 1
+	Reserved          ShowSeatStatus = 2
+	PendingAssignment ShowSeatStatus = 3
+	Assigned          ShowSeatStatus = 4
+	ExpiredSeat       ShowSeatStatus = 5
 )
