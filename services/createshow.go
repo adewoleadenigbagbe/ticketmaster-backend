@@ -39,7 +39,7 @@ func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShow
 		return CreateShowResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: showTimeErrors}
 	}
 
-	showIds := []string{}
+	var showIds []string
 	err = showService.DB.Transaction(func(tx *gorm.DB) error {
 		for _, showTime := range request.ShowTimes {
 			show := &entities.Show{

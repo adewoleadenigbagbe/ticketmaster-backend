@@ -24,8 +24,10 @@ type CinemaHallResponse struct {
 }
 
 func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (CinemaHallResponse, models.ErrorResponse) {
-	var err error
-	var errs []error
+	var (
+		err  error
+		errs []error
+	)
 
 	//validate request
 	errs = validateCinemaHallRequiredFields(request)
@@ -68,7 +70,10 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 
 	//check if the not duplicate names in the DB
 	var countResult int64
-	cinemaService.DB.Model(&entities.CinemaHall{}).Where("Name IN ? AND CinemaId = ? AND IsDeprecated = ?", hallNames, cinema.Id, false).Count(&countResult)
+	cinemaService.DB.Model(&entities.CinemaHall{}).
+		Where("Name IN ? AND CinemaId = ? AND IsDeprecated = ?", hallNames, cinema.Id, false).
+		Count(&countResult)
+
 	if countResult > 0 {
 		errs = append(errs, fmt.Errorf(("cinemaHall name already exist in system")))
 		return CinemaHallResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: errs}
@@ -125,7 +130,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 }
 
 func validateCinemaHallRequiredFields(request CinemaHallRequest) []error {
-	validationErrors := []error{}
+	var validationErrors []error
 	if len(request.Id) == 0 || len(request.Id) < 36 {
 		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cinemaId"))
 	}

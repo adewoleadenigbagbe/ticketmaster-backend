@@ -123,7 +123,7 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 }
 
 func validateAvailableSeat(request GetAvailableSeatRequest) []error {
-	validationErrors := []error{}
+	var validationErrors []error
 
 	if len(request.Id) == 0 || len(request.Id) < 36 {
 

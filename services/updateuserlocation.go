@@ -73,7 +73,7 @@ func (userService UserService) UpdateUserLocation(request UserLocationRequest) (
 }
 
 func validateUserLocation(request UserLocationRequest) []error {
-	validationErrors := []error{}
+	var validationErrors []error
 
 	if request.UserId == utilities.DEFAULT_UUID {
 		validationErrors = append(validationErrors, fmt.Errorf("userId should have a valid UUID"))

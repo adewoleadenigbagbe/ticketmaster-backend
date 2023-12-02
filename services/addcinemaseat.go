@@ -35,7 +35,9 @@ type CinemaSeatDTO struct {
 }
 
 func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest) (CreateCinemaSeatResponse, models.ErrorResponse) {
-
+	var (
+		err error
+	)
 	validationErrors := validateCinemSeatRequiredFields(request)
 	if len(validationErrors) > 0 {
 		return CreateCinemaSeatResponse{}, models.ErrorResponse{Errors: validationErrors, StatusCode: http.StatusBadRequest}
@@ -54,7 +56,6 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 		}
 	}
 
-	var err error
 	cinemaQuery, err := cinemaService.DB.Table("cinemas").
 		Where("cinemas.Id = ?", request.Id).
 		Where("cinemas.IsDeprecated = ?", false).
@@ -167,7 +168,7 @@ func (cinemaService CinemaService) AddCinemaSeat(request CreateCinemaSeatRequest
 }
 
 func validateCinemSeatRequiredFields(request CreateCinemaSeatRequest) []error {
-	validationErrors := []error{}
+	var validationErrors []error
 	if len(request.Id) == 0 || len(request.Id) < 36 {
 		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cinemaId"))
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/common"
 	db "github.com/Wolechacho/ticketmaster-backend/database"
 	"github.com/Wolechacho/ticketmaster-backend/enums"
+	"github.com/google/uuid"
 	"github.com/muesli/cache2go"
 	"github.com/nats-io/nats.go"
 	"github.com/samber/lo"
@@ -20,6 +21,7 @@ import (
 type DbQuery struct {
 	ItemKey       string
 	ShowId        string
+	BookingId     string
 	CinemaSeatIds []string
 	UserId        string
 }
@@ -66,10 +68,7 @@ func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn, db *gorm.DB) {
 			log.Fatal("decode error:", err)
 		}
 
-		//make a unique , append with nano time
-		now := time.Now().UnixNano()
-		key := fmt.Sprint(now, message.UserId)
-
+		key := uuid.New().String()
 		//add to cache
 		if !cache.Exists(key) {
 			cache.Add(key, 0, message)
@@ -101,23 +100,30 @@ func setSeatStatusAfterExpiration(cache *cache2go.CacheTable, db *gorm.DB, nc *n
 	fmt.Println("Ticker stopped")
 }
 
-func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn, showId string, filter DbQuery) {
-	showSeatsQuery, err := db.Table("showseats").
-		Where("CinemaSeatId IN ?", filter.CinemaSeatIds).
-		Where("showseats.ShowId = ?", showId).
+func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn, bookingId string, filter DbQuery) error {
+	var (
+		err       error
+		showSeats []ShowSeatDTO
+	)
+
+	showSeatsQuery, err := db.Table("bookings").
+		Where("bookings.Id = ?", bookingId).
+		Where("bookings.ShowId = ?", filter.ShowId).
+		Where("bookings.IsDeprecated = ?", false).
+		Joins("join showseats on bookings.Id = showseats.bookingId").
+		Where("showseats.ShowId = ?", filter.ShowId).
+		Where("showseats.CinemaSeatId IN ?", filter.CinemaSeatIds).
 		Where("showseats.IsDeprecated = ?", false).
 		Joins("join cinemaSeats on showseats.CinemaSeatId = cinemaSeats.Id").
-		Joins("join bookings on showseats.BookingId = bookings.Id").
 		Select("showseats.Id, showseats.Status, showseats.CinemaSeatId,showseats.ShowId,cinemaSeats.SeatNumber,bookings.UserId").
 		Rows()
 
 	if err != nil {
-		return
+		return err
 	}
 
 	defer showSeatsQuery.Close()
 
-	showSeats := []ShowSeatDTO{}
 	for showSeatsQuery.Next() {
 		var showSeatDTO ShowSeatDTO
 		err = showSeatsQuery.Scan(&showSeatDTO.Id,
@@ -128,47 +134,56 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn
 			&showSeatDTO.UserId)
 
 		if err != nil {
-			return
+			return err
 		}
 		showSeats = append(showSeats, showSeatDTO)
 	}
 
+	showSeats = lo.Filter(showSeats, func(item ShowSeatDTO, index int) bool {
+		return item.Status == enums.Reserved || item.Status == enums.PendingAssignment
+	})
+
 	//update
-	_ = db.Transaction(func(tx *gorm.DB) error {
-		for _, showSeat := range showSeats {
-			if showSeat.Status == enums.Reserved || showSeat.Status == enums.PendingAssignment {
-				var dbErr error
-				dbErr = db.Transaction(func(tx *gorm.DB) error {
-					dbErr = db.Table("showseats").
-						Where("ShowId = ? AND CinemaSeatId = ?", showSeat.ShowId, showSeat.CinemaSeatId).
-						Where("IsDeprecated = ?", false).
-						Update("status", enums.ExpiredSeat).Error
+	err = db.Transaction(func(tx *gorm.DB) error {
+		err = tx.Table("bookings").
+			Where("Id = ?", filter.BookingId).
+			Where("IsDeprecated = ?", false).
+			Where("ShowId = ? ", filter.ShowId).
+			Where("ShowId = ? ", filter.UserId).
+			Update("status", enums.Expired).Error
 
-					if dbErr != nil {
-						return dbErr
-					}
-
-					dbErr = db.Table("bookings").
-						Where("ShowId = ? AND UserId = ?", showSeat.ShowId, showSeat.UserId).
-						Update("status", enums.Expired).Error
-
-					if dbErr != nil {
-						return dbErr
-					}
-					return nil
-				})
-			}
+		if err != nil {
+			return err
 		}
 
-		//no error
-		cache.Delete(filter.ItemKey)
+		err = db.Table("showseats").
+			Where("bookingId = ?", filter.BookingId).
+			Where("ShowId = ? ", filter.ShowId).
+			Where("CinemaSeatId IN ?", showSeats).
+			Where("IsDeprecated = ?", false).
+			Update("status", enums.ExpiredSeat).Error
+
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 
+	if err != nil {
+		return err
+	}
+
+	//no error
+	cache.Delete(filter.ItemKey)
+
 	//sample message
+	cinemaIds := lo.Map(showSeats, func(item ShowSeatDTO, index int) string {
+		return item.CinemaSeatId
+	})
 	bk := common.SeatAvailableMessage{
-		CinemaSeatIds: filter.CinemaSeatIds,
-		ShowId:        showId,
+		CinemaSeatIds: cinemaIds,
+		ShowId:        filter.ShowId,
 	}
 
 	var buf bytes.Buffer
@@ -183,9 +198,14 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn
 	}
 
 	nc.Flush()
+
+	return nil
 }
 
 func checkAndSetExpiredItems(cache *cache2go.CacheTable, db *gorm.DB, nc *nats.Conn) {
+	var (
+		err error
+	)
 	if cache.Count() > 0 {
 		filters := []DbQuery{}
 		now := time.Now()
@@ -197,6 +217,7 @@ func checkAndSetExpiredItems(cache *cache2go.CacheTable, db *gorm.DB, nc *nats.C
 					query := DbQuery{
 						ItemKey:       itemKey,
 						ShowId:        message.ShowId,
+						BookingId:     message.BookingId,
 						CinemaSeatIds: message.CinemaSeatIds,
 						UserId:        message.UserId,
 					}
@@ -207,13 +228,16 @@ func checkAndSetExpiredItems(cache *cache2go.CacheTable, db *gorm.DB, nc *nats.C
 
 		//group them
 		mapQueries := lo.GroupBy(filters, func(item DbQuery) string {
-			return item.ShowId
+			return item.BookingId
 		})
 
 		if len(mapQueries) > 0 {
 			for key, val := range mapQueries {
 				for _, v := range val {
-					setStatusToAvailable(db, cache, nc, key, v)
+					err = setStatusToAvailable(db, cache, nc, key, v)
+					if err != nil {
+						fmt.Println(err)
+					}
 				}
 			}
 		}

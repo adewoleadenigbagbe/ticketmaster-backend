@@ -60,7 +60,7 @@ func (bookService BookService) ChargeBooking(request CreatePaymentRequest) (Crea
 	}
 	defer query.Close()
 
-	bookings := []BookModel{}
+	var bookings []BookModel
 	for query.Next() {
 		var booking BookModel
 		err = query.Scan(&booking.BookingId, &booking.BookingStatus, &booking.SeatStatus, &booking.Price)
@@ -105,7 +105,7 @@ func (bookService BookService) ChargeBooking(request CreatePaymentRequest) (Crea
 
 		// Create a new charge
 		params := &stripe.ChargeParams{
-			Amount:      stripe.Int64(int64(amount)),
+			Amount:      stripe.Int64(int64(amount * 100)),
 			Currency:    stripe.String(string(stripe.CurrencyUSD)),
 			Description: stripe.String("Test Charge"),
 			Source:      &stripe.SourceParams{Token: stripe.String("tok_visa")}, // use a test card token provided by Stripe

@@ -61,7 +61,7 @@ func (cinemaService CinemaService) AddCinemaRate(request CinemaRateRequest) (Cin
 }
 
 func validateCinemaRate(request CinemaRateRequest) []error {
-	validationErrors := []error{}
+	var validationErrors []error
 
 	if request.CinemaId == utilities.DEFAULT_UUID {
 		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cinemaId"))

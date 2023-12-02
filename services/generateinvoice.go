@@ -93,7 +93,7 @@ func (bookService BookService) GenerateInvoicePDF(request GeneratePdfRequest) (G
 
 	defer query.Close()
 
-	bookings := []BookingModel{}
+	var bookings []BookingModel
 	for query.Next() {
 		var booking BookingModel
 		err = query.Scan(&booking.TicketNumber, &booking.CinemaName, &booking.MovieTitle, &booking.ShowStartTime, &booking.ShowEndTime, &booking.SeatNumber, &booking.SeatType, &booking.Price, &booking.HallName)

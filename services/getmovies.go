@@ -73,11 +73,12 @@ func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesR
 	var countResult int64
 	paginate.GetEntityCount(movieService.DB, new(entities.Movie), &countResult)
 
-	resp := new(GetMoviesResponse)
-	resp.Page = request.Page
-	resp.RequestedPageLength = request.PageLength
-	resp.PerPage = len(*movies)
-	resp.TotalResults = countResult
+	resp := GetMoviesResponse{
+		Page:                request.Page,
+		RequestedPageLength: request.PageLength,
+		PerPage:             len(*movies),
+		TotalResults:        countResult,
+	}
 
 	for _, movie := range *movies {
 		movieData := MovieDataResponse{
@@ -93,5 +94,5 @@ func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesR
 		resp.Movies = append(resp.Movies, movieData)
 	}
 
-	return *resp, nil
+	return resp, nil
 }

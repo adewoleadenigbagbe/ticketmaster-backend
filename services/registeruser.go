@@ -36,7 +36,9 @@ type CreateUserResponse struct {
 }
 
 func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUserResponse, models.ErrorResponse) {
-	var err error
+	var (
+		err error
+	)
 	fieldsErrors := validateUser(request)
 	if len(fieldsErrors) != 0 {
 		return CreateUserResponse{}, models.ErrorResponse{Errors: fieldsErrors, StatusCode: http.StatusBadRequest}

@@ -9,6 +9,7 @@ import (
 type BookingMessage struct {
 	UserId          string
 	ShowId          string
+	BookingId       string
 	CinemaSeatIds   []string
 	Status          enums.ShowSeatStatus
 	BookingDateTime time.Time

@@ -18,7 +18,7 @@ type GetMovieByIdResponse struct {
 }
 
 func (movieService MovieService) GetMovieById(request GetMovieByIdRequest) (GetMovieByIdResponse, models.ErrorResponse) {
-	movie := &entities.Movie{}
+	var movie entities.Movie
 	result := movieService.DB.Where("Id = ? AND IsDeprecated = ?", request.Id, false).First(&movie)
 
 	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {

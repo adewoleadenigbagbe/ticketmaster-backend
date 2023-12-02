@@ -25,7 +25,7 @@ type GetCityByIdResponse struct {
 
 func (cityService CityService) GetCityById(request GetCityByIdRequest) (GetCityByIdResponse, models.ErrorResponse) {
 	var err error
-	city := entities.City{}
+	var city entities.City
 
 	result := cityService.DB.Where("Id = ? AND IsDeprecated = ?", request.Id, false).First(&city)
 	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {

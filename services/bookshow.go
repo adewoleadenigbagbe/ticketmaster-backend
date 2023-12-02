@@ -158,6 +158,7 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, mode
 		UserId:          request.UserId,
 		CinemaSeatIds:   request.CinemaSeatIds,
 		ShowId:          request.ShowId,
+		BookingId:       booking.Id,
 		Status:          request.Status,
 		BookingDateTime: today,
 		ExpiryDateTime:  today.Add(5 * time.Minute),
@@ -181,11 +182,11 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, mode
 func validateShowBook(request BookRequest) []error {
 	vErrors := []error{}
 	if len(request.ShowId) == 0 || len(request.ShowId) < 36 {
-		vErrors = append(vErrors, errors.New("showId is a required field  with 36 characters"))
+		vErrors = append(vErrors, fmt.Errorf(ErrRequiredUUIDField, "showId"))
 	}
 
 	if request.ShowId == utilities.DEFAULT_UUID {
-		vErrors = append(vErrors, errors.New("showId should have a valid UUID"))
+		vErrors = append(vErrors, fmt.Errorf(ErrInvalidUUID, "showId"))
 	}
 
 	if request.Status != enums.Reserved && request.Status != enums.PendingAssignment {
@@ -194,11 +195,11 @@ func validateShowBook(request BookRequest) []error {
 
 	for i, cinemaSeatId := range request.CinemaSeatIds {
 		if len(cinemaSeatId) == 0 || len(cinemaSeatId) < 36 {
-			vErrors = append(vErrors, fmt.Errorf("CinemaSeatIds[%d] is a required field  with 36 characters", i))
+			vErrors = append(vErrors, fmt.Errorf(ErrRequiredUUIDField, "CinemaSeatIds[%d]", i))
 		}
 
 		if cinemaSeatId == utilities.DEFAULT_UUID {
-			vErrors = append(vErrors, fmt.Errorf("CinemaSeatIds[%d] should have a valid UUID", i))
+			vErrors = append(vErrors, fmt.Errorf(ErrInvalidUUID, "CinemaSeatIds[%d]", i))
 		}
 	}
 
