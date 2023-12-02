@@ -109,7 +109,7 @@ func (bookService BookService) GenerateInvoicePDF(request GeneratePdfRequest) (G
 	}
 
 	var ticketNumber string
-	pdfModel := PdfModel{}
+	var pdfModel PdfModel
 
 	for _, booking := range bookings {
 		if ticketNumber == "" {
@@ -122,10 +122,7 @@ func (bookService BookService) GenerateInvoicePDF(request GeneratePdfRequest) (G
 			pdfModel.Tax = 1.02
 		}
 
-		var seat SeatInfo
-		seat.SeatNumber = booking.SeatNumber
-		seat.SeatType = booking.SeatType
-		seat.Price = booking.Price
+		seat := SeatInfo{SeatNumber: booking.SeatNumber, SeatType: booking.SeatType, Price: booking.Price}
 		pdfModel.SeatInfos = append(pdfModel.SeatInfos, seat)
 		pdfModel.SubTotal += booking.Price
 

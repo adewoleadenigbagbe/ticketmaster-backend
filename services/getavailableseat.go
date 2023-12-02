@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -92,7 +91,7 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 		ReservedShowSeats:  []ShowSeatResponse{},
 		AssignedShowSeats:  []ShowSeatResponse{},
 	}
-	utilities.NewNullable[string]("", true)
+
 	for _, seatDTO := range seatsDTO {
 		seat := ShowSeatResponse{
 			SeatId:       seatDTO.SeatId,
@@ -127,19 +126,20 @@ func validateAvailableSeat(request GetAvailableSeatRequest) []error {
 	validationErrors := []error{}
 
 	if len(request.Id) == 0 || len(request.Id) < 36 {
-		validationErrors = append(validationErrors, errors.New("showId is a required field  with 36 characters"))
+
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "showId"))
 	}
 
 	if request.Id == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, errors.New("showId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "showId"))
 	}
 
 	if len(request.CinemaHallId) == 0 || len(request.CinemaHallId) < 36 {
-		validationErrors = append(validationErrors, errors.New("cinemahallId is a required field  with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "cinemahallId"))
 	}
 
 	if request.CinemaHallId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, errors.New("cinemahallId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cinemahallId"))
 	}
 
 	return validationErrors
