@@ -2,7 +2,6 @@ package services
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -33,8 +32,8 @@ type BookResponse struct {
 
 type RateModel struct {
 	BaseFee    float64
-	Discount   sql.NullFloat64
-	IsSpecials sql.NullFloat64
+	Discount   utilities.Nullable[float64]
+	IsSpecials utilities.Nullable[bool]
 }
 
 type SeatTypeModel struct {
@@ -101,7 +100,7 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, mode
 
 	var rate float64
 	if rateModel.IsSpecials.Valid && rateModel.Discount.Valid {
-		rate = (rateModel.BaseFee - (rateModel.BaseFee * rateModel.Discount.Float64))
+		rate = (rateModel.BaseFee - (rateModel.BaseFee * rateModel.Discount.Val))
 	}
 
 	today := time.Now()
