@@ -21,7 +21,7 @@ type CreateRoleResponse struct {
 }
 
 func (userService UserService) AddRole(request CreateRoleRequest) (CreateRoleResponse, models.ErrorResponse) {
-	userService.Logger.Info().Interface("request", request)
+	userService.Logger.Info().Interface("createRoleRequest", request).Msg("request")
 	requiredFieldErrors := validateRole(request)
 	if len(requiredFieldErrors) > 0 {
 		return CreateRoleResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: requiredFieldErrors}
@@ -38,13 +38,12 @@ func (userService UserService) AddRole(request CreateRoleRequest) (CreateRoleRes
 
 	if rowsAffected < 1 {
 		err := fmt.Errorf("role already exist")
-		errResponse := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
-		userService.Logger.Info().Interface("response", errResponse)
-		return CreateRoleResponse{}, errResponse
+		userService.Logger.Info().Interface("createRoleResponse", err.Error()).Msg("response")
+		return CreateRoleResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
 
 	resp := CreateRoleResponse{UserRoleId: userRole.Id}
-	userService.Logger.Info().Interface("response", resp)
+	userService.Logger.Info().Interface("createRoleResponse", resp).Msg("response")
 	return resp, models.ErrorResponse{}
 }
 

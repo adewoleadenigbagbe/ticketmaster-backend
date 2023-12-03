@@ -23,7 +23,7 @@ type SignInResponse struct {
 }
 
 func (authService AuthService) SignIn(request SignInRequest) (SignInResponse, models.ErrorResponse) {
-	authService.Logger.Info().Interface("request", request)
+	authService.Logger.Info().Interface("signInRequest", request).Msg("request")
 	var err error
 	validationErrors := validateSignInCredentials(request)
 	if len(validationErrors) > 0 {
@@ -37,27 +37,26 @@ func (authService AuthService) SignIn(request SignInRequest) (SignInResponse, mo
 		First(&user).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{fmt.Errorf("email or password not found")}}
-		authService.Logger.Info().Interface("response", errResp)
-		return SignInResponse{}, errResp
+		err = fmt.Errorf("email or password not found")
+		authService.Logger.Info().Interface("signInResponse", err.Error()).Msg("response")
+		return SignInResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
 	if err != nil {
-		errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{fmt.Errorf("email or password not found")}}
-		authService.Logger.Info().Interface("response", errResp)
-		return SignInResponse{}, errResp
+		err = fmt.Errorf("email or password not found")
+		authService.Logger.Info().Interface("signInResponse", err.Error()).Msg("response")
+		return SignInResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
 
 	token, err := jwtauth.GenerateJWT(*user)
 	if err != nil {
-		errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
-		authService.Logger.Info().Interface("response", errResp)
-		return SignInResponse{}, errResp
+		authService.Logger.Info().Interface("signInResponse", err.Error()).Msg("response")
+		return SignInResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
 
 	resp := SignInResponse{Token: token}
-	authService.Logger.Info().Interface("response", resp)
+	authService.Logger.Info().Interface("signInResponse", resp).Msg("response")
 	return resp, models.ErrorResponse{}
 }
 

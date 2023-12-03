@@ -24,16 +24,15 @@ type GetCityByIdResponse struct {
 }
 
 func (cityService CityService) GetCityById(request GetCityByIdRequest) (GetCityByIdResponse, models.ErrorResponse) {
-	cityService.Logger.Info().Interface("request", request)
+	cityService.Logger.Info().Interface("getCityByIdRequest", request).Msg("request")
 	var err error
 	city := entities.City{}
 
 	result := cityService.DB.Where("Id = ? AND IsDeprecated = ?", request.Id, false).First(&city)
 	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		err = errors.New("city record not found")
-		errResp := models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{err}}
-		cityService.Logger.Info().Interface("response", errResp)
-		return GetCityByIdResponse{}, errResp
+		cityService.Logger.Info().Interface("getCityByIdResponse", err.Error()).Msg("response")
+		return GetCityByIdResponse{}, models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{err}}
 	}
 
 	cityResp := CityModelResponse{
@@ -42,6 +41,6 @@ func (cityService CityService) GetCityById(request GetCityByIdRequest) (GetCityB
 		State:        city.State,
 		IsDeprecated: false,
 	}
-	cityService.Logger.Info().Interface("response", cityResp)
+	cityService.Logger.Info().Interface("getCityByIdResponse", cityResp).Msg("response")
 	return GetCityByIdResponse{City: cityResp}, models.ErrorResponse{}
 }

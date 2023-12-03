@@ -18,14 +18,15 @@ type GetMovieByIdResponse struct {
 }
 
 func (movieService MovieService) GetMovieById(request GetMovieByIdRequest) (GetMovieByIdResponse, models.ErrorResponse) {
-	movieService.Logger.Info().Interface("request", request)
+	var err error
+	movieService.Logger.Info().Interface("getMovieByIdRequest", request).Msg("request")
 	movie := &entities.Movie{}
 	result := movieService.DB.Where("Id = ? AND IsDeprecated = ?", request.Id, false).First(&movie)
 
 	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		errResp := models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{errors.New("movie Record  not found")}}
-		movieService.Logger.Info().Interface("response", errResp)
-		return GetMovieByIdResponse{}, errResp
+		err = errors.New("movie Record  not found")
+		movieService.Logger.Info().Interface("getMovieByIdResponse", err.Error()).Msg("response")
+		return GetMovieByIdResponse{}, models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{err}}
 	}
 
 	movieDataResp := MovieDataResponse{
@@ -39,6 +40,6 @@ func (movieService MovieService) GetMovieById(request GetMovieByIdRequest) (GetM
 		VoteCount:   movie.VoteCount,
 	}
 
-	movieService.Logger.Info().Interface("response", movieDataResp)
+	movieService.Logger.Info().Interface("getMovieByIdResponse", movieDataResp).Msg("response")
 	return GetMovieByIdResponse{Movie: movieDataResp}, models.ErrorResponse{}
 }

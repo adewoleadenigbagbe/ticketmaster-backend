@@ -47,7 +47,7 @@ type CreateCinemaResponse struct {
 
 func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) (CreateCinemaResponse, models.ErrorResponse) {
 	var err error
-	cinemaService.Logger.Info().Interface("request", request)
+	cinemaService.Logger.Info().Interface("createCinemaRequest", request).Msg("request")
 	fieldErrors := validateCinema(request)
 	if len(fieldErrors) != 0 {
 		return CreateCinemaResponse{}, models.ErrorResponse{Errors: fieldErrors, StatusCode: http.StatusBadRequest}
@@ -126,12 +126,12 @@ func (cinemaService CinemaService) CreateCinema(request CreateCinemaRequest) (Cr
 
 	if err != nil {
 		errResponse := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
-		cinemaService.Logger.Info().Interface("response", errResponse)
+		cinemaService.Logger.Info().Interface("createCinemaResponse", err.Error()).Msg("response")
 		return CreateCinemaResponse{}, errResponse
 	}
 
 	resp := CreateCinemaResponse{CinemaId: cinema.Id}
-	cinemaService.Logger.Info().Interface("response", resp)
+	cinemaService.Logger.Info().Interface("createCinemaResponse", resp).Msg("response")
 	return resp, models.ErrorResponse{}
 }
 

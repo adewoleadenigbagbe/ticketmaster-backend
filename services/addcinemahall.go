@@ -27,7 +27,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 	var err error
 	var errs []error
 
-	cinemaService.Logger.Info().Interface("request", request)
+	cinemaService.Logger.Info().Interface("cinemaHallRequest", request).Msg("request")
 	//validate request
 	errs = validateCinemaHallRequiredFields(request)
 	if len(errs) > 0 {
@@ -44,7 +44,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 	if len(duplicateHallNames) > 0 {
 		errs = append(errs, fmt.Errorf("should not have duplicate hall names : %s", strings.Join(duplicateHallNames, ",")))
 		errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: errs}
-		cinemaService.Logger.Info().Interface("response", errResp)
+		cinemaService.Logger.Info().Interface("cinemaHallResponse", errResp).Msg("response")
 		return CinemaHallResponse{}, errResp
 	}
 
@@ -59,7 +59,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 		if len(duplicateSeatNumbers) > 0 {
 			errs = append(errs, fmt.Errorf("should not have duplicate seat numbers for hall name: %s", hall.Name))
 			errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: errs}
-			cinemaService.Logger.Info().Interface("response", errResp)
+			cinemaService.Logger.Info().Interface("cinemaHallResponse", errResp).Msg("response")
 			return CinemaHallResponse{}, errResp
 		}
 	}
@@ -69,7 +69,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		errs = append(errs, errors.New("cinema record not found"))
 		errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: errs}
-		cinemaService.Logger.Info().Interface("response", errResp)
+		cinemaService.Logger.Info().Interface("cinemaHallResponse", errResp).Msg("response")
 		return CinemaHallResponse{}, errResp
 	}
 
@@ -79,7 +79,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 	if countResult > 0 {
 		errs = append(errs, fmt.Errorf(("cinemaHall name already exist in system")))
 		errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: errs}
-		cinemaService.Logger.Info().Interface("response", errResp)
+		cinemaService.Logger.Info().Interface("cinemaHallResponse", errResp).Msg("response")
 		return CinemaHallResponse{}, errResp
 	}
 
@@ -124,7 +124,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 	if err != nil {
 		errs = append(errs, result.Error)
 		errResp := models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: errs}
-		cinemaService.Logger.Info().Interface("response", errResp)
+		cinemaService.Logger.Info().Interface("cinemaHallResponse", err.Error()).Msg("response")
 
 		return CinemaHallResponse{}, errResp
 	}
@@ -132,7 +132,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 	resp := CinemaHallResponse{
 		CinemaId: request.Id,
 	}
-	cinemaService.Logger.Info().Interface("response", resp)
+	cinemaService.Logger.Info().Interface("cinemaHallResponse", resp).Msg("response")
 	return resp, models.ErrorResponse{}
 }
 
