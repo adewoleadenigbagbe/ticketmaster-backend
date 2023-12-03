@@ -42,6 +42,10 @@ func SetDefaults[T any](t *T) error {
 						}
 					}
 				}
+			case reflect.Bool:
+				if b, err := strconv.ParseBool(value); err == nil {
+					p.Field(i).SetBool(b)
+				}
 			}
 		}
 	}
