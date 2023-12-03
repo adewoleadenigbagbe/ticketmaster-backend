@@ -34,6 +34,14 @@ func SetDefaults[T any](t *T) error {
 
 					}
 				}
+			case reflect.Float32, reflect.Float64:
+				if p.Field(i).Float() == 0.0 {
+					if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
+						if !p.Field(i).OverflowFloat(floatValue) {
+							p.Field(i).SetFloat(floatValue)
+						}
+					}
+				}
 			}
 		}
 	}
