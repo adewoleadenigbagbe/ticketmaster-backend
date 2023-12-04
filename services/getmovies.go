@@ -37,26 +37,6 @@ type MovieDataResponse struct {
 }
 
 func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesResponse, error) {
-
-	// if request.Page <= 0 {
-	// 	request.Page = 1
-	// }
-
-	// switch {
-	// case request.PageLength > 100:
-	// 	request.PageLength = 100
-	// case request.PageLength <= 0:
-	// 	request.PageLength = 10
-	// }
-
-	// if request.SortBy == "" {
-	// 	request.SortBy = "Title"
-	// }
-
-	// if request.Order == "" {
-	// 	request.Order = "asc"
-	// }
-
 	err := utilities.SetDefaults[GetMoviesRequest](&request)
 	if err != nil {
 		return GetMoviesResponse{}, err
