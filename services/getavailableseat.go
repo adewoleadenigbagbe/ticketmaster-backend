@@ -11,8 +11,8 @@ import (
 type GetAvailableSeatRequest struct {
 	Id           string `param:"id"`
 	CinemaHallId string `json:"cinemaHallId"`
-	SortBy       string `json:"sortBy"`
-	Order        string `json:"order"`
+	SortBy       string `json:"sortBy" default:"SeatNumber"`
+	Order        string `json:"order" default:"asc"`
 }
 
 type GetAvailableSeatResponse struct {
@@ -44,22 +44,21 @@ type SeatDTO struct {
 }
 
 func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequest) (GetAvailableSeatResponse, []error) {
+	var err error
+	err = utilities.SetDefaults[GetAvailableSeatRequest](&request)
+	if err != nil {
+		return GetAvailableSeatResponse{StatusCode: http.StatusBadRequest}, []error{err}
+	}
+
+	fmt.Println("request", request)
+
 	errs := validateAvailableSeat(request)
 	if len(errs) != 0 {
 		return GetAvailableSeatResponse{StatusCode: http.StatusBadRequest}, errs
 	}
 
-	if request.SortBy == "" {
-		request.SortBy = "SeatNumber"
-	}
-
-	if request.Order == "" {
-		request.Order = "asc"
-	}
-
 	sortOrder := fmt.Sprint(request.SortBy, " ", request.Order)
 
-	var err error
 	seatQuery, err := showService.DB.Table("cinemaseats").
 		Where("cinemaseats.CinemaHallId = ?", request.CinemaHallId).
 		Where("cinemaseats.IsDeprecated = ?", false).
