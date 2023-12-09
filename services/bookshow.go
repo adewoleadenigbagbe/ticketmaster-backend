@@ -119,6 +119,11 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, mode
 			return err
 		}
 
+		seatStatus := enums.Reserved
+		if request.Status == enums.Assigned {
+			seatStatus = enums.PendingAssignment
+		}
+
 		showSeats := []*entities.ShowSeat{}
 		for _, cinemaSeatId := range request.CinemaSeatIds {
 			seatType := groupedSeatTypeById[cinemaSeatId]
@@ -133,7 +138,7 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, mode
 
 			showseat := entities.ShowSeat{
 				Id:           sequentialguid.New().String(),
-				Status:       request.Status,
+				Status:       seatStatus,
 				Price:        price,
 				CinemaSeatId: cinemaSeatId,
 				ShowId:       request.ShowId,
@@ -180,7 +185,7 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, mode
 }
 
 func validateShowBook(request BookRequest) []error {
-	vErrors := []error{}
+	var vErrors []error
 	if len(request.ShowId) == 0 || len(request.ShowId) < 36 {
 		vErrors = append(vErrors, fmt.Errorf(ErrRequiredUUIDField, "showId"))
 	}
@@ -189,8 +194,8 @@ func validateShowBook(request BookRequest) []error {
 		vErrors = append(vErrors, fmt.Errorf(ErrInvalidUUID, "showId"))
 	}
 
-	if request.Status != enums.Reserved && request.Status != enums.PendingAssignment {
-		vErrors = append(vErrors, errors.New("seat can only be reserved or booked"))
+	if request.Status != enums.Reserved && request.Status != enums.Assigned {
+		vErrors = append(vErrors, errors.New("seat can only be reserved or assigned"))
 	}
 
 	for i, cinemaSeatId := range request.CinemaSeatIds {

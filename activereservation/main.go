@@ -35,6 +35,14 @@ type ShowSeatDTO struct {
 	UserId       string
 }
 
+type BookingDTO struct {
+	UserId       string
+	ShowId       string
+	BookingId    string
+	CinemaSeatId string
+	Status       enums.ShowSeatStatus
+}
+
 func main() {
 	var err error
 	var wg sync.WaitGroup
@@ -78,6 +86,8 @@ func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn, db *gorm.DB) {
 
 func setSeatStatusAfterExpiration(cache *cache2go.CacheTable, db *gorm.DB, nc *nats.Conn) {
 	ticker := time.NewTicker(5 * time.Minute)
+	tickerForMissedCache := time.NewTicker(10 * time.Minute)
+
 	done := make(chan bool)
 	go func() {
 		for {
@@ -92,7 +102,11 @@ func setSeatStatusAfterExpiration(cache *cache2go.CacheTable, db *gorm.DB, nc *n
 				// check if the seat is already book while seating in cache
 				// do nothing if seat is already book
 				checkAndSetExpiredItems(cache, db, nc)
+			case v := <-tickerForMissedCache.C:
+				fmt.Println("Tick at", v, "for missed cache")
+				UpdateMissedBookingMessage(db, cache)
 			}
+
 		}
 	}()
 	<-done
@@ -242,4 +256,93 @@ func checkAndSetExpiredItems(cache *cache2go.CacheTable, db *gorm.DB, nc *nats.C
 			}
 		}
 	}
+}
+
+// UpdateMissedBookingMessage pull missed cache from the DB and push to the cache in case NATS is down
+func UpdateMissedBookingMessage(db *gorm.DB, cache *cache2go.CacheTable) error {
+	var (
+		err error
+	)
+
+	bookinqQuery, err := db.Table("bookings").
+		Where("bookings.IsDeprecated = ?", false).
+		Where("bookings.Status = ?", enums.PendingBook).
+		Joins("join showseats on bookings.Id = showseats.bookingId").
+		Where("showseats.Status = ? OR showseats.Status = ?", enums.PendingAssignment, enums.Reserved).
+		Where("showseats.IsDeprecated = ?", false).
+		Joins("join cinemaSeats on showseats.CinemaSeatId = cinemaSeats.Id").
+		Select("bookings.Id,bookings.ShowId,bookings.UserId,showseats.CinemaSeatId,showseats.Status").
+		Rows()
+
+	if err != nil {
+		return err
+	}
+
+	defer bookinqQuery.Close()
+
+	var missedBookings []BookingDTO
+	for bookinqQuery.Next() {
+		var booking BookingDTO
+		err = bookinqQuery.Scan(booking.BookingId, booking.ShowId, booking.UserId, booking.CinemaSeatId, booking.Status)
+		if err != nil {
+			return err
+		}
+		missedBookings = append(missedBookings, booking)
+	}
+
+	groupBookings := lo.GroupBy(missedBookings, func(item BookingDTO) string {
+		return item.BookingId
+	})
+
+	if cache.Count() == 0 {
+		for key, bookings := range groupBookings {
+			today := time.Now()
+			var message common.BookingMessage
+			message.BookingId = key
+			message.BookingDateTime = today
+			message.ExpiryDateTime = today.Add(5 * time.Minute)
+
+			for _, booking := range bookings {
+				if message.BookingId != "" {
+					message.ShowId = booking.ShowId
+					message.UserId = booking.UserId
+					message.Status = booking.Status
+				}
+				message.CinemaSeatIds = append(message.CinemaSeatIds, booking.CinemaSeatId)
+			}
+
+			itemKey := uuid.New().String()
+			cache.Add(itemKey, 0, message)
+		}
+		return nil
+	}
+
+	cache.Foreach(func(key interface{}, item *cache2go.CacheItem) {
+		message, ok := item.Data().(common.BookingMessage)
+		if ok {
+			for key, bookings := range groupBookings {
+				if key == message.BookingId {
+					continue
+				}
+				today := time.Now()
+				var message common.BookingMessage
+				message.BookingId = key
+				message.BookingDateTime = today
+				message.ExpiryDateTime = today.Add(5 * time.Minute)
+
+				for _, booking := range bookings {
+					if message.BookingId != "" {
+						message.ShowId = booking.ShowId
+						message.UserId = booking.UserId
+						message.Status = booking.Status
+					}
+					message.CinemaSeatIds = append(message.CinemaSeatIds, booking.CinemaSeatId)
+				}
+
+				itemKey := uuid.New().String()
+				cache.Add(itemKey, 0, message)
+			}
+		}
+	})
+	return nil
 }
