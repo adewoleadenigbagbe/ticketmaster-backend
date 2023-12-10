@@ -31,6 +31,7 @@ type JsonSeatResponse struct {
 func main() {
 	afterOneHourTicker := time.NewTicker(1 * time.Hour)
 	afterThreeMinTicker := time.NewTicker(3 * time.Minute)
+	tickerForMissedCache := time.NewTicker(10 * time.Minute)
 	eventChan := make(chan bool)
 
 	// Accessing a new cache table for the first time will create it.
@@ -65,9 +66,11 @@ func main() {
 				seats := getAvailableSeat(cache, db)
 				broadcast(c, seats)
 				time.Sleep(1 * time.Second)
+
 			case t := <-afterOneHourTicker.C:
 				fmt.Println("Tick at", t)
 				cache.Flush()
+
 			case w := <-afterThreeMinTicker.C:
 				fmt.Println("Tick at", w)
 				availableSeats := []JsonSeatResponse{}
@@ -85,6 +88,9 @@ func main() {
 					broadcast(c, availableSeats)
 				}
 
+			case v := <-tickerForMissedCache.C:
+				fmt.Println("Tick at", v, "for missed cache")
+				UpdateMissedBookingMessage(db, cache)
 			default:
 			}
 		}
@@ -104,7 +110,6 @@ func main() {
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
-
 }
 
 func subscribeToAvailableSeat(nc *nats.Conn, cache *cache2go.CacheTable, ch chan bool) {
@@ -206,5 +211,119 @@ func broadcast(c echo.Context, seats []JsonSeatResponse) error {
 	s := fmt.Sprintf("data: %s\n\n", string(resp))
 	fmt.Fprint(c.Response(), s)
 	c.Response().Flush()
+	return nil
+}
+
+// UpdateMissedBookingMessage pull missed cache from the DB and push to the cache in case NATS is down
+func UpdateMissedBookingMessage(db *gorm.DB, cache *cache2go.CacheTable) error {
+	var (
+		err error
+	)
+
+	showSeatQuery, err := db.Table("bookings").
+		Where("bookings.IsDeprecated = ?", false).
+		Where("bookings.Status = ?", enums.Expired).
+		Joins("join showseats on bookings.Id = showseats.bookingId").
+		Where("showseats.Status = ?", enums.ExpiredSeat).
+		Where("showseats.IsDeprecated = ?", false).
+		Joins("join cinemaSeats on showseats.CinemaSeatId = cinemaSeats.Id").
+		Select("showseats.ShowId,showseats.CinemaSeatId").
+		Rows()
+
+	if err != nil {
+		return err
+	}
+
+	defer showSeatQuery.Close()
+
+	var missedExpiredSeats []common.SeatAvailableDTO
+	for showSeatQuery.Next() {
+		var expiredSeat common.SeatAvailableDTO
+		err = showSeatQuery.Scan(expiredSeat.ShowId, expiredSeat.CinemaSeatId)
+		if err != nil {
+			return err
+		}
+		missedExpiredSeats = append(missedExpiredSeats, expiredSeat)
+	}
+
+	groupSeats := lo.GroupBy(missedExpiredSeats, func(item common.SeatAvailableDTO) string {
+		return item.ShowId
+	})
+
+	if cache.Count() == 0 {
+		for key, seats := range groupSeats {
+			var message common.SeatAvailableMessage
+			message.ShowId = key
+			for _, seat := range seats {
+				message.CinemaSeatIds = append(message.CinemaSeatIds, seat.CinemaSeatId)
+			}
+
+			cache.Add(key, 0, message)
+		}
+		return nil
+	}
+
+	var cachedMessages []common.SeatAvailableMessage
+	cache.Foreach(func(key interface{}, item *cache2go.CacheItem) {
+		msg, ok := item.Data().(common.SeatAvailableMessage)
+		if ok {
+			cachedMessages = append(cachedMessages, msg)
+		}
+	})
+
+	newshowIDs := lo.Keys(groupSeats)
+	cachedShowIDs := lo.Map(cachedMessages, func(item common.SeatAvailableMessage, index int) string {
+		return item.ShowId
+	})
+
+	commonIDs := lo.Intersect(cachedShowIDs, newshowIDs)
+	var messagesToModify []common.SeatAvailableMessage
+	for _, id := range commonIDs {
+		cache.Foreach(func(key interface{}, item *cache2go.CacheItem) {
+			oldMsg, ok := item.Data().(common.SeatAvailableMessage)
+			if ok {
+				if id == oldMsg.ShowId {
+					var newMsg common.SeatAvailableMessage
+					newMsg.ShowId = id
+
+					//add old messages
+					newMsg.CinemaSeatIds = append(newMsg.CinemaSeatIds, oldMsg.CinemaSeatIds...)
+
+					//add new messages
+					for _, seat := range groupSeats[id] {
+						newMsg.CinemaSeatIds = append(newMsg.CinemaSeatIds, seat.CinemaSeatId)
+					}
+
+					newMsg.CinemaSeatIds = lo.Uniq(newMsg.CinemaSeatIds)
+					messagesToModify = append(messagesToModify, newMsg)
+				}
+			}
+		})
+	}
+
+	//delete old messages
+	for _, id := range commonIDs {
+		cache.Delete(id)
+	}
+
+	newIDs, _ := lo.Difference(newshowIDs, cachedShowIDs)
+	var newMessagesToAdd []common.SeatAvailableMessage
+	for _, id := range newIDs {
+		var msg common.SeatAvailableMessage
+		msg.ShowId = id
+		for _, message := range groupSeats[id] {
+			msg.CinemaSeatIds = append(msg.CinemaSeatIds, message.CinemaSeatId)
+		}
+		newMessagesToAdd = append(newMessagesToAdd, msg)
+	}
+
+	//old plus new messages
+	newMessagesToAdd = append(newMessagesToAdd, messagesToModify...)
+
+	//add new messages
+	for _, message := range newMessagesToAdd {
+		cache.Add(message.ShowId, 0, message)
+	}
+
 	return nil
 }

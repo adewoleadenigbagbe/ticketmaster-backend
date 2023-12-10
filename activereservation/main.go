@@ -26,23 +26,6 @@ type DbQuery struct {
 	UserId        string
 }
 
-type ShowSeatDTO struct {
-	Id           string
-	Status       enums.ShowSeatStatus
-	CinemaSeatId string
-	ShowId       string
-	SeatNumber   int
-	UserId       string
-}
-
-type BookingDTO struct {
-	UserId       string
-	ShowId       string
-	BookingId    string
-	CinemaSeatId string
-	Status       enums.ShowSeatStatus
-}
-
 func main() {
 	var err error
 	var wg sync.WaitGroup
@@ -117,7 +100,7 @@ func setSeatStatusAfterExpiration(cache *cache2go.CacheTable, db *gorm.DB, nc *n
 func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn, bookingId string, filter DbQuery) error {
 	var (
 		err       error
-		showSeats []ShowSeatDTO
+		showSeats []common.ShowSeatDTO
 	)
 
 	showSeatsQuery, err := db.Table("bookings").
@@ -139,7 +122,7 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn
 	defer showSeatsQuery.Close()
 
 	for showSeatsQuery.Next() {
-		var showSeatDTO ShowSeatDTO
+		var showSeatDTO common.ShowSeatDTO
 		err = showSeatsQuery.Scan(&showSeatDTO.Id,
 			&showSeatDTO.Status,
 			&showSeatDTO.CinemaSeatId,
@@ -153,7 +136,7 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn
 		showSeats = append(showSeats, showSeatDTO)
 	}
 
-	showSeats = lo.Filter(showSeats, func(item ShowSeatDTO, index int) bool {
+	showSeats = lo.Filter(showSeats, func(item common.ShowSeatDTO, index int) bool {
 		return item.Status == enums.Reserved || item.Status == enums.PendingAssignment
 	})
 
@@ -192,7 +175,7 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn
 	cache.Delete(filter.ItemKey)
 
 	//sample message
-	cinemaIds := lo.Map(showSeats, func(item ShowSeatDTO, index int) string {
+	cinemaIds := lo.Map(showSeats, func(item common.ShowSeatDTO, index int) string {
 		return item.CinemaSeatId
 	})
 	bk := common.SeatAvailableMessage{
@@ -280,9 +263,9 @@ func UpdateMissedBookingMessage(db *gorm.DB, cache *cache2go.CacheTable) error {
 
 	defer bookinqQuery.Close()
 
-	var missedBookings []BookingDTO
+	var missedBookings []common.BookingDTO
 	for bookinqQuery.Next() {
-		var booking BookingDTO
+		var booking common.BookingDTO
 		err = bookinqQuery.Scan(booking.BookingId, booking.ShowId, booking.UserId, booking.CinemaSeatId, booking.Status)
 		if err != nil {
 			return err
@@ -290,7 +273,7 @@ func UpdateMissedBookingMessage(db *gorm.DB, cache *cache2go.CacheTable) error {
 		missedBookings = append(missedBookings, booking)
 	}
 
-	groupBookings := lo.GroupBy(missedBookings, func(item BookingDTO) string {
+	groupBookings := lo.GroupBy(missedBookings, func(item common.BookingDTO) string {
 		return item.BookingId
 	})
 
