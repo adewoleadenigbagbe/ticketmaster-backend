@@ -10,10 +10,10 @@ import (
 )
 
 type GetMoviesRequest struct {
-	Page       int    `query:"page"`
-	PageLength int    `query:"pageLength"`
-	SortBy     string `query:"sortBy"`
-	Order      string `query:"order"`
+	Page       int    `query:"page" default:"1"`
+	PageLength int    `query:"pageLength" default:"10"`
+	SortBy     string `query:"sortBy" default:"Title"`
+	Order      string `query:"order" default:"asc"`
 }
 
 type GetMoviesResponse struct {
@@ -37,24 +37,12 @@ type MovieDataResponse struct {
 }
 
 func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesResponse, error) {
-	if request.Page <= 0 {
-		request.Page = 1
+	err := utilities.SetDefaults[GetMoviesRequest](&request)
+	if err != nil {
+		return GetMoviesResponse{}, err
 	}
 
-	switch {
-	case request.PageLength > 100:
-		request.PageLength = 100
-	case request.PageLength <= 0:
-		request.PageLength = 10
-	}
-
-	if request.SortBy == "" {
-		request.SortBy = "Title"
-	}
-
-	if request.Order == "" {
-		request.Order = "asc"
-	}
+	fmt.Println(request)
 
 	//Filter
 	filterClause := paginate.FilterFields(&entities.Movie{IsDeprecated: false})
