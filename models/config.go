@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 )
 
 type DatabaseConfig struct {
@@ -17,14 +16,14 @@ type DatabaseConfig struct {
 	Loc          string `json:"loc"`
 }
 
-func CreateDbConfig(content []byte) *DatabaseConfig {
+func CreateDbConfig(content []byte) (*DatabaseConfig, error) {
 	dbConfig := &DatabaseConfig{}
 	err := json.Unmarshal(content, dbConfig)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
-	return dbConfig
+	return dbConfig, nil
 }
 
 func (dbConfig *DatabaseConfig) GetDsn() string {
@@ -40,12 +39,12 @@ type MovieApiConfig struct {
 	Auth   string `json:"auth"`
 }
 
-func CreateMovieApiConfig(content []byte) MovieApiConfig {
+func CreateMovieApiConfig(content []byte) (*MovieApiConfig, error) {
 	movieApiConfig := MovieApiConfig{}
 	err := json.Unmarshal(content, &movieApiConfig)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
-	return movieApiConfig
+	return &movieApiConfig, nil
 }

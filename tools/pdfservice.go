@@ -2,8 +2,8 @@ package tools
 
 import (
 	"bytes"
+	"errors"
 	"html/template"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,12 +20,12 @@ func (pdfService PDFService) GeneratePDF(data any) ([]byte, error) {
 	rootPath := "ticketmaster-backend"
 	currentWorkingDirectory, err := os.Getwd()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	index := strings.Index(currentWorkingDirectory, rootPath)
 	if index == -1 {
-		log.Fatal("App Root Folder Path not found")
+		return nil, errors.New("App Root Folder Path not found")
 	}
 
 	file := filepath.Join(currentWorkingDirectory[:index], rootPath, "tools", "invoice.html")

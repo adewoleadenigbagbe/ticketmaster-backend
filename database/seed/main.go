@@ -65,10 +65,13 @@ func main() {
 	dbConfigPath := filepath.Join(rootPath, DbConfigFilePath)
 	content, err := os.ReadFile(dbConfigPath)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
 
-	dbConfig := models.CreateDbConfig(content)
+	dbConfig, err := models.CreateDbConfig(content)
+	if err != nil {
+		log.Fatal(err)
+	}
 	dsn := dbConfig.GetDsn()
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
@@ -95,9 +98,13 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	movieApiConfig := models.CreateMovieApiConfig(apicontent)
+	movieApiConfig, err := models.CreateMovieApiConfig(apicontent)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	apiData := NewApiData()
-	apiData.GetData(movieApiConfig, db)
+	apiData.GetData(*movieApiConfig, db)
 }
 
 type IData interface {

@@ -1,7 +1,6 @@
 package utilities
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -25,8 +24,6 @@ func TestSetDefaults(t *testing.T) {
 	datetime, _ := time.Parse(time.RFC3339, "2023-08-08T02:00:00Z")
 
 	var person Person
-
-	fmt.Println("person", person)
 
 	//Arrange
 	SetDefaults(&person)
@@ -63,8 +60,6 @@ func TestShouldNotSetDefaults(t *testing.T) {
 		DOB:       datetime,
 	}
 
-	fmt.Println("person", person)
-
 	//Arrange
 	SetDefaults(&person)
 
@@ -99,8 +94,6 @@ func TestShouldNotDefaultBoolValueToFalse(t *testing.T) {
 		IsAdmin:   isAdmin,
 		DOB:       datetime,
 	}
-
-	fmt.Println("person", person)
 
 	//Arrange
 	err := SetDefaults(&person)

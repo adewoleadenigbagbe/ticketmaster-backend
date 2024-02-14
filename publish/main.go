@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
 	"log"
 
 	"github.com/Wolechacho/ticketmaster-backend/common"
@@ -17,8 +16,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println("starting publish test")
 
 	//sample message
 	bk := common.SeatAvailableMessage{

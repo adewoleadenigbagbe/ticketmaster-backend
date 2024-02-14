@@ -43,7 +43,10 @@ func main() {
 	}
 
 	//connect to the db
-	db := db.ConnectToDatabase()
+	db, err := db.ConnectToDatabase()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	subscribeToAvailableSeat(nc, cache, eventChan)
 
@@ -159,7 +162,6 @@ func getAvailableSeat(cache *cache2go.CacheTable, db *gorm.DB) []JsonSeatRespons
 					err = showSeatsQuery.Scan(&cinemaSeatId)
 
 					if err != nil {
-						fmt.Println(err)
 						return
 					}
 					ids = append(ids, cinemaSeatId)

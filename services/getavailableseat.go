@@ -50,8 +50,6 @@ func (showService ShowService) GetAvailableShowSeat(request GetAvailableSeatRequ
 		return GetAvailableSeatResponse{StatusCode: http.StatusBadRequest}, []error{err}
 	}
 
-	fmt.Println("request", request)
-
 	errs := validateAvailableSeat(request)
 	if len(errs) != 0 {
 		return GetAvailableSeatResponse{StatusCode: http.StatusBadRequest}, errs
