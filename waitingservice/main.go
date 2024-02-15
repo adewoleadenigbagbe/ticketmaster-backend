@@ -15,6 +15,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/common"
 	db "github.com/Wolechacho/ticketmaster-backend/database"
 	"github.com/Wolechacho/ticketmaster-backend/enums"
+	"github.com/fatih/color"
 	"github.com/labstack/echo/v4"
 	"github.com/muesli/cache2go"
 	"github.com/nats-io/nats.go"
@@ -62,17 +63,17 @@ func main() {
 		for {
 			select {
 			case <-c.Request().Context().Done():
-				fmt.Println("Client closed connection")
+				color.Yellow("Client closed connection")
 				return nil
 			case <-eventChan:
 				seats := getAvailableSeat(cache, db)
 				broadcast(c, seats)
 				time.Sleep(1 * time.Second)
 			case t := <-afterOneHourTicker.C:
-				fmt.Println("Tick at", t)
+				color.Blue("Tick at", t)
 				cache.Flush()
 			case w := <-afterThreeMinTicker.C:
-				fmt.Println("Tick at", w)
+				color.Magenta("Tick at", w)
 				availableSeats := []JsonSeatResponse{}
 				if cache.Count() > 0 {
 					cache.Foreach(func(key interface{}, item *cache2go.CacheItem) {
@@ -116,7 +117,7 @@ func subscribeToAvailableSeat(nc *nats.Conn, cache *cache2go.CacheTable, ch chan
 		dec := gob.NewDecoder(buf)
 		var message common.SeatAvailableMessage
 		err := dec.Decode(&message)
-		fmt.Println("Receiving Message:", message)
+		color.Magenta("Receiving Message:", message)
 		if err != nil {
 			log.Fatal("decode error:", err)
 		}

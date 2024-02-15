@@ -20,6 +20,7 @@ import (
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 	"github.com/Wolechacho/ticketmaster-backend/models"
+	"github.com/fatih/color"
 	"github.com/samber/lo"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -83,9 +84,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("SucessFully Connected to the Database")
+	color.Magenta("Sucessfully Connected to the Database...")
 
-	//create database entities
 	useDBCommand := fmt.Sprintf("USE %s;", dbConfig.DatabaseName)
 	db.Exec(useDBCommand)
 
@@ -303,32 +303,38 @@ func (fileData *FileData) GetData(db *gorm.DB) {
 			// return any error will rollback
 			return err
 		}
+		color.Magenta("Successfully added cities data to table")
 
 		if err := tx.CreateInBatches(&cinemaEntities, 50).Error; err != nil {
 			// return any error will rollback
 			return err
 		}
+		color.Magenta("Successfully added cinemas data to table")
 
 		if err := tx.CreateInBatches(&cinemaHallEntities, 50).Error; err != nil {
 			// return any error will rollback
 			return err
 		}
+		color.Magenta("Successfully added cinemahalls data to table")
 
 		if err := tx.CreateInBatches(&cinemaSeatsEntities, 50).Error; err != nil {
 			// return any error will rollback
 			return err
 		}
+		color.Magenta("Successfully added cinemaseats data to table")
 
 		if err := tx.CreateInBatches(&cinemaAddressEntities, 50).Error; err != nil {
 			// return any error will rollback
 			return err
 		}
+		color.Magenta("Successfully added cinemaAddresses data to table")
 
 		// return nil will commit the whole transaction
 		return nil
 	})
 
 	if err != nil {
+		color.Red("Failed to save data into tables ... Rolling Back data")
 		log.Fatalln(err)
 	}
 }
@@ -361,11 +367,12 @@ func (apiData *ApiData) GetData(config models.MovieApiConfig, db *gorm.DB) {
 	//sort the data
 	sort.Sort(entities.ByID[entities.Movie](movies))
 	tx := db.CreateInBatches(&movies, 50)
+	color.Magenta("Successfully added movies data to table")
 	if tx.Error != nil {
 		return
 	}
 
-	fmt.Println("All Data sucessfully saved into the tables")
+	color.Magenta("All Data sucessfully saved into the tables ...")
 }
 
 // AllocateJobs - create jobs to be done - sender
@@ -391,7 +398,7 @@ func (apiData *ApiData) createWorkerThread(movieConfig models.MovieApiConfig, no
 // receive jobs
 func (apiData *ApiData) worker(movieConfig models.MovieApiConfig, wg *sync.WaitGroup) {
 	for page := range apiData.Pages {
-		fmt.Println("Page #", page)
+		color.Cyan("Fetching Page #%d", page)
 		resp := getMovieData(movieConfig, page)
 		addMovieToList(resp.MovieDatas)
 	}
@@ -415,7 +422,7 @@ func getMovieData(movieConfig models.MovieApiConfig, page int) ResponseData {
 	err := json.Unmarshal(body, &responseData)
 
 	if err != nil {
-		fmt.Println(err)
+		color.Red(err.Error())
 	}
 	return responseData
 }
