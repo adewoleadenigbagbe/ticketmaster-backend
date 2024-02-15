@@ -7,10 +7,10 @@ import (
 	"os/signal"
 	"time"
 
+	_ "github.com/Wolechacho/ticketmaster-backend/apis/docs"
+	middlewares "github.com/Wolechacho/ticketmaster-backend/apis/middleware"
+	"github.com/Wolechacho/ticketmaster-backend/apis/routes"
 	"github.com/Wolechacho/ticketmaster-backend/core"
-	_ "github.com/Wolechacho/ticketmaster-backend/docs"
-	middlewares "github.com/Wolechacho/ticketmaster-backend/middleware"
-	"github.com/Wolechacho/ticketmaster-backend/routes"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
