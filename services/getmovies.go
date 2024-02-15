@@ -42,8 +42,6 @@ func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesR
 		return GetMoviesResponse{}, err
 	}
 
-	fmt.Println(request)
-
 	//Filter
 	filterClause := paginate.FilterFields(&entities.Movie{IsDeprecated: false})
 

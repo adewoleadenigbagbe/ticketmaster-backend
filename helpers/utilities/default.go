@@ -2,7 +2,6 @@ package utilities
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strconv"
 	"time"
@@ -11,7 +10,6 @@ import (
 func SetDefaults[T any](t *T) error {
 	tType := reflect.TypeOf(*t)
 	if tType.Kind() != reflect.Struct {
-		fmt.Println(tType.Kind())
 		return errors.New("default allowed only allowed on struct")
 	}
 

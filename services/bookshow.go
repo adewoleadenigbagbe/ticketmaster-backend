@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -167,11 +166,13 @@ func (bookService BookService) BookShow(request BookRequest) (BookResponse, mode
 	encoder := gob.NewEncoder(&buf)
 	err = encoder.Encode(bk)
 	if err != nil {
-		log.Fatal("encode error:", err)
+		//TODO: log to file, cmd , or elastic search
+		return BookResponse{}, models.ErrorResponse{Errors: []error{err}, StatusCode: http.StatusInternalServerError}
 	}
 
 	if err := bookService.Nc.Publish(common.EventSubject, buf.Bytes()); err != nil {
-		log.Fatal(err)
+		//TODO: log to file, cmd , or elastic search
+		return BookResponse{}, models.ErrorResponse{Errors: []error{err}, StatusCode: http.StatusInternalServerError}
 	}
 
 	bookService.Nc.Flush()

@@ -1,9 +1,6 @@
 package core
 
 import (
-	"fmt"
-	"log"
-
 	db "github.com/Wolechacho/ticketmaster-backend/database"
 	"github.com/Wolechacho/ticketmaster-backend/services"
 	"github.com/Wolechacho/ticketmaster-backend/tools"
@@ -27,10 +24,17 @@ type BaseApp struct {
 	AuthService        services.AuthService
 }
 
-func ConfigureApp() *BaseApp {
+func ConfigureApp() (*BaseApp, error) {
 	//create a database connection
-	db := db.ConnectToDatabase()
-	nc := ConnectToNats()
+	db, err := db.ConnectToDatabase()
+	if err != nil {
+		return nil, err
+	}
+
+	nc, err := ConnectToNats()
+	if err != nil {
+		return nil, err
+	}
 
 	app := &BaseApp{
 		IsMigrationChecked: false,
@@ -46,17 +50,16 @@ func ConfigureApp() *BaseApp {
 		AuthService:        services.AuthService{DB: db},
 	}
 
-	return app
+	return app, nil
 }
 
-func ConnectToNats() *nats.Conn {
+func ConnectToNats() (*nats.Conn, error) {
 	nc, err := nats.Connect(nats.DefaultURL)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	fmt.Println("Nats connected")
-	return nc
+	return nc, nil
 }
 
 func (app *BaseApp) Db() *gorm.DB {

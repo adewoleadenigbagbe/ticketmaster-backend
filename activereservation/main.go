@@ -48,7 +48,10 @@ func main() {
 	}
 
 	//connec to the db
-	db := db.ConnectToDatabase()
+	db, err := db.ConnectToDatabase()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	addMessagetoCache(cache, nc, db)
 	setSeatStatusAfterExpiration(cache, db, nc)
@@ -63,7 +66,7 @@ func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn, db *gorm.DB) {
 		err := dec.Decode(&message)
 		fmt.Println("Receiving Message:", message)
 		if err != nil {
-			log.Fatal("decode error:", err)
+			//TODO:log this to file , elastic search , cmd
 		}
 
 		//make a unique , append with nano time
@@ -101,7 +104,7 @@ func setSeatStatusAfterExpiration(cache *cache2go.CacheTable, db *gorm.DB, nc *n
 	fmt.Println("Ticker stopped")
 }
 
-func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn, showId string, filter DbQuery) {
+func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn, showId string, filter DbQuery) error {
 	showSeatsQuery, err := db.Table("showseats").
 		Where("CinemaSeatId IN ?", filter.CinemaSeatIds).
 		Where("showseats.ShowId = ?", showId).
@@ -112,7 +115,7 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn
 		Rows()
 
 	if err != nil {
-		return
+		return err
 	}
 
 	defer showSeatsQuery.Close()
@@ -128,7 +131,7 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn
 			&showSeatDTO.UserId)
 
 		if err != nil {
-			return
+			return err
 		}
 		showSeats = append(showSeats, showSeatDTO)
 	}
@@ -175,14 +178,15 @@ func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn
 	encoder := gob.NewEncoder(&buf)
 	err = encoder.Encode(bk)
 	if err != nil {
-		log.Fatal("encode error:", err)
+		return err
 	}
 
 	if err := nc.Publish(common.SeatAvailableEvent, buf.Bytes()); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	nc.Flush()
+	return nil
 }
 
 func checkAndSetExpiredItems(cache *cache2go.CacheTable, db *gorm.DB, nc *nats.Conn) {
