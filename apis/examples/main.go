@@ -1,4 +1,4 @@
-package main
+package examples
 
 import (
 	"context"
@@ -36,9 +36,10 @@ import (
 //   Produces:
 //   - application/json
 // @schemes http
-func main() {
+func InitializeAPI() {
+	//TODO: Could remove this later if it can be set using cobra
 	//load env variables
-	err := godotenv.Load("..//.env")
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
