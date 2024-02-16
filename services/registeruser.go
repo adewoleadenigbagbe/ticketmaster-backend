@@ -1,7 +1,6 @@
 package services
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -10,6 +9,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
+	"github.com/Wolechacho/ticketmaster-backend/models"
 	"gorm.io/gorm"
 )
 
@@ -32,55 +32,14 @@ type CreateUserRequest struct {
 }
 
 type CreateUserResponse struct {
-	UserId     string `json:"userId"`
-	StatusCode int    `json:"statusCode"`
+	UserId string `json:"userId"`
 }
 
-func validateUser(request CreateUserRequest) []error {
-	var validationErrors []error
-	if request.FirstName == "" {
-		validationErrors = append(validationErrors, fmt.Errorf("firstName is a required field"))
-	}
-
-	if request.LastName == "" {
-		validationErrors = append(validationErrors, fmt.Errorf("lastName is a required field"))
-	}
-
-	if request.Password == "" {
-		validationErrors = append(validationErrors, fmt.Errorf("password is a required field"))
-	}
-
-	if request.Address == "" {
-		validationErrors = append(validationErrors, fmt.Errorf("address is a required field"))
-	}
-
-	if len(request.CityId) == 0 || len(request.CityId) < 36 {
-		validationErrors = append(validationErrors, fmt.Errorf("cityId is a required field  with 36 characters"))
-	}
-
-	if request.CityId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, fmt.Errorf("cityId should have a valid UUID"))
-	}
-
-	isEmailValid, _ := regexp.MatchString(EmailRegex, request.Email)
-	if !isEmailValid {
-		validationErrors = append(validationErrors, fmt.Errorf("email supplied is invalid"))
-	}
-
-	isPhoneValid, _ := regexp.MatchString(PhoneNumberRegex, request.PhoneNumber)
-
-	if !isPhoneValid {
-		validationErrors = append(validationErrors, fmt.Errorf("phone number supplied is invalid"))
-	}
-
-	return validationErrors
-}
-
-func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUserResponse, []error) {
+func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUserResponse, models.ErrorResponse) {
 	var err error
 	fieldsErrors := validateUser(request)
 	if len(fieldsErrors) != 0 {
-		return CreateUserResponse{StatusCode: http.StatusBadRequest}, fieldsErrors
+		return CreateUserResponse{}, models.ErrorResponse{Errors: fieldsErrors, StatusCode: http.StatusBadRequest}
 	}
 
 	user := entities.User{
@@ -90,10 +49,9 @@ func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUs
 		Email:        request.Email,
 		RoleId:       request.RoleId,
 		Password:     request.Password,
-		PhoneNumber:  sql.NullString{String: request.PhoneNumber, Valid: true},
+		PhoneNumber:  utilities.NewNullable[string](request.PhoneNumber, true),
 		IsDeprecated: false,
 	}
-
 
 	err = authService.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&user).Error; err != nil {
@@ -112,6 +70,7 @@ func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUs
 				Latitude:  request.Latitude,
 			},
 			IsDeprecated: false,
+			IsCurrent:    true,
 		}
 
 		if err := tx.Create(&address).Error; err != nil {
@@ -123,8 +82,48 @@ func (authService AuthService) RegisterUser(request CreateUserRequest) (CreateUs
 	})
 
 	if err != nil {
-		return CreateUserResponse{StatusCode: http.StatusBadRequest}, []error{err}
+		return CreateUserResponse{}, models.ErrorResponse{Errors: []error{err}, StatusCode: http.StatusBadRequest}
 	}
 
-	return CreateUserResponse{UserId: user.Id, StatusCode: http.StatusOK}, nil
+	return CreateUserResponse{UserId: user.Id}, models.ErrorResponse{}
+}
+
+func validateUser(request CreateUserRequest) []error {
+	var validationErrors []error
+	if request.FirstName == "" {
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "firstName"))
+	}
+
+	if request.LastName == "" {
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "lastName"))
+	}
+
+	if request.Password == "" {
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "password"))
+	}
+
+	if request.Address == "" {
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredField, "address"))
+	}
+
+	if len(request.CityId) == 0 || len(request.CityId) < 36 {
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cityId"))
+	}
+
+	if request.CityId == utilities.DEFAULT_UUID {
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cityId"))
+	}
+
+	isEmailValid, _ := regexp.MatchString(EmailRegex, request.Email)
+	if !isEmailValid {
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInValidField, "email"))
+	}
+
+	isPhoneValid, _ := regexp.MatchString(PhoneNumberRegex, request.PhoneNumber)
+
+	if !isPhoneValid {
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInValidField, "phone number"))
+	}
+
+	return validationErrors
 }

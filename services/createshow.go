@@ -1,7 +1,6 @@
 package services
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,12 +8,8 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
+	"github.com/Wolechacho/ticketmaster-backend/models"
 	"gorm.io/gorm"
-)
-
-const (
-	TIME_OVERLAP_ERROR = "time overlap between the show Start and End Time"
-	INVALID_UUID_ERROR = "%s should have a valid UUID"
 )
 
 type CreateShowRequest struct {
@@ -24,8 +19,7 @@ type CreateShowRequest struct {
 }
 
 type CreateShowResponse struct {
-	ShowIds    []string `json:"showIds"`
-	StatusCode int
+	ShowIds []string `json:"showIds"`
 }
 
 type ShowDateTime struct {
@@ -33,16 +27,16 @@ type ShowDateTime struct {
 	EndDateTime   time.Time `json:"endDate"`
 }
 
-func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShowResponse, []error) {
+func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShowResponse, models.ErrorResponse) {
 	var err error
 	fieldErrors := validateRequiredFields(request)
 	if len(fieldErrors) != 0 {
-		return CreateShowResponse{StatusCode: http.StatusBadRequest}, fieldErrors
+		return CreateShowResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: fieldErrors}
 	}
 
 	showTimeErrors := validateShowTime(request)
 	if len(showTimeErrors) != 0 {
-		return CreateShowResponse{StatusCode: http.StatusBadRequest}, showTimeErrors
+		return CreateShowResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: showTimeErrors}
 	}
 
 	showIds := []string{}
@@ -57,7 +51,7 @@ func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShow
 				CinemaHallId:       request.CinemaHallId,
 				IsDeprecated:       false,
 				IsCancelled:        false,
-				CancellationReason: sql.NullString{Valid: false},
+				CancellationReason: utilities.NewNullable[string]("", false),
 			}
 
 			result := tx.Create(&show)
@@ -72,9 +66,9 @@ func (showService ShowService) CreateShow(request CreateShowRequest) (CreateShow
 	})
 
 	if err != nil {
-		return CreateShowResponse{StatusCode: http.StatusBadRequest}, []error{err}
+		return CreateShowResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
-	return CreateShowResponse{ShowIds: showIds, StatusCode: http.StatusOK}, nil
+	return CreateShowResponse{ShowIds: showIds}, models.ErrorResponse{}
 }
 
 func validateRequiredFields(request CreateShowRequest) []error {
@@ -83,19 +77,19 @@ func validateRequiredFields(request CreateShowRequest) []error {
 
 	//validate the cinemaHallId and movieId
 	if len(request.CinemaHallId) == 0 || len(request.CinemaHallId) < 36 {
-		validationErrors = append(validationErrors, fmt.Errorf("cinemaHallId is a required field  with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cinemaHallId"))
 	}
 
 	if request.CinemaHallId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, fmt.Errorf("cinemaHallId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cinemaHallId"))
 	}
 
 	if len(request.MovieId) == 0 || len(request.MovieId) < 36 {
-		validationErrors = append(validationErrors, fmt.Errorf("movieId is a required field with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "movieId"))
 	}
 
 	if request.MovieId == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, fmt.Errorf("movieId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "movieId"))
 	}
 
 	if len(request.ShowTimes) == 0 {
@@ -163,7 +157,6 @@ func validateShowTime(request CreateShowRequest) []error {
 	}
 
 	//if there is overlap, add error
-	fmt.Println("Overlap : ", timeOverlap)
 	if timeOverlap {
 		validationErrors = append(validationErrors, fmt.Errorf(TIME_OVERLAP_ERROR))
 	}

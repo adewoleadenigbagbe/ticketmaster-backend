@@ -6,13 +6,14 @@ import (
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	paginate "github.com/Wolechacho/ticketmaster-backend/helpers/pagination"
+	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
 )
 
 type GetMoviesRequest struct {
-	Page       int    `query:"page"`
-	PageLength int    `query:"pageLength"`
-	SortBy     string `query:"sortBy"`
-	Order      string `query:"order"`
+	Page       int    `query:"page" default:"1"`
+	PageLength int    `query:"pageLength" default:"10"`
+	SortBy     string `query:"sortBy" default:"Title"`
+	Order      string `query:"order" default:"asc"`
 }
 
 type GetMoviesResponse struct {
@@ -24,26 +25,21 @@ type GetMoviesResponse struct {
 }
 
 type MovieDataResponse struct {
-	Id          string    `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Language    string    `json:"language"`
-	ReleaseDate time.Time `json:"releaseDate"`
-	Genre       int       `json:"genre"`
-	Popularity  float32   `json:"popularity"`
-	VoteCount   int       `json:"voteCount"`
+	Id          string                     `json:"id"`
+	Title       string                     `json:"title"`
+	Description utilities.Nullable[string] `json:"description"`
+	Language    string                     `json:"language"`
+	ReleaseDate time.Time                  `json:"releaseDate"`
+	Genre       int                        `json:"genre"`
+	Popularity  float32                    `json:"popularity"`
+	VoteCount   int                        `json:"voteCount"`
+	Duration    utilities.Nullable[int]    `json:"duration"`
 }
 
 func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesResponse, error) {
-	if request.Page <= 0 {
-		request.Page = 1
-	}
-
-	switch {
-	case request.PageLength > 100:
-		request.PageLength = 100
-	case request.PageLength <= 0:
-		request.PageLength = 10
+	err := utilities.SetDefaults[GetMoviesRequest](&request)
+	if err != nil {
+		return GetMoviesResponse{}, err
 	}
 
 	//Filter
@@ -55,7 +51,6 @@ func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesR
 
 	//order by
 	sortandorder := fmt.Sprintf("%s %s", request.SortBy, request.Order)
-	fmt.Println(sortandorder)
 	orderByClause := paginate.OrderBy(sortandorder)
 
 	//this uses functional scope pattern in golang
@@ -75,7 +70,7 @@ func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesR
 			Id:          movie.Id,
 			Title:       movie.Title,
 			Language:    movie.Language,
-			Description: movie.Description.String,
+			Description: movie.Description,
 			ReleaseDate: movie.ReleaseDate,
 			Genre:       movie.Genre,
 			Popularity:  movie.Popularity,

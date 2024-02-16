@@ -1,12 +1,10 @@
 package services
 
-import "gorm.io/gorm"
-
-//TODO: add all these to the service response
-type ErrrorResponse struct {
-	Errors     []error
-	StatusCode int
-}
+import (
+	"github.com/Wolechacho/ticketmaster-backend/tools"
+	"github.com/nats-io/nats.go"
+	"gorm.io/gorm"
+)
 
 type CinemaService struct {
 	DB *gorm.DB
@@ -26,6 +24,12 @@ type ShowService struct {
 
 type UserService struct {
 	DB *gorm.DB
+}
+
+type BookService struct {
+	DB         *gorm.DB
+	Nc         *nats.Conn
+	PDFService tools.PDFService
 }
 
 type AuthService struct {

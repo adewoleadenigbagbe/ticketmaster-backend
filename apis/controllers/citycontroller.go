@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"net/http"
+	"reflect"
 
 	"github.com/Wolechacho/ticketmaster-backend/core"
 	"github.com/Wolechacho/ticketmaster-backend/services"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 )
 
 type CityController struct {
@@ -21,7 +23,7 @@ type CityController struct {
 // @Param        id  path  string  true  "Id"
 // @Success      200  {object}  services.CityModelResponse
 // @Failure      400  {object}  string
-// @Failure      404  {object}  string
+// @Failure      404  {object}  []string
 // @Router       /api/v1/city/{id} [get]
 func (cityController *CityController) GetCityByIdHandler(cityContext echo.Context) error {
 	var err error
@@ -31,9 +33,13 @@ func (cityController *CityController) GetCityByIdHandler(cityContext echo.Contex
 		return cityContext.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	resp, err := cityController.App.CityService.GetCityById(*req)
-	if err != nil {
-		return cityContext.JSON(resp.StatusCode, err.Error())
+	dataResp, errResp := cityController.App.CityService.GetCityById(*req)
+	if !reflect.ValueOf(errResp).IsZero() {
+		errs := lo.Map(errResp.Errors, func(er error, index int) string {
+			return er.Error()
+		})
+		return cityContext.JSON(errResp.StatusCode, errs)
 	}
-	return cityContext.JSON(http.StatusOK, resp.City)
+
+	return cityContext.JSON(http.StatusOK, dataResp)
 }

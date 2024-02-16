@@ -7,6 +7,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	"github.com/Wolechacho/ticketmaster-backend/enums"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
+	"github.com/Wolechacho/ticketmaster-backend/models"
 )
 
 type CreateRoleRequest struct {
@@ -17,13 +18,12 @@ type CreateRoleRequest struct {
 
 type CreateRoleResponse struct {
 	UserRoleId string `json:"userRoleId"`
-	StatusCode int
 }
 
-func (userService UserService) AddRole(request CreateRoleRequest) (CreateRoleResponse, []error) {
+func (userService UserService) AddRole(request CreateRoleRequest) (CreateRoleResponse, models.ErrorResponse) {
 	requiredFieldErrors := validateRole(request)
 	if len(requiredFieldErrors) > 0 {
-		return CreateRoleResponse{StatusCode: http.StatusBadRequest}, requiredFieldErrors
+		return CreateRoleResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: requiredFieldErrors}
 	}
 
 	userRole := entities.UserRole{
@@ -37,24 +37,24 @@ func (userService UserService) AddRole(request CreateRoleRequest) (CreateRoleRes
 
 	if rowsAffected < 1 {
 		err := fmt.Errorf("role already exist")
-		return CreateRoleResponse{StatusCode: http.StatusBadRequest}, []error{err}
+		return CreateRoleResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: []error{err}}
 	}
 
-	return CreateRoleResponse{StatusCode: http.StatusOK, UserRoleId: userRole.Id}, nil
+	return CreateRoleResponse{UserRoleId: userRole.Id}, models.ErrorResponse{}
 }
 
 func validateRole(request CreateRoleRequest) []error {
 	vErrors := []error{}
 	if request.Name == "" {
-		vErrors = append(vErrors, fmt.Errorf("name field is required"))
+		vErrors = append(vErrors, fmt.Errorf(ErrRequiredField, "name"))
 	}
 
 	if request.Description == "" {
-		vErrors = append(vErrors, fmt.Errorf("description field is required"))
+		vErrors = append(vErrors, fmt.Errorf(ErrRequiredField, "description"))
 	}
 
 	if request.Role <= 0 {
-		vErrors = append(vErrors, fmt.Errorf("role field is required"))
+		vErrors = append(vErrors, fmt.Errorf(ErrRequiredField, "role"))
 	}
 
 	return vErrors

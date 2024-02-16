@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
+	"github.com/Wolechacho/ticketmaster-backend/models"
 	"gorm.io/gorm"
 )
 
@@ -13,28 +14,28 @@ type GetMovieByIdRequest struct {
 }
 
 type GetMovieByIdResponse struct {
-	StatusCode int
-	Movie      MovieDataResponse `json:"movie"`
+	Movie MovieDataResponse `json:"movie"`
 }
 
-func (movieService MovieService) GetMovieById(request GetMovieByIdRequest) (GetMovieByIdResponse, error) {
+func (movieService MovieService) GetMovieById(request GetMovieByIdRequest) (GetMovieByIdResponse, models.ErrorResponse) {
 	movie := &entities.Movie{}
 	result := movieService.DB.Where("Id = ? AND IsDeprecated = ?", request.Id, false).First(&movie)
 
 	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return GetMovieByIdResponse{StatusCode: http.StatusNotFound}, errors.New("movie Record  not found")
+		return GetMovieByIdResponse{}, models.ErrorResponse{StatusCode: http.StatusNotFound, Errors: []error{errors.New("movie Record not found")}}
 	}
 
 	movieDataResp := MovieDataResponse{
 		Id:          movie.Id,
 		Title:       movie.Title,
 		Language:    movie.Language,
-		Description: movie.Description.String,
+		Description: movie.Description,
 		ReleaseDate: movie.ReleaseDate,
 		Genre:       movie.Genre,
 		Popularity:  movie.Popularity,
 		VoteCount:   movie.VoteCount,
+		Duration:    movie.Duration,
 	}
 
-	return GetMovieByIdResponse{StatusCode: http.StatusOK, Movie: movieDataResp}, nil
+	return GetMovieByIdResponse{Movie: movieDataResp}, models.ErrorResponse{}
 }

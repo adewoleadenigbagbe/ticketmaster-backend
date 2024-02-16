@@ -3,11 +3,13 @@ package services
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/Wolechacho/ticketmaster-backend/database/entities"
 	sequentialguid "github.com/Wolechacho/ticketmaster-backend/helpers"
 	"github.com/Wolechacho/ticketmaster-backend/helpers/utilities"
+	"github.com/Wolechacho/ticketmaster-backend/models"
 	"github.com/samber/lo"
 	"gorm.io/gorm"
 )
@@ -21,14 +23,14 @@ type CinemaHallResponse struct {
 	CinemaId string `json:"CinemaId"`
 }
 
-func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (CinemaHallResponse, []error) {
+func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (CinemaHallResponse, models.ErrorResponse) {
 	var err error
 	var errs []error
 
 	//validate request
 	errs = validateCinemaHallRequiredFields(request)
 	if len(errs) > 0 {
-		return CinemaHallResponse{}, errs
+		return CinemaHallResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: errs}
 	}
 
 	//check for duplicate hall names
@@ -40,7 +42,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 	duplicateHallNames := lo.FindDuplicates(hallNames)
 	if len(duplicateHallNames) > 0 {
 		errs = append(errs, fmt.Errorf("should not have duplicate hall names : %s", strings.Join(duplicateHallNames, ",")))
-		return CinemaHallResponse{}, errs
+		return CinemaHallResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: errs}
 	}
 
 	//check for duplicate seat number
@@ -53,7 +55,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 		duplicateSeatNumbers := lo.FindDuplicates(seatNumbers)
 		if len(duplicateSeatNumbers) > 0 {
 			errs = append(errs, fmt.Errorf("should not have duplicate seat numbers for hall name: %s", hall.Name))
-			return CinemaHallResponse{}, errs
+			return CinemaHallResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: errs}
 		}
 	}
 
@@ -61,7 +63,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 	result := cinemaService.DB.Where("Id = ? AND IsDeprecated = ?", request.Id, false).First(cinema)
 	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		errs = append(errs, errors.New("cinema record not found"))
-		return CinemaHallResponse{}, errs
+		return CinemaHallResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: errs}
 	}
 
 	//check if the not duplicate names in the DB
@@ -69,7 +71,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 	cinemaService.DB.Model(&entities.CinemaHall{}).Where("Name IN ? AND CinemaId = ? AND IsDeprecated = ?", hallNames, cinema.Id, false).Count(&countResult)
 	if countResult > 0 {
 		errs = append(errs, fmt.Errorf(("cinemaHall name already exist in system")))
-		return CinemaHallResponse{}, errs
+		return CinemaHallResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: errs}
 	}
 
 	err = cinemaService.DB.Transaction(func(tx *gorm.DB) error {
@@ -93,7 +95,7 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 						seat := entities.CinemaSeat{
 							Id:           sequentialguid.New().String(),
 							SeatNumber:   seat.SeatNumber,
-							Type:         int(seat.Type),
+							Type:         seat.Type,
 							CinemaHallId: cinemaHall.Id,
 							IsDeprecated: false,
 						}
@@ -113,23 +115,23 @@ func (cinemaService CinemaService) AddCinemaHall(request CinemaHallRequest) (Cin
 
 	if err != nil {
 		errs = append(errs, result.Error)
-		return CinemaHallResponse{}, errs
+		return CinemaHallResponse{}, models.ErrorResponse{StatusCode: http.StatusBadRequest, Errors: errs}
 	}
 
 	resp := CinemaHallResponse{
 		CinemaId: request.Id,
 	}
-	return resp, nil
+	return resp, models.ErrorResponse{}
 }
 
 func validateCinemaHallRequiredFields(request CinemaHallRequest) []error {
 	validationErrors := []error{}
 	if len(request.Id) == 0 || len(request.Id) < 36 {
-		validationErrors = append(validationErrors, errors.New("cinemaId is a required field  with 36 characters"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrRequiredUUIDField, "cinemaId"))
 	}
 
 	if request.Id == utilities.DEFAULT_UUID {
-		validationErrors = append(validationErrors, errors.New("cinemaId should have a valid UUID"))
+		validationErrors = append(validationErrors, fmt.Errorf(ErrInvalidUUID, "cinemaId"))
 	}
 
 	for i, hall := range request.Halls {

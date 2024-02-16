@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/nats-io/nats.go"
 	"gorm.io/gorm"
 )
 
@@ -10,4 +11,5 @@ import (
 type App interface {
 	Db() *gorm.DB
 	GetEcho() *echo.Echo
+	GetNats() *nats.Conn
 }
