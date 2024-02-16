@@ -11,6 +11,7 @@ import (
 	"github.com/Wolechacho/ticketmaster-backend/common"
 	db "github.com/Wolechacho/ticketmaster-backend/database"
 	"github.com/Wolechacho/ticketmaster-backend/enums"
+	"github.com/fatih/color"
 	"github.com/muesli/cache2go"
 	"github.com/nats-io/nats.go"
 	"github.com/samber/lo"
@@ -64,7 +65,7 @@ func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn, db *gorm.DB) {
 		dec := gob.NewDecoder(buf)
 		var message common.BookingMessage
 		err := dec.Decode(&message)
-		fmt.Println("Receiving Message:", message)
+		color.Magenta("Receiving Message:", message)
 		if err != nil {
 			//TODO:log this to file , elastic search , cmd
 		}
@@ -89,7 +90,7 @@ func setSeatStatusAfterExpiration(cache *cache2go.CacheTable, db *gorm.DB, nc *n
 			case <-done:
 				return
 			case t := <-ticker.C:
-				fmt.Println("Tick at", t)
+				color.Magenta("Tick at", t)
 				//loop through the cache , find all items that are expired
 				// update the show seat status and push message to the broker about an expired
 				//expired reserve seat now available , while doing so
@@ -101,7 +102,7 @@ func setSeatStatusAfterExpiration(cache *cache2go.CacheTable, db *gorm.DB, nc *n
 	}()
 	<-done
 	ticker.Stop()
-	fmt.Println("Ticker stopped")
+	color.Yellow("Ticker stopped")
 }
 
 func setStatusToAvailable(db *gorm.DB, cache *cache2go.CacheTable, nc *nats.Conn, showId string, filter DbQuery) error {
