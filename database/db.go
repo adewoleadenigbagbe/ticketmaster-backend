@@ -1,8 +1,7 @@
 package db
 
 import (
-	"fmt"
-
+	"github.com/fatih/color"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -15,8 +14,7 @@ func ConnectToDatabase() (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("Connected to the Database")
+	color.Blue("Connected to the Database")
 
 	return db, nil
 }
