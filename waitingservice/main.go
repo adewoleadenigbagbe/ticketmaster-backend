@@ -1,4 +1,4 @@
-package main
+package waitingservice
 
 import (
 	"bytes"
@@ -29,7 +29,7 @@ type JsonSeatResponse struct {
 	CinemaSeatIds []string `json:"cinemaSeatIds"`
 }
 
-func main() {
+func Run() {
 	afterOneHourTicker := time.NewTicker(1 * time.Hour)
 	afterThreeMinTicker := time.NewTicker(3 * time.Minute)
 	eventChan := make(chan bool)

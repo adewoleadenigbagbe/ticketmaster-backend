@@ -1,4 +1,4 @@
-package main
+package activereservation
 
 import (
 	"bytes"
@@ -34,7 +34,7 @@ type ShowSeatDTO struct {
 	UserId       string
 }
 
-func main() {
+func Run() {
 	var err error
 	var wg sync.WaitGroup
 	wg.Add(1)

@@ -1,25 +1,23 @@
-package ticketmaster
+package cmd
 
 import (
-	"os"
-
-	"github.com/Wolechacho/ticketmaster-backend/cmd"
 	"github.com/spf13/cobra"
 )
 
 type TicketMaster struct {
-	RootCmd *cobra.Command
+	rootCmd *cobra.Command
 }
 
-func New() *TicketMaster {
+func NewTicketMaster() *TicketMaster {
 	tc := &TicketMaster{
-		RootCmd: &cobra.Command{
-			Use:   "[command]",
+		rootCmd: &cobra.Command{
+			Use:   "ticketmaster",
 			Short: "Ticketmaster CLI",
 			// no need to provide the default cobra completion command
 			CompletionOptions: cobra.CompletionOptions{
 				DisableDefaultCmd: true,
 			},
+			//Run: func(cmd *cobra.Command, args []string) { fmt.Println("Hello CLI") },
 		},
 	}
 
@@ -27,17 +25,17 @@ func New() *TicketMaster {
 }
 
 func (ticketmaster *TicketMaster) Start() error {
-	ticketmaster.RootCmd.AddCommand(cmd.ServeApiCommand())
-	ticketmaster.RootCmd.AddCommand(cmd.WaitingServiceCommand())
-	ticketmaster.RootCmd.AddCommand(cmd.ActivationReservationCommand())
+	ticketmaster.rootCmd.AddCommand(serveApiCommand())
+	ticketmaster.rootCmd.AddCommand(waitingServiceCommand())
+	ticketmaster.rootCmd.AddCommand(activationReservationCommand())
 
 	return ticketmaster.execute()
 }
 
 func (ticketmaster *TicketMaster) execute() error {
-	err := ticketmaster.RootCmd.Execute()
+	err := ticketmaster.rootCmd.Execute()
 	if err != nil {
-		os.Exit(1)
+		return err
 	}
 
 	return nil
