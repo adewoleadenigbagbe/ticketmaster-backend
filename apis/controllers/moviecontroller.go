@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/Wolechacho/ticketmaster-backend/core"
-	"github.com/Wolechacho/ticketmaster-backend/services"
+	"github.com/Wolechacho/ticketmaster-backend/apis/core"
+	"github.com/Wolechacho/ticketmaster-backend/infastructure/services"
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 )

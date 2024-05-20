@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Wolechacho/ticketmaster-backend/common"
-	db "github.com/Wolechacho/ticketmaster-backend/database"
-	"github.com/Wolechacho/ticketmaster-backend/enums"
+	"github.com/Wolechacho/ticketmaster-backend/shared/common"
+	db "github.com/Wolechacho/ticketmaster-backend/shared/database"
+	"github.com/Wolechacho/ticketmaster-backend/shared/enums"
 	"github.com/fatih/color"
 	"github.com/muesli/cache2go"
 	"github.com/nats-io/nats.go"

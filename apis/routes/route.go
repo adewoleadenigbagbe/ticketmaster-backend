@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/Wolechacho/ticketmaster-backend/core"
+	"github.com/Wolechacho/ticketmaster-backend/apis/core"
 )
 
 // RegisterRoutes - Configuration for all incoming routes
