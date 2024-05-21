@@ -54,12 +54,12 @@ func Run() {
 		log.Fatal(err)
 	}
 
-	addMessagetoCache(cache, nc, db)
+	addMessagetoCache(cache, nc)
 	setSeatStatusAfterExpiration(cache, db, nc)
 	wg.Wait()
 }
 
-func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn, db *gorm.DB) {
+func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn) {
 	nc.Subscribe(common.EventSubject, func(m *nats.Msg) {
 		buf := bytes.NewBuffer(m.Data)
 		dec := gob.NewDecoder(buf)
@@ -68,6 +68,7 @@ func addMessagetoCache(cache *cache2go.CacheTable, nc *nats.Conn, db *gorm.DB) {
 		color.Magenta("Receiving Message:", message)
 		if err != nil {
 			//TODO:log this to file , elastic search , cmd
+			fmt.Println(err)
 		}
 
 		//make a unique , append with nano time

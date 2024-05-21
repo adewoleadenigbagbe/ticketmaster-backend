@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -28,9 +27,9 @@ import (
 )
 
 var (
-	RootFolderPath   = "ticketmaster-backend"
-	DbConfigFilePath = "configs\\database.json"
-	MovieApiFilePath = "configs\\movieapi.json"
+	JsonDataPath     = "./shared/jsondata"
+	DbConfigFilePath = "./shared/configs/database.json"
+	MovieApiFilePath = "./shared/configs/movieapi.json"
 
 	genres = []enums.Genre{
 		enums.Action, enums.Adventure, enums.Animation, enums.Comedy,
@@ -51,19 +50,10 @@ const (
 )
 
 func main() {
-	currentWorkingDirectory, err := os.Getwd()
+	dbConfigPath, err := filepath.Abs(DbConfigFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	index := strings.Index(currentWorkingDirectory, RootFolderPath)
-	if index == -1 {
-		log.Fatal("App Root Folder Path not found")
-	}
-
-	rootPath := filepath.Join(currentWorkingDirectory[:index], RootFolderPath)
-
-	dbConfigPath := filepath.Join(rootPath, DbConfigFilePath)
 	content, err := os.ReadFile(dbConfigPath)
 	if err != nil {
 		log.Fatal(err)
@@ -89,10 +79,13 @@ func main() {
 	useDBCommand := fmt.Sprintf("USE %s;", dbConfig.DatabaseName)
 	db.Exec(useDBCommand)
 
-	filedata := NewFileData(rootPath)
+	filedata := NewFileData(JsonDataPath)
 	filedata.GetData(db)
 
-	apiJsonPath := filepath.Join(rootPath, MovieApiFilePath)
+	apiJsonPath, err := filepath.Abs(MovieApiFilePath)
+	if err != nil {
+		log.Fatal(err)
+	}
 	apicontent, err := os.ReadFile(apiJsonPath)
 	if err != nil {
 		log.Fatalln(err)
@@ -112,10 +105,9 @@ type IData interface {
 }
 
 type FileData struct {
-	JsonFolderPath   string
-	TargetFolderPath string
-	Converter        func(data []byte, v any) error
-	Cities           []struct {
+	JsonFolderPath string
+	Converter      func(data []byte, v any) error
+	Cities         []struct {
 		Name      string  `json:"city"`
 		State     string  `json:"state"`
 		ZipCode   int     `json:"zip_code"`
@@ -137,8 +129,7 @@ type FileData struct {
 
 func NewFileData(folderPath string) *FileData {
 	fileData := &FileData{
-		JsonFolderPath:   "jsondata",
-		TargetFolderPath: folderPath,
+		JsonFolderPath: folderPath,
 		Converter: func(data []byte, v any) error {
 			err := json.Unmarshal(data, v)
 			return err
@@ -168,7 +159,7 @@ func NewFileData(folderPath string) *FileData {
 }
 
 func (fileData *FileData) GetData(db *gorm.DB) {
-	path := filepath.Join(fileData.TargetFolderPath, fileData.JsonFolderPath, "\\*.json")
+	path := filepath.Join(fileData.JsonFolderPath, "\\*.json")
 	files, err := filepath.Glob(path)
 
 	if err != nil {
