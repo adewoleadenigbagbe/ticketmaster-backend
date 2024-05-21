@@ -1,13 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"github.com/Wolechacho/ticketmaster-backend/apis/server"
+)
 
 func main() {
-	// ticketmaster := cmd.NewTicketMaster()
-	// err := ticketmaster.Start()
-	// if err != nil {
-	// 	os.Exit(1)
-	// }
-
-	fmt.Println("Hi there")
+	server.InitializeAPI()
 }
