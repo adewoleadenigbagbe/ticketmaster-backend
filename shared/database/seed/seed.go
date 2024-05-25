@@ -27,9 +27,9 @@ import (
 )
 
 var (
-	JsonDataPath     = "./shared/jsondata"
-	DbConfigFilePath = "./shared/configs/database.json"
-	MovieApiFilePath = "./shared/configs/movieapi.json"
+	JsonDataPath     = "../../jsondata"
+	DbConfigFilePath = "../../configs/database.json"
+	MovieApiFilePath = "../../configs/movieapi.json"
 
 	genres = []enums.Genre{
 		enums.Action, enums.Adventure, enums.Animation, enums.Comedy,
@@ -49,7 +49,7 @@ const (
 	MaxPage        = 500
 )
 
-func main() {
+func SeedData() {
 	dbConfigPath, err := filepath.Abs(DbConfigFilePath)
 	if err != nil {
 		log.Fatal(err)
@@ -358,11 +358,10 @@ func (apiData *ApiData) GetData(config models.MovieApiConfig, db *gorm.DB) {
 	//sort the data
 	sort.Sort(entities.ByID[entities.Movie](movies))
 	tx := db.CreateInBatches(&movies, 50)
-	color.Magenta("Successfully added movies data to table")
 	if tx.Error != nil {
 		return
 	}
-
+	color.Magenta("Successfully added movies data to table")
 	color.Magenta("All Data sucessfully saved into the tables ...")
 }
 
@@ -411,10 +410,10 @@ func getMovieData(movieConfig models.MovieApiConfig, page int) ResponseData {
 
 	var responseData ResponseData
 	err := json.Unmarshal(body, &responseData)
-
 	if err != nil {
 		color.Red(err.Error())
 	}
+
 	return responseData
 }
 
@@ -425,7 +424,7 @@ func addMovieToList(movieDatasResponse []MovieData) {
 			Title:        moviedata.OriginalTitle,
 			Description:  utilities.NewNullable[string](moviedata.Overview, true),
 			Duration:     utilities.NewNullable[int](0, false),
-			ReleaseDate:  time.Time(moviedata.ReleaseDate),
+			ReleaseDate:  utilities.DefaultIfZero(time.Time(moviedata.ReleaseDate)),
 			Genre:        rand.Intn(len(genres)),
 			Language:     moviedata.OriginalLanguage,
 			Popularity:   moviedata.Popularity,

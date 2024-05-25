@@ -25,6 +25,15 @@ func NewNullable[T any](value T, isValid bool) Nullable[T] {
 	return Nullable[T]{Val: value, Valid: isValid}
 }
 
+func DefaultIfZero[T any](value T) Nullable[T] {
+	if !reflect.ValueOf(value).IsZero() {
+		return Nullable[T]{Val: value, Valid: true}
+	}
+
+	defaultValue := zeroTypeValue[T]()
+	return Nullable[T]{Val: defaultValue, Valid: false}
+}
+
 func (n *Nullable[T]) Scan(value interface{}) error {
 	if value == nil {
 		n.Val = zeroTypeValue[T]()

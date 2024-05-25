@@ -80,7 +80,7 @@ CREATE TABLE Movies (
  Title MEDIUMTEXT NOT NULL,
  Description LONGTEXT,
  Language CHAR(10) NOT NULL,
- ReleaseDate DATETIME NOT NULL,
+ ReleaseDate DATETIME NULL,
  Duration INT,
  Genre INT NOT NULL,
  Popularity FLOAT NOT NULL,

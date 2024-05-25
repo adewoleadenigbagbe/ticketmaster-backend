@@ -56,13 +56,9 @@ func (d *Datetime) UnmarshalJSON(b []byte) error {
 	var t time.Time
 	var err error
 	s := strings.Trim(string(b), "\"")
-	if s == "" {
-		t = time.Now()
-	} else {
-		t, err = time.Parse(time.DateOnly, s)
-		if err != nil {
-			return err
-		}
+	t, err = time.Parse(time.DateOnly, s)
+	if err != nil {
+		return err
 	}
 
 	*d = Datetime(t)
