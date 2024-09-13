@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  api:
+    container_name: rest-api
+    build: .
+    command: ["./urlshortner", "serveapi"]
+    volumes:
+      - sqlite_data:/app/data
+    ports: 
+      - 8653:8653 
+    restart: on-failure
+    depends_on:
+      - redis   # this for other services.
+      - sqlite3        
+    networks:
+      - networkstack
+
+  redis:
+    image: redis:latest
+    container_name: my-redis
+    ports:
+      - 6379:6379
+    command: ["redis-server", "--bind", "redis", "--port", "6379"]
+    # environment: 
+    #   - REDIS_HOST=redis:6379
+    #   - REDIS_PASSWORD=${REDIS_PASSWORD}
+    restart: always
+    networks:
+      - networkstack
+
+  sqlite3:
+    image: python:3.9-alpine
+    container_name: my-sqlite3
+    command: ["sh", "-c", "apk add --no-cache sqlite && python -m pip install sqlite-utils && tail -f /dev/null"]
+    restart: always
+    networks:
+      - networkstack
+
+  sqlitebrowser:
+    image: linuxserver/sqlitebrowser
+    container_name: sqlitebrowser
+    ports:
+      - 3001:3001
+      - 3000:3000
+    depends_on:
+      - sqlite3
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - ENABLE_UWSGI=true
+    volumes:
+      - sqlite_data:/data
+    restart: unless-stopped
+
+# Networks to be created to facilitate communication between containers
+networks:
+  networkstack:
+    driver: bridge
+
+volumes:
+  sqlite_data:
