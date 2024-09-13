@@ -6,7 +6,7 @@ services:
       dockerfile: apis/Dockerfile
       context: .
     volumes:
-      - ./service_a:/myapp
+      #- ./service_a:/myapp
     ports:
       - "8185:8185"
     depends_on:
@@ -22,7 +22,7 @@ services:
       dockerfile: activationreservation/Dockerfile
       context: .
     volumes:
-      - ./service_b:/myapp
+      #- ./service_b:/myapp
     # ports:
     #   - "8081:3000"
     depends_on:
@@ -38,7 +38,7 @@ services:
       dockerfile: waitingservice/Dockerfile
       context: .
     volumes:
-      - ./service_c:/myapp
+      #- ./service_c:/myapp
     # ports:
     #   - "8082:3000"
     depends_on:
@@ -57,7 +57,7 @@ services:
       MYSQL_USER: "root"
       MYSQL_PASSWORD: "P@ssw0r1d"
     volumes:
-      - ./service_c/tmp/mysqldb:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
     ports:
       - "3306:3306"
     restart: always
@@ -84,4 +84,4 @@ networks:
     driver: bridge
 
 volumes:
-  sqlite_data:
+  mysql_data:
