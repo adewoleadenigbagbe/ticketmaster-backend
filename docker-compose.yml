@@ -1,58 +1,82 @@
-version: '3.8'
-
+version: "3.8"
 services:
   api:
-    container_name: rest-api
-    build: .
-    command: ["./urlshortner", "serveapi"]
-    volumes:
-      - sqlite_data:/app/data
-    ports: 
-      - 8653:8653 
+    container_name: api
+    build:
+      dockerfile: apis/Dockerfile
+      context: .
+    #volumes:
+      #- ./service_a:/myapp
+    ports:
+      - "8185:8185"
+    depends_on:
+      - mysql
+      - nats
     restart: on-failure
-    depends_on:
-      - redis   # this for other services.
-      - sqlite3        
     networks:
       - networkstack
 
-  redis:
-    image: redis:latest
-    container_name: my-redis
-    ports:
-      - 6379:6379
-    command: ["redis-server", "--bind", "redis", "--port", "6379"]
-    # environment: 
-    #   - REDIS_HOST=redis:6379
-    #   - REDIS_PASSWORD=${REDIS_PASSWORD}
+  activatereservationservice:
+    container_name: activereservationservice
+    build:
+      dockerfile: activereservation/Dockerfile
+      context: .
+    #volumes:
+      #- ./service_b:/myapp
+    # ports:
+    #   - "8081:3000"
+    depends_on:
+      - mysql
+      - nats
     restart: always
     networks:
       - networkstack
 
-  sqlite3:
-    image: python:3.9-alpine
-    container_name: my-sqlite3
-    command: ["sh", "-c", "apk add --no-cache sqlite && python -m pip install sqlite-utils && tail -f /dev/null"]
+  waitingservice:
+    container_name: waitingservice
+    build:
+      dockerfile: waitingservice/Dockerfile
+      context: .
+    #volumes:
+      #- ./service_c:/myapp
+    # ports:
+    #   - "8082:3000"
+    depends_on:
+      - mysql
+      - nats
     restart: always
     networks:
       - networkstack
 
-  sqlitebrowser:
-    image: linuxserver/sqlitebrowser
-    container_name: sqlitebrowser
-    ports:
-      - 3001:3001
-      - 3000:3000
-    depends_on:
-      - sqlite3
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=UTC
-      - ENABLE_UWSGI=true
+      # MYSQL_ROOT_PASSWORD: service_c
+      MYSQL_DATABASE: "ticketmasterdb"
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "P@ssw0r1d"
     volumes:
-      - sqlite_data:/data
-    restart: unless-stopped
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    restart: always
+    networks:
+      - networkstack
+  
+  nats:
+    image: nats:alpine
+    container_name: nats
+    restart: always
+    ports:
+      - "8222:8222"
+    command: -c /etc/nats/nats.conf
+    volumes:
+      - ./nats.conf:/etc/nats/nats.conf
+      #- $JETSTREAM_STORAGE:/data
+    networks:
+      - networkstack
+
 
 # Networks to be created to facilitate communication between containers
 networks:
@@ -60,4 +84,4 @@ networks:
     driver: bridge
 
 volumes:
-  sqlite_data:
+  mysql_data:

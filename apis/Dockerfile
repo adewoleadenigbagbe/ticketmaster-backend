@@ -1,6 +1,14 @@
 # Use an official Golang runtime as a parent image
 FROM golang:1.19
 
+RUN mkdir /shared
+COPY ./shared /shared
+
+RUN mkdir /infastructure
+COPY ./infastructure /infastructure
+
+
+
 # Set the working directory inside the container
 WORKDIR /app
 
