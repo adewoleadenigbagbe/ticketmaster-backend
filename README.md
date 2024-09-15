@@ -30,7 +30,7 @@ Basically the user books seat(s) for a movie show, the seat(s) are reserved for 
 * Docker (Optional)
 
 ## Usage
-Make sure you have the Redis service and sqlite3 service running on the machine as specified as the dependencies for this project. Change the configuration as it suit you in the .env.example
+Make sure you have the mysql service and Nats service running on the machine as specified as the dependencies for this project. Change the configuration as it suit you in the .env
 
 To run locally, cd from the root to either apis, activereservation or waitingservice directory and run 
 
