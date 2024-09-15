@@ -19,8 +19,6 @@ Basically the user books seat(s) for a movie show, the seat(s) are reserved for 
 ## Database Table Design
 ![alt text](<Ticketmaster Database Tables Diagram.jpeg>)
 
-## Architecture Design
-
 ## Application Dependencies
 * Go 1.20 >=
 * MySql
