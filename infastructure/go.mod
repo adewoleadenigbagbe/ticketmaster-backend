@@ -1,13 +1,13 @@
 module github.com/Wolechacho/ticketmaster-backend/infastructure
 
-go 1.19
+go 1.20
 
 replace github.com/Wolechacho/ticketmaster-backend/shared => ../shared
 
 require (
 	github.com/SebastiaanKlippert/go-wkhtmltopdf v1.9.2
 	github.com/Wolechacho/ticketmaster-backend/shared v1.0.0
-	github.com/nats-io/nats.go v1.35.0
+	github.com/nats-io/nats.go v1.31.0
 	github.com/samber/lo v1.39.0
 	github.com/stripe/stripe-go v70.15.0+incompatible
 	golang.org/x/crypto v0.23.0

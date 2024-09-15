@@ -1,6 +1,6 @@
 module github.com/Wolechacho/ticketmaster-backend/apis
 
-go 1.19
+go 1.20
 
 replace (
 	github.com/Wolechacho/ticketmaster-backend/infastructure => ../infastructure
@@ -8,12 +8,12 @@ replace (
 )
 
 require (
-	github.com/Wolechacho/ticketmaster-backend/infastructure v1.0.0
+	github.com/Wolechacho/ticketmaster-backend/infastructure v0.0.0-00010101000000-000000000000
 	github.com/Wolechacho/ticketmaster-backend/shared v1.0.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2
-	github.com/nats-io/nats.go v1.35.0
+	github.com/nats-io/nats.go v1.31.0
 	github.com/samber/lo v1.39.0
 	github.com/swaggo/echo-swagger v1.4.1
 	github.com/swaggo/swag v1.16.1

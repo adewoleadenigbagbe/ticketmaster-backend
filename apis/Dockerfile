@@ -1,12 +1,11 @@
 # Use an official Golang runtime as a parent image
-FROM golang:1.19
+FROM golang:1.20
 
 RUN mkdir /shared
 COPY ./shared /shared
 
 RUN mkdir /infastructure
 COPY ./infastructure /infastructure
-
 
 
 # Set the working directory inside the container
@@ -18,8 +17,10 @@ COPY ./apis .
 # Installs Go dependencies
 RUN go mod tidy && go mod download
 
+RUN go build
+
 # Tells Docker which network port your container listens on
 EXPOSE 8071
 
 # Define the command to run your application
-CMD ["go run main.go"]
+CMD ["go","run","main.go"]

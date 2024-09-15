@@ -1,6 +1,6 @@
 module github.com/Wolechacho/ticketmaster-backend/waitingservice
 
-go 1.19
+go 1.20
 
 replace github.com/Wolechacho/ticketmaster-backend/shared => ../shared
 
@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.17.0
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/muesli/cache2go v0.0.0-20221011235721-518229cd8021
-	github.com/nats-io/nats.go v1.35.0
+	github.com/nats-io/nats.go v1.31.0
 	github.com/samber/lo v1.39.0
 	gorm.io/gorm v1.25.10
 )

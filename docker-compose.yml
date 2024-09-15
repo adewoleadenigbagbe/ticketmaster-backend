@@ -5,8 +5,6 @@ services:
     build:
       dockerfile: apis/Dockerfile
       context: .
-    #volumes:
-      #- ./service_a:/myapp
     ports:
       - "8185:8185"
     depends_on:
@@ -16,15 +14,11 @@ services:
     networks:
       - networkstack
 
-  activatereservationservice:
+  activereservationservice:
     container_name: activereservationservice
     build:
       dockerfile: activereservation/Dockerfile
       context: .
-    #volumes:
-      #- ./service_b:/myapp
-    # ports:
-    #   - "8081:3000"
     depends_on:
       - mysql
       - nats
@@ -37,10 +31,6 @@ services:
     build:
       dockerfile: waitingservice/Dockerfile
       context: .
-    #volumes:
-      #- ./service_c:/myapp
-    # ports:
-    #   - "8082:3000"
     depends_on:
       - mysql
       - nats
@@ -52,14 +42,14 @@ services:
     image: mysql:8.0
     container_name: mysql
     environment:
-      # MYSQL_ROOT_PASSWORD: service_c
+      MYSQL_ROOT_PASSWORD: "P@ssw0r1d"
       MYSQL_DATABASE: "ticketmasterdb"
       MYSQL_USER: "root"
       MYSQL_PASSWORD: "P@ssw0r1d"
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
-      - "3306:3306"
+      - "3307:3306"
     restart: always
     networks:
       - networkstack
@@ -70,10 +60,9 @@ services:
     restart: always
     ports:
       - "8222:8222"
-    command: -c /etc/nats/nats.conf
-    volumes:
-      - ./nats.conf:/etc/nats/nats.conf
-      #- $JETSTREAM_STORAGE:/data
+    # command: -c /etc/nats/nats.conf
+    # volumes:
+    #   - ./nats.conf:/etc/nats/nats.conf
     networks:
       - networkstack
 

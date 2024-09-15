@@ -25,15 +25,15 @@ type GetMoviesResponse struct {
 }
 
 type MovieDataResponse struct {
-	Id          string                     `json:"id"`
-	Title       string                     `json:"title"`
-	Description utilities.Nullable[string] `json:"description"`
-	Language    string                     `json:"language"`
-	ReleaseDate time.Time                  `json:"releaseDate"`
-	Genre       int                        `json:"genre"`
-	Popularity  float32                    `json:"popularity"`
-	VoteCount   int                        `json:"voteCount"`
-	Duration    utilities.Nullable[int]    `json:"duration"`
+	Id          string                        `json:"id"`
+	Title       string                        `json:"title"`
+	Description utilities.Nullable[string]    `json:"description"`
+	Language    string                        `json:"language"`
+	ReleaseDate utilities.Nullable[time.Time] `json:"releaseDate"`
+	Genre       int                           `json:"genre"`
+	Popularity  float32                       `json:"popularity"`
+	VoteCount   int                           `json:"voteCount"`
+	Duration    utilities.Nullable[int]       `json:"duration"`
 }
 
 func (movieService MovieService) GetMovies(request GetMoviesRequest) (GetMoviesResponse, error) {
