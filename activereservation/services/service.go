@@ -5,6 +5,8 @@ import (
 	"encoding/gob"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -12,10 +14,15 @@ import (
 	db "github.com/Wolechacho/ticketmaster-backend/shared/database"
 	"github.com/Wolechacho/ticketmaster-backend/shared/enums"
 	"github.com/fatih/color"
+	"github.com/joho/godotenv"
 	"github.com/muesli/cache2go"
 	"github.com/nats-io/nats.go"
 	"github.com/samber/lo"
 	"gorm.io/gorm"
+)
+
+const (
+	DbFile = "database.json"
 )
 
 type DbQuery struct {
@@ -36,6 +43,13 @@ type ShowSeatDTO struct {
 
 func Run() {
 	var err error
+
+	//load env variables
+	err = godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -43,13 +57,18 @@ func Run() {
 	cache := cache2go.Cache("reservationCache")
 
 	// connect to nats
-	nc, err := nats.Connect(nats.DefaultURL)
+	natUrl := os.Getenv("NATS_URL")
+	nc, err := nats.Connect(natUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	//connec to the db
-	db, err := db.ConnectToDatabase()
+	//connect to the db
+	dbConfigPath, err := filepath.Abs(DbFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	db, err := db.ConnectToDatabase(dbConfigPath)
 	if err != nil {
 		log.Fatal(err)
 	}

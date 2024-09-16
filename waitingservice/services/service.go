@@ -10,12 +10,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"time"
 
 	"github.com/Wolechacho/ticketmaster-backend/shared/common"
 	db "github.com/Wolechacho/ticketmaster-backend/shared/database"
 	"github.com/Wolechacho/ticketmaster-backend/shared/enums"
 	"github.com/fatih/color"
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/muesli/cache2go"
 	"github.com/nats-io/nats.go"
@@ -24,16 +26,24 @@ import (
 	"github.com/samber/lo"
 )
 
+const (
+	DbFile = "database.json"
+)
+
 type JsonSeatResponse struct {
 	ShowId        string   `json:"showId"`
 	CinemaSeatIds []string `json:"cinemaSeatIds"`
 }
 
-func main() {
-	Run()
-}
-
 func Run() {
+	var err error
+
+	//load env variables
+	err = godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	afterOneHourTicker := time.NewTicker(1 * time.Hour)
 	afterThreeMinTicker := time.NewTicker(3 * time.Minute)
 	eventChan := make(chan bool)
@@ -42,13 +52,19 @@ func Run() {
 	cache := cache2go.Cache("waitingServiceCache")
 
 	// connect to nats
-	nc, err := nats.Connect(nats.DefaultURL)
+	natUrl := os.Getenv("NATS_URL")
+	nc, err := nats.Connect(natUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	//connect to the db
-	db, err := db.ConnectToDatabase()
+	dbConfigPath, err := filepath.Abs(DbFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db, err := db.ConnectToDatabase(dbConfigPath)
 	if err != nil {
 		log.Fatal(err)
 	}

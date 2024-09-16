@@ -1,12 +1,20 @@
 package core
 
 import (
+	"log"
+	"os"
+	"path/filepath"
+
 	"github.com/Wolechacho/ticketmaster-backend/infastructure/services"
 	"github.com/Wolechacho/ticketmaster-backend/infastructure/tools"
 	db "github.com/Wolechacho/ticketmaster-backend/shared/database"
 	"github.com/labstack/echo/v4"
 	"github.com/nats-io/nats.go"
 	"gorm.io/gorm"
+)
+
+const (
+	DbFile = "database.json"
 )
 
 // BaseApp implements core.App and defines the structure of the whole application
@@ -25,17 +33,23 @@ type BaseApp struct {
 }
 
 func ConfigureApp() (*BaseApp, error) {
+	//connect to nats
+	natUrl := os.Getenv("NATS_URL")
+	nc, err := nats.Connect(natUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	//create a database connection
-	db, err := db.ConnectToDatabase()
+	dbConfigPath, err := filepath.Abs(DbFile)
 	if err != nil {
 		return nil, err
 	}
 
-	nc, err := ConnectToNats()
+	db, err := db.ConnectToDatabase(dbConfigPath)
 	if err != nil {
 		return nil, err
 	}
-
 	app := &BaseApp{
 		IsMigrationChecked: false,
 		Echo:               echo.New(),

@@ -37,7 +37,6 @@ import (
 //   - application/json
 // @schemes http
 func InitializeAPI() {
-	//TODO: Could remove this later if it can be set using cobra
 	//load env variables
 	err := godotenv.Load(".env")
 	if err != nil {
