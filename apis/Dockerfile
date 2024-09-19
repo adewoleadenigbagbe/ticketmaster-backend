@@ -1,9 +1,24 @@
 # Use an official Golang runtime as a parent image
 FROM golang:1.20
 
+RUN apt-get update \
+    && apt-get install -y \
+        curl \
+        libxrender1 \
+        libfontconfig \
+        libxtst6 \
+        xz-utils
+
+RUN curl "https://github.com/wkhtmltopdf/packaging/archive/refs/tags/0.12.6.1-3.tar.gz" -L -o "wkhtmltopdf.tar.gz"
+RUN tar xzf wkhtmltopdf.tar.gz
+RUN mv wkhtmltopdf.tar.gz /usr/local/bin/wkhtmltopdf
+# RUN chmod +x /usr/local/bin/wkhtmltopdf
+
+#Copy Shared folder
 RUN mkdir /shared
 COPY ./shared /shared
 
+#Copy Infastructure folder
 RUN mkdir /infastructure
 COPY ./infastructure /infastructure
 

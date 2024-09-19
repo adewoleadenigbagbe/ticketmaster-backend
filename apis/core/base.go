@@ -33,9 +33,11 @@ type BaseApp struct {
 }
 
 func ConfigureApp() (*BaseApp, error) {
+	var err error
+
 	//connect to nats
 	natUrl := os.Getenv("NATS_URL")
-	nc, err := nats.Connect(natUrl)
+	nc, err := ConnectToNats(natUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,8 +69,8 @@ func ConfigureApp() (*BaseApp, error) {
 	return app, nil
 }
 
-func ConnectToNats() (*nats.Conn, error) {
-	nc, err := nats.Connect(nats.DefaultURL)
+func ConnectToNats(url string) (*nats.Conn, error) {
+	nc, err := nats.Connect(url)
 	if err != nil {
 		return nil, err
 	}

@@ -27,8 +27,8 @@ func CreateDbConfig(content []byte) (*DatabaseConfig, error) {
 }
 
 func (dbConfig *DatabaseConfig) GetDsn() string {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=%s&parseTime=%s&loc=%s", dbConfig.User, dbConfig.Password,
-		dbConfig.IpAddress, dbConfig.Port, dbConfig.Charset, dbConfig.ParseTime, dbConfig.Loc)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=%s&loc=%s", dbConfig.User, dbConfig.Password,
+		dbConfig.IpAddress, dbConfig.Port, dbConfig.DatabaseName, dbConfig.Charset, dbConfig.ParseTime, dbConfig.Loc)
 
 	return dsn
 }

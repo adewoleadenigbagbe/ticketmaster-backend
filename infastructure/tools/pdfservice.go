@@ -2,36 +2,29 @@ package tools
 
 import (
 	"bytes"
-	"errors"
 	"html/template"
-	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
+)
+
+const (
+	templatePath = "../infastructure/tools/invoice.html"
 )
 
 type PDFService struct {
 }
 
 func (pdfService PDFService) GeneratePDF(data any) ([]byte, error) {
-	var templ *template.Template
 	var err error
-	rootPath := "ticketmaster-backend"
-	currentWorkingDirectory, err := os.Getwd()
+	var templ *template.Template
+	filePath, err := filepath.Abs(templatePath)
 	if err != nil {
 		return nil, err
 	}
 
-	index := strings.Index(currentWorkingDirectory, rootPath)
-	if index == -1 {
-		return nil, errors.New("App Root Folder Path not found")
-	}
-
-	file := filepath.Join(currentWorkingDirectory[:index], rootPath, "tools", "invoice.html")
-
 	// use Go's default HTML template generation tools to generate your HTML
-	if templ, err = template.ParseFiles(file); err != nil {
+	if templ, err = template.ParseFiles(filePath); err != nil {
 		return nil, err
 	}
 
