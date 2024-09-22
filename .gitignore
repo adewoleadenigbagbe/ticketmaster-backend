@@ -14,3 +14,15 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 tmp
+
+.env
+
+launch.json
+
+# Environmental variables
+.env
+
+*.vscode
+
+
+launch.json
