@@ -3,7 +3,7 @@ package routes
 import (
 	"github.com/Wolechacho/ticketmaster-backend/apis/controllers"
 	middlewares "github.com/Wolechacho/ticketmaster-backend/apis/middleware"
-	"github.com/Wolechacho/ticketmaster-backend/core"
+	"github.com/Wolechacho/ticketmaster-backend/apis/core"
 	"github.com/labstack/echo/v4"
 )
 

@@ -1,0 +1,10 @@
+{
+    "dbName" : "ticketmasterDB",
+    "user" : "root",
+    "password" : "P@ssw0r1d",
+    "ip" : "mysql",
+    "port" : "3306",
+    "charset" : "utf8mb4",
+    "parseTime" : "True",
+    "loc": "Local"
+}

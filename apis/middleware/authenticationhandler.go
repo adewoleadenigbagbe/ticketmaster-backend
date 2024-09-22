@@ -3,7 +3,7 @@ package middlewares
 import (
 	"net/http"
 
-	jwtauth "github.com/Wolechacho/ticketmaster-backend/helpers/utilities/auth"
+	jwtauth "github.com/Wolechacho/ticketmaster-backend/shared/helpers/utilities/auth"
 	"github.com/labstack/echo/v4"
 )
 
