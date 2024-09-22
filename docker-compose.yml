@@ -1,0 +1,83 @@
+version: "3.8"
+services:
+  api:
+    container_name: api
+    build:
+      dockerfile: apis/Dockerfile
+      context: .
+    ports:
+      - "8185:8185"
+    depends_on:
+      - mysql
+      - nats
+    restart: on-failure
+    networks:
+      - networkstack
+
+  migrationservice:
+    container_name: migrationservice
+    build:
+      dockerfile: shared/database/migrations/Dockerfile
+      context: .
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - networkstack
+
+  activereservationservice:
+    container_name: activereservationservice
+    build:
+      dockerfile: activereservation/Dockerfile
+      context: .
+    depends_on:
+      - mysql
+      - nats
+    restart: always
+    networks:
+      - networkstack
+
+  waitingservice:
+    container_name: waitingservice
+    build:
+      dockerfile: waitingservice/Dockerfile
+      context: .
+    depends_on:
+      - mysql
+      - nats
+    restart: always
+    networks:
+      - networkstack
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "P@ssw0r1d"
+      MYSQL_DATABASE: "ticketmasterDB"
+      MYSQL_PASSWORD: "P@ssw0r1d"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    restart: always
+    networks:
+      - networkstack
+
+  nats:
+    image: nats:alpine
+    container_name: nats
+    restart: always
+    ports:
+      - "4222:4222"
+    networks:
+      - networkstack
+
+
+# Networks to be created to facilitate communication between containers
+networks:
+  networkstack:
+    driver: bridge
+
+volumes:
+  mysql_data:

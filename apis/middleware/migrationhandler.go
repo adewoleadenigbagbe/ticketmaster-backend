@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Wolechacho/ticketmaster-backend/core"
+	"github.com/Wolechacho/ticketmaster-backend/apis/core"
 	"github.com/labstack/echo/v4"
 )
 
